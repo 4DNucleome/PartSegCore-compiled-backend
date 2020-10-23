@@ -27,16 +27,16 @@ exclude = '''
   )/
   | foo.py           # also separately exclude a file named foo.py in
                      # the root of the project
-  | package/PartSeg/version.py
+  | src/PartSegCore_compiled_backend/version.py
 )
 '''
 
 [tool.isort]
 line_length=120
-known_first_party=['PartSeg', 'PartSegData','PartSegCore','PartSegImage']
+known_first_party=['PartSegCore_compiled_backend']
 profile="black"
-src_paths=["package"]
+src_paths=["src"]
 
 
 [tool.check-manifest]
-ignore = [".travis.yml", "package/PartSeg/changelog.py", "package/PartSeg/version.py"]
+ignore = ["src/PartSegCore_compiled_backend/changelog.py", "src/PartSegCore_compiled_backend/version.py"]

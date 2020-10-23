@@ -1,0 +1,6 @@
+global-include *.pyx
+global-include *.pxd
+include src/PartSegCore_compiled_backend/sprawl_utils/*.h
+include src/PartSegCore_compiled_backend/multiscale_opening/*.h
+include pyproject.toml
+recursive-include src*.py

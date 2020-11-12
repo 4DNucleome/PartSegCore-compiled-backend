@@ -34,6 +34,10 @@ jobs:
         name: Install Python 3.8
         with:
           python-version: 3.8
+      - uses: actions/setup-python@v2
+        name: Install Python 3.9
+        with:
+          python-version: 3.9
       - name: Install tox
         run: pip install tox numpy
       - name: Test PartSeg
@@ -62,7 +66,7 @@ jobs:
         run: |
           python -m cibuildwheel --output-dir wheelhouse
         env:
-          CIBW_BUILD: cp3[6-8]*64
+          CIBW_BUILD: cp3[6-9]*64
           CIBW_TEST_EXTRAS: test
           CIBW_BEFORE_BUILD: pip install numpy cython
           CIBW_TEST_COMMAND: pytest {project}/src/tests

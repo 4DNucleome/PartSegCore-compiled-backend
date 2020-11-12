@@ -2,6 +2,7 @@ from itertools import product
 
 import numpy as np
 import pytest
+
 from PartSegCore_compiled_backend.color_image_cython import calculate_borders, calculate_borders2d
 
 

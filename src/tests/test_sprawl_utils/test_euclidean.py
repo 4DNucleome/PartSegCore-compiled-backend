@@ -2,6 +2,7 @@ from itertools import product
 
 import numpy as np
 import pytest
+
 from PartSegCore_compiled_backend.sprawl_utils.euclidean_cython import calculate_euclidean
 
 

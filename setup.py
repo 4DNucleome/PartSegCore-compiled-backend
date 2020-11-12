@@ -62,5 +62,7 @@ extensions = [
 ]
 
 setup(
-    ext_modules=extensions, include_package_data=True, use_scm_version=True,
+    ext_modules=extensions,
+    include_package_data=True,
+    use_scm_version=True,
 )

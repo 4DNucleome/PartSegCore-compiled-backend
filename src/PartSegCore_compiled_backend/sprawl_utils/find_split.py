@@ -232,7 +232,7 @@ def distance_sprawl(
     data_cache=None,
     parallel=False,
 ) -> np.ndarray:
-    if data_m.dtype == np.bool:
+    if data_m.dtype == bool:
         data_m = data_m.astype(np.uint8)
     if data_cache is None:
         data_cache = np.zeros(data_m.shape, data_m.dtype)

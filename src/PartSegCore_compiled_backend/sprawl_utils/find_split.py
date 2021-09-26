@@ -32,7 +32,7 @@ def path_maximum_sprawl(
     neighbourhood: np.ndarray,
     distance_cache=None,
     data_cache=None,
-):
+) -> np.ndarray:
     """
     Calculate sprawl in respect to brightens. Distance between voxels is minimum brightness on
     all paths connecting them.
@@ -78,7 +78,9 @@ def path_maximum_sprawl(
     return components
 
 
-def path_minimum_sprawl(data_f, components, components_count, neighbourhood, distance_cache=None, data_cache=None):
+def path_minimum_sprawl(
+    data_f, components, components_count, neighbourhood, distance_cache=None, data_cache=None
+) -> np.ndarray:
     """
     Calculate sprawl in respect to brightens. Distance between voxels is maximum brightness on
     all paths connecting them.
@@ -90,7 +92,7 @@ def path_minimum_sprawl(data_f, components, components_count, neighbourhood, dis
     :param distance_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is np.float64
     :param data_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is data_m.dtype
         (use np.uint8 instead of np.bool)
-    :return: a
+    :return: array with updated labels
     """
     maximum = data_f.max()
     if data_cache is None:
@@ -133,7 +135,7 @@ def euclidean_sprawl(
     dist_arr,
     distance_cache=None,
     data_cache=None,
-):
+) -> np.ndarray:
     """
     Calculate euclidean sprawl (watershed)
 
@@ -163,7 +165,7 @@ def fdt_sprawl(
     upper_bound,
     distance_cache=None,
     data_cache=None,
-):
+) -> np.ndarray:
     """
     Function for calculate fdt sprawl
 
@@ -177,7 +179,7 @@ def fdt_sprawl(
     :param distance_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is np.float64
     :param data_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is data_m.dtype
         (use np.uint8 instead of np.bool)
-    :return:
+    :return: array with updated labels
     """
     if lower_bound > upper_bound:
         mu_array = 1 - calculate_mu_array(data_m, upper_bound, lower_bound, MuType.reflection_mu)
@@ -202,7 +204,7 @@ def sprawl_component(
     neigh_arr: np.ndarray,
     dist_arr: np.ndarray,
     calculate_operator: typing.Callable,
-):
+) -> np.ndarray:
     """
     calculate sprawl for single component
 
@@ -212,7 +214,7 @@ def sprawl_component(
     :param neigh_arr: information about neighbourhood, shift array
     :param dist_arr: information about neighbourhood, distance array for shifted position
     :param calculate_operator: function to be called for calculate sprawl
-    :return:
+    :return: array with updated labels
     """
     data_cache = np.copy(data_m)
     data_cache[(components > 0) * (components != component_number)] = 0
@@ -299,26 +301,25 @@ def distance_sprawl(
     return components
 
 
-def reverse_permutation(perm):
+def reverse_permutation(perm: typing.List[int]) -> typing.List[int]:
     rev = [0] * len(perm)
     for i, x in enumerate(perm, 1):
         rev[x - 1] = i
     return rev
 
 
-def relabel_with_perm(labeling, perm):
+def relabel_with_perm(labeling: typing.List, perm: typing.List) -> typing.List:
     logging.debug(f"{labeling}, {perm}")
     perm = reverse_permutation(perm)
     return [perm[x] for x in labeling]
 
 
-def verify_cohesion(elements: typing.List[int], graph):
+def verify_cohesion(elements: typing.List[int], graph: typing.List[typing.List[int]]) -> bool:
     start = elements[0]
     elements_set = set(elements)
     elements_set.remove(start)
-    queue = []
-    queue.extend(graph[start])
-    while len(queue) > 0 and len(elements_set) > 0:
+    queue = list(graph[start])
+    while queue and elements_set:
         el = queue.pop()
         if el in elements_set:
             elements_set.remove(el)
@@ -326,7 +327,7 @@ def verify_cohesion(elements: typing.List[int], graph):
     return len(elements_set) == 0
 
 
-def relabel_array(data: np.ndarray, perm):
+def relabel_array(data: np.ndarray, perm: typing.List[int]) -> np.ndarray:
     result = np.zeros(data.shape, dtype=data.dtype)
     for i, val in enumerate(perm):
         result[data == i + 1] = val

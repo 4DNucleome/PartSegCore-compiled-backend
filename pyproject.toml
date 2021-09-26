@@ -40,3 +40,10 @@ src_paths=["src"]
 
 [tool.check-manifest]
 ignore = ["src/PartSegCore_compiled_backend/changelog.py", "src/PartSegCore_compiled_backend/version.py"]
+
+
+[tool.cibuildwheel]
+test-command = "pytest {project}/src/tests"
+test-extras = ["test"]
+skip = "cp36-*"
+build = "*64"

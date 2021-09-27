@@ -1,6 +1,5 @@
 # distutils: define_macros=CYTHON_TRACE_NOGIL=1
 # cython: language_level=3, boundscheck=False, wraparound=False, nonecheck=False, cdivision=True, embedsignature=True
-import itertools
 
 import numpy as np
 

@@ -52,6 +52,14 @@ extensions = [
         language="c++",
     ),
     Extension(
+        "PartSegCore_compiled_backend.utils",
+        ["src/PartSegCore_compiled_backend/utils.pyx"],
+        include_dirs=[np.get_include()],
+        extra_compile_args=cpp_standard,
+        extra_link_args=cpp_standard,
+        language="c++",
+    ),
+    Extension(
         "PartSegCore_compiled_backend.multiscale_opening.mso_bind",
         sources=["src/PartSegCore_compiled_backend/multiscale_opening/mso_bind.pyx"],
         include_dirs=[np.get_include()],

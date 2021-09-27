@@ -48,6 +48,7 @@ jobs:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-18.04, windows-latest, macos-latest]
 
@@ -59,6 +60,8 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.2.0a1
+        env:
+          OPENBLAS: "$(brew --prefix openblas)"
 
       - uses: actions/upload-artifact@v2
         with:

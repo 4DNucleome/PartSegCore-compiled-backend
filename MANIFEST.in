@@ -2,5 +2,10 @@ global-include *.pyx
 global-include *.pxd
 include src/PartSegCore_compiled_backend/sprawl_utils/*.h
 include src/PartSegCore_compiled_backend/multiscale_opening/*.h
+include src/PartSegCore_compiled_backend/multiscale_opening/mso.cpp
 include pyproject.toml
-recursive-include src*.py
+recursive-include src *.py
+recursive-include src *.pyi
+exclude tox*
+exclude .pre-commit-config.yaml
+include Readme.md

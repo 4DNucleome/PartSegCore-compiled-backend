@@ -11,6 +11,22 @@ ctypedef fused label_types:
     np.uint32_t
 
 def calc_bounds(labels, components_num=None):
+    """
+    Calculate the bounds of each component.
+    wrapper around calc_boundsX function for different number of dimensions
+
+    Parameters
+    ----------
+    labels : ndarray
+        The labels of the components.
+    components_num : int, optional
+        The number of components.
+
+    Returns
+    -------
+    bounds : (ndarray, ndarray)
+        The bounds of each component.
+    """
     if components_num is None:
         components_num = np.max(labels)
     return {
@@ -21,7 +37,7 @@ def calc_bounds(labels, components_num=None):
     }[labels.ndim](labels, components_num)
 
 
-def calc_bounds5(np.ndarray[label_types, ndim=5] labels, components_num=None):
+def calc_bounds5(np.ndarray[label_types, ndim=5] labels, components_num: Py_ssize_t):
     cdef Py_ssize_t x, y, z, t, s
     cdef Py_ssize_t x_max = labels.shape[4]
     cdef Py_ssize_t y_max = labels.shape[3]
@@ -29,8 +45,6 @@ def calc_bounds5(np.ndarray[label_types, ndim=5] labels, components_num=None):
     cdef Py_ssize_t t_max = labels.shape[1]
     cdef Py_ssize_t s_max = labels.shape[0]
     cdef label_types label_val
-    if components_num is None:
-        components_num = np.max(labels)
     cdef np.ndarray[np.int16_t, ndim=2] min_bound = np.full((components_num + 1, 5), max(x_max, y_max, z_max, t_max, s_max) + 5, dtype=np.int16)
     cdef np.ndarray[np.int16_t, ndim=2] max_bound = np.full((components_num + 1, 5), -1, dtype=np.int16)
 
@@ -57,15 +71,13 @@ def calc_bounds5(np.ndarray[label_types, ndim=5] labels, components_num=None):
     return min_bound, max_bound
 
 
-def calc_bounds4(np.ndarray[label_types, ndim=4] labels, components_num=None):
+def calc_bounds4(np.ndarray[label_types, ndim=4] labels, components_num: Py_ssize_t):
     cdef Py_ssize_t x, y, z, t
     cdef Py_ssize_t x_max = labels.shape[3]
     cdef Py_ssize_t y_max = labels.shape[2]
     cdef Py_ssize_t z_max = labels.shape[1]
     cdef Py_ssize_t t_max = labels.shape[0]
     cdef label_types label_val
-    if components_num is None:
-        components_num = np.max(labels)
     cdef np.ndarray[np.int16_t, ndim=2] min_bound = np.full((components_num + 1, 4), max(x_max, y_max, z_max, t_max) + 5, dtype=np.int16)
     cdef np.ndarray[np.int16_t, ndim=2] max_bound = np.full((components_num + 1, 4), -1, dtype=np.int16)
 
@@ -87,14 +99,12 @@ def calc_bounds4(np.ndarray[label_types, ndim=4] labels, components_num=None):
                     max_bound[label_val, 3] = max(max_bound[label_val, 3], x)
     return min_bound, max_bound
 
-def calc_bounds3(np.ndarray[label_types, ndim=3] labels, components_num=None):
+def calc_bounds3(np.ndarray[label_types, ndim=3] labels, components_num: Py_ssize_t):
     cdef Py_ssize_t x, y, z
     cdef Py_ssize_t x_max = labels.shape[2]
     cdef Py_ssize_t y_max = labels.shape[1]
     cdef Py_ssize_t z_max = labels.shape[0]
     cdef label_types label_val
-    if components_num is None:
-        components_num = np.max(labels)
     cdef np.ndarray[np.int16_t, ndim=2] min_bound = np.full((components_num + 1, 3), max(x_max, y_max, z_max) + 5, dtype=np.int16)
     cdef np.ndarray[np.int16_t, ndim=2] max_bound = np.full((components_num + 1, 3), -1, dtype=np.int16)
 
@@ -115,13 +125,11 @@ def calc_bounds3(np.ndarray[label_types, ndim=3] labels, components_num=None):
     return min_bound, max_bound
 
 
-def calc_bounds2(np.ndarray[label_types, ndim=2] labels, components_num=None):
+def calc_bounds2(np.ndarray[label_types, ndim=2] labels, components_num: Py_ssize_t):
     cdef Py_ssize_t x, y
     cdef Py_ssize_t x_max = labels.shape[1]
     cdef Py_ssize_t y_max = labels.shape[0]
     cdef label_types label_val
-    if components_num is None:
-        components_num = np.max(labels)
     cdef np.ndarray[np.int16_t, ndim=2] min_bound = np.full((components_num + 1, 2), max(x_max, y_max) + 5, dtype=np.int16)
     cdef np.ndarray[np.int16_t, ndim=2] max_bound = np.full((components_num + 1, 2), -1, dtype=np.int16)
 

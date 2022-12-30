@@ -6,7 +6,7 @@ from setuptools import Extension, setup
 current_dir = os.path.dirname(os.path.abspath(__file__))
 package_dir = os.path.join(current_dir, "src")
 
-cpp_standard = ["-std=c++11"]
+cpp_standard = ["-std=c++11", "-g0", "-O2"]
 sprawl_utils_path = [os.path.join(package_dir, "PartSegCore_compiled_backend", "sprawl_utils")]
 
 

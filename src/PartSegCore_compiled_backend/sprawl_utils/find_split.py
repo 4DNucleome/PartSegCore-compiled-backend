@@ -241,7 +241,7 @@ def distance_sprawl(
     if components_count == 1:
         np.copyto(data_cache, data_m)
         tmp = calculate_operator(data_cache, (components == 1).astype(np.uint8), neigh_arr, dist_array)
-        components[tmp < 2 ** 17] = 1
+        components[tmp < 2**17] = 1
         return components
     base_components = np.copy(components)
     masked_area = ((data_m > 0) * (base_components == 0)).astype(np.uint8)

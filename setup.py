@@ -67,6 +67,14 @@ extensions = [
         extra_link_args=cpp_standard,
         language="c++",
     ),
+    Extension(
+        "PartSegCore_compiled_backend._fast_unique",
+        sources=["src/PartSegCore_compiled_backend/_fast_unique.pyx"],
+        include_dirs=[np.get_include()],
+        extra_compile_args=cpp_standard + ["-fopenmp"],
+        extra_link_args=cpp_standard + ["-fopenmp"],
+        language="c++",
+    ),
 ]
 
 setup(

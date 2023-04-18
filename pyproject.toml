@@ -47,3 +47,6 @@ test-command = "pytest {project}/src/tests"
 test-extras = ["test"]
 skip = "cp36-* cp37-* pp37-* pp*macos*"
 build = "*64"
+
+[tool.cibuildwheel.macos]
+before-all = "bash {project}/build_utils/build_libomp.sh"

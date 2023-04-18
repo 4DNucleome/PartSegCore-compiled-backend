@@ -28,6 +28,8 @@ jobs:
         name: Install Python ${{ matrix.python_version }}
         with:
           python-version: ${{ matrix.python_version }}
+      - if: runner.os == 'macOS'
+        run: brew install libomp
       - name: Install tox
         run: pip install tox numpy tox-gh-actions
       - name: Test PartSeg

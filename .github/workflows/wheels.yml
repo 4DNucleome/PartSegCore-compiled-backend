@@ -2,9 +2,8 @@ name: Wheels
 
 on:
   push:
-    branches-ignore:
-      - 'release/**'
-      - 'dependabot/**'
+    branch:
+      - master
     tags:
       - '*'
   pull_request:

@@ -1,5 +1,5 @@
 # distutils: language = c++
-# cython: boundscheck=False, wraparound=False, nonecheck=False, cdivision=True, embedsignature=True
+# cython: boundscheck=True, wraparound=False, nonecheck=False, cdivision=True, embedsignature=True
 # cython: language_level=3
 
 

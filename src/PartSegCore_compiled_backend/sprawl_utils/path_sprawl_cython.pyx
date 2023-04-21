@@ -1,5 +1,5 @@
 # distutils: language = c++
-# cython: boundscheck=False, wraparound=False, nonecheck=False, cdivision=True
+# cython: boundscheck=True, wraparound=False, nonecheck=False, cdivision=True
 # cython: language_level=3
 
 from numpy cimport float64_t, int8_t, uint8_t

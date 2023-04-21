@@ -17,7 +17,7 @@ ctypedef fused object_area_types:
 
 cdef void put_borders_in_queue(my_queue[Point] & current_points,
                                       np.ndarray[uint8_t, ndim=3] base_object,
-                                      np.ndarray[int8_t, ndim=2] neighbourhood):
+                                      np.ndarray[int8_t, ndim=2] neighbourhood) except -1:
     cdef Size x_size, y_size, z_size, x, y, z, xx, yy, zz
     cdef Point p, p1
     cdef char neigh_length = neighbourhood.shape[0]
@@ -43,7 +43,7 @@ cdef void put_borders_in_queue(my_queue[Point] & current_points,
 
 
 cdef vector[my_queue[Point]] create_borders_queues(np.ndarray[component_types, ndim=3] base_object,
-                                      np.ndarray[int8_t, ndim=2] neighbourhood, component_types components_num):
+                                      np.ndarray[int8_t, ndim=2] neighbourhood, component_types components_num)  except -1:
     cdef Size x_size, y_size, z_size, x, y, z, xx, yy, zz
     cdef Point p, p1
     cdef char neigh_length = neighbourhood.shape[0]

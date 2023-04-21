@@ -32,7 +32,7 @@ cdef void put_borders_in_queue(my_queue[Point] & current_points,
                         zz = z+neighbourhood[neigh_it, 0]
                         yy = y+neighbourhood[neigh_it, 1]
                         xx = x+neighbourhood[neigh_it, 2]
-                        if xx == -1 or xx == x_size or xx == -1 or yy == y_size or zz == -1 or zz == z_size:
+                        if xx == -1 or xx == x_size or yy == -1 or yy == y_size or zz == -1 or zz == z_size:
                             continue
                         if base_object[zz, yy, xx] == 0:
                             p.z = z

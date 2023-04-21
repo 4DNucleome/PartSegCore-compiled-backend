@@ -1,6 +1,7 @@
 # distutils: language = c++
 # cython: boundscheck=True, wraparound=False, nonecheck=False, cdivision=True, embedsignature=True
 # cython: language_level=3
+# cython: infer_types=True
 
 
 from cpython.mem cimport PyMem_Free

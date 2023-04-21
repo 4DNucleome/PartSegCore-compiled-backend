@@ -1,6 +1,7 @@
 # distutils: language = c++
 # cython: boundscheck=True, wraparound=False, nonecheck=False, cdivision=True
 # cython: language_level=3
+# cython: infer_types=True
 
 from numpy cimport float64_t, int8_t, uint8_t
 

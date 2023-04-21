@@ -1,5 +1,6 @@
 # distutils: language = c++
 # cython: wraparound=False, nonecheck=False, cdivision=True, embedsignature=True, unraisable_tracebacks=True
+# cython: infer_types=True
 # cython: profile=True
 # cython: language_level=3
 

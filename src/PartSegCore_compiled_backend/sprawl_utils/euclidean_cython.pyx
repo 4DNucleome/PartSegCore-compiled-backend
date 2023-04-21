@@ -47,8 +47,8 @@ def calculate_euclidean(np.ndarray[uint8_t, ndim=3] object_area, np.ndarray[uint
         p = current_points.front()
         current_points.pop()
         count += 1
-        """if consumed_area[p.z, p.y, p.x] > 0:
-            continue"""
+        # if consumed_area[p.z, p.y, p.x] > 0:
+        #     continue
         consumed_area[p.z, p.y, p.x] = 0
         for neigh_it in range(neigh_length):
             z = p.z + neighbourhood[neigh_it, 0]

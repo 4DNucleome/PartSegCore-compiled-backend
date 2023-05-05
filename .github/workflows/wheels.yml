@@ -33,9 +33,7 @@ jobs:
       - name: Install tox
         run: pip install tox numpy tox-gh-actions
       - name: Test Backend
-        run: tox
-        env:
-          OPENBLAS: "$(brew --prefix openblas)"
+        run: OPENBLAS="$(brew --prefix openblas)" tox
 
   build_wheels:
     needs: test

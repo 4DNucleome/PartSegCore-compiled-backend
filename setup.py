@@ -1,4 +1,5 @@
 import os
+import platform
 
 import numpy as np
 from setuptools import Extension, setup
@@ -71,8 +72,10 @@ extensions = [
         "PartSegCore_compiled_backend._fast_unique",
         sources=["src/PartSegCore_compiled_backend/_fast_unique.pyx"],
         include_dirs=[np.get_include()],
-        extra_compile_args=cpp_standard + ["-fopenmp"],
-        extra_link_args=cpp_standard + ["-fopenmp"],
+        extra_compile_args=cpp_standard + ["-Xpreprocesssor", "-fopenmp"]
+        if platform.system() == "Darwin"
+        else ["-fopenmp"],
+        extra_link_args=cpp_standard + ["-fopenmp", "-lomp"] if platform.system() == "Darwin" else ["-fopenmp"],
         language="c++",
     ),
 ]

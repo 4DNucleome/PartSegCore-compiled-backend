@@ -1,6 +1,7 @@
 *.cpp
 src/PartSegCore_compiled_backend/version.py
 src/**.html
+*.html
 
 # Created by https://www.toptal.com/developers/gitignore/api/pycharm+all,jupyternotebooks,python,code,vim,macos,linux,windows
 # Edit at https://www.toptal.com/developers/gitignore?templates=pycharm+all,jupyternotebooks,python,code,vim,macos,linux,windows

@@ -10,10 +10,16 @@ package_dir = os.path.join(current_dir, 'src')
 
 cpp_standard = ['-std=c++11', '-g0', '-O2', '-DNDEBUG']  # "-DDEBUG", "-O0", "-ggdb3" ]
 sprawl_utils_path = [os.path.join(package_dir, 'PartSegCore_compiled_backend', 'sprawl_utils')]
+extra_link_args = []
 
 if platform.system() == 'Darwin':
     cpp_standard += ['-stdlib=libc++', '-Wno-nullability-completeness']
     omp = ['-Xpreprocessor', '-fopenmp']
+    if omp_prefix := os.environ.get('OMP'):
+        cpp_standard += ['-I' + os.path.join(omp_prefix, 'include')]
+        extra_link_args += ['-L' + os.path.join(omp_prefix, 'lib')]
+    else:
+        raise ValueError("Please set OMP environment variable")
     # omp = []
 elif platform.system() == 'Linux':
     omp = ['-fopenmp']
@@ -83,7 +89,7 @@ extensions = [
         sources=['src/PartSegCore_compiled_backend/_fast_unique.pyx'],
         include_dirs=[np.get_include()],
         extra_compile_args=cpp_standard + omp,
-        extra_link_args=cpp_standard + omp,
+        extra_link_args=cpp_standard + omp + extra_link_args,
         language='c++',
     ),
 ]

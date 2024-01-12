@@ -32,7 +32,7 @@ jobs:
       - name: Install tox
         run: pip install tox numpy tox-gh-actions
       - name: Test Backend
-        run: OPENBLAS="$(brew --prefix openblas)" tox
+        run: OPENBLAS="$(brew --prefix openblas)" OMP="$(brew --prefix libomp)" tox
         if: runner.os == 'macOS'
       - name: Test Backend
         run: tox

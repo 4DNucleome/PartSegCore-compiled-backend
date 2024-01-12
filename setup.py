@@ -18,9 +18,6 @@ if platform.system() == 'Darwin':
     if omp_prefix := os.environ.get('OMP'):
         cpp_standard += ['-I' + os.path.join(omp_prefix, 'include')]
         extra_link_args += ['-L' + os.path.join(omp_prefix, 'lib')]
-    else:
-        raise ValueError("Please set OMP environment variable")
-    # omp = []
 elif platform.system() == 'Linux':
     omp = ['-fopenmp']
 else:

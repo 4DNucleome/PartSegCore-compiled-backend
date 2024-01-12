@@ -13,8 +13,8 @@ sprawl_utils_path = [os.path.join(package_dir, 'PartSegCore_compiled_backend', '
 
 if platform.system() == 'Darwin':
     cpp_standard += ['-stdlib=libc++', '-Wno-nullability-completeness']
-    # omp = ['-Xpreprocesssor', '-fopenmp']
-    omp = []
+    omp = ['-Xpreprocessor', '-fopenmp']
+    # omp = []
 elif platform.system() == 'Linux':
     omp = ['-fopenmp']
 else:

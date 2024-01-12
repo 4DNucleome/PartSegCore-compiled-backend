@@ -3,7 +3,6 @@ import platform
 
 import numpy as np
 from setuptools import Extension, setup
-from Cython.Build import cythonize
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 package_dir = os.path.join(current_dir, 'src')
@@ -91,4 +90,4 @@ extensions = [
     ),
 ]
 
-setup(ext_modules=cythonize(extensions), include_package_data=True, use_scm_version=True)
+setup(ext_modules=extensions, include_package_data=True, use_scm_version=True)

@@ -114,7 +114,7 @@ ignore = ["src/PartSegCore_compiled_backend/changelog.py", "src/PartSegCore_comp
 [tool.cibuildwheel]
 test-command = "pytest {project}/src/tests"
 test-extras = ["test"]
-skip = "cp36-* cp37-* pp37-* pp*macos*"
+skip = "pp*macos*"
 build = "*64"
 
 [tool.cibuildwheel.macos]

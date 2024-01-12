@@ -10,6 +10,9 @@ on:
     branches:
       - '**'
 
+concurrency:
+  group: wheel-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -57,7 +60,7 @@ jobs:
         run: brew install openblas
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.11.4
+        uses: pypa/cibuildwheel@v2.16.2
         env:
           OPENBLAS: "$(brew --prefix openblas)"
 

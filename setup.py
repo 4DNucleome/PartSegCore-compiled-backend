@@ -5,83 +5,79 @@ import numpy as np
 from setuptools import Extension, setup
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-package_dir = os.path.join(current_dir, "src")
+package_dir = os.path.join(current_dir, 'src')
 
-cpp_standard = ["-std=c++11", "-g0", "-O2"]  # "-DDEBUG", "-O0", "-ggdb3" ]
-sprawl_utils_path = [os.path.join(package_dir, "PartSegCore_compiled_backend", "sprawl_utils")]
+cpp_standard = ['-std=c++11', '-g0', '-O2', '-DNDEBUG']  # "-DDEBUG", "-O0", "-ggdb3" ]
+sprawl_utils_path = [os.path.join(package_dir, 'PartSegCore_compiled_backend', 'sprawl_utils')]
 
 
 extensions = [
     Extension(
-        "PartSegCore_compiled_backend.sprawl_utils.euclidean_cython",
-        sources=["src/PartSegCore_compiled_backend/sprawl_utils/euclidean_cython.pyx"],
+        'PartSegCore_compiled_backend.sprawl_utils.euclidean_cython',
+        sources=['src/PartSegCore_compiled_backend/sprawl_utils/euclidean_cython.pyx'],
         include_dirs=[np.get_include()] + sprawl_utils_path,
-        language="c++",
+        language='c++',
         extra_compile_args=cpp_standard,
         extra_link_args=cpp_standard,
     ),
     Extension(
-        "PartSegCore_compiled_backend.sprawl_utils.path_sprawl_cython",
-        sources=["src/PartSegCore_compiled_backend/sprawl_utils/path_sprawl_cython.pyx"],
+        'PartSegCore_compiled_backend.sprawl_utils.path_sprawl_cython',
+        sources=['src/PartSegCore_compiled_backend/sprawl_utils/path_sprawl_cython.pyx'],
         include_dirs=[np.get_include()] + sprawl_utils_path,
-        language="c++",
+        language='c++',
         extra_compile_args=cpp_standard,
         extra_link_args=cpp_standard,
     ),
     Extension(
-        "PartSegCore_compiled_backend.sprawl_utils.sprawl_utils",
-        sources=["src/PartSegCore_compiled_backend/sprawl_utils/sprawl_utils.pyx"],
+        'PartSegCore_compiled_backend.sprawl_utils.sprawl_utils',
+        sources=['src/PartSegCore_compiled_backend/sprawl_utils/sprawl_utils.pyx'],
         include_dirs=[np.get_include()] + sprawl_utils_path,
-        language="c++",
+        language='c++',
         extra_compile_args=cpp_standard,
         extra_link_args=cpp_standard,
     ),
     Extension(
-        "PartSegCore_compiled_backend.sprawl_utils.fuzzy_distance",
-        sources=["src/PartSegCore_compiled_backend/sprawl_utils/fuzzy_distance.pyx"],
+        'PartSegCore_compiled_backend.sprawl_utils.fuzzy_distance',
+        sources=['src/PartSegCore_compiled_backend/sprawl_utils/fuzzy_distance.pyx'],
         include_dirs=[np.get_include()] + sprawl_utils_path,
-        language="c++",
+        language='c++',
         extra_compile_args=cpp_standard,
         extra_link_args=cpp_standard,
     ),
     Extension(
-        "PartSegCore_compiled_backend.color_image_cython",
-        ["src/PartSegCore_compiled_backend/color_image_cython.pyx"],
+        'PartSegCore_compiled_backend.color_image_cython',
+        ['src/PartSegCore_compiled_backend/color_image_cython.pyx'],
         include_dirs=[np.get_include()],
         extra_compile_args=cpp_standard,
         extra_link_args=cpp_standard,
-        language="c++",
+        language='c++',
     ),
     Extension(
-        "PartSegCore_compiled_backend.utils",
-        ["src/PartSegCore_compiled_backend/utils.pyx"],
+        'PartSegCore_compiled_backend.utils',
+        ['src/PartSegCore_compiled_backend/utils.pyx'],
         include_dirs=[np.get_include()],
         extra_compile_args=cpp_standard,
         extra_link_args=cpp_standard,
-        language="c++",
+        language='c++',
     ),
     Extension(
-        "PartSegCore_compiled_backend.multiscale_opening.mso_bind",
-        sources=["src/PartSegCore_compiled_backend/multiscale_opening/mso_bind.pyx"],
+        'PartSegCore_compiled_backend.multiscale_opening.mso_bind',
+        sources=['src/PartSegCore_compiled_backend/multiscale_opening/mso_bind.pyx'],
         include_dirs=[np.get_include()],
         extra_compile_args=cpp_standard,
         extra_link_args=cpp_standard,
-        language="c++",
+        language='c++',
     ),
     Extension(
-        "PartSegCore_compiled_backend._fast_unique",
-        sources=["src/PartSegCore_compiled_backend/_fast_unique.pyx"],
+        'PartSegCore_compiled_backend._fast_unique',
+        sources=['src/PartSegCore_compiled_backend/_fast_unique.pyx'],
         include_dirs=[np.get_include()],
-        extra_compile_args=cpp_standard + ["-Xpreprocesssor", "-fopenmp"]
-        if platform.system() == "Darwin"
-        else ["-fopenmp"],
-        extra_link_args=cpp_standard + ["-fopenmp", "-lomp"] if platform.system() == "Darwin" else ["-fopenmp"],
-        language="c++",
+        extra_compile_args=cpp_standard + ['-Xpreprocesssor', '-fopenmp']
+        if platform.system() == 'Darwin'
+        else ['-fopenmp'],
+        extra_link_args=cpp_standard + ['-fopenmp', '-lomp'] if platform.system() == 'Darwin' else ['-fopenmp'],
+        language='c++',
     ),
 ]
 
-setup(
-    ext_modules=extensions,
-    include_package_data=True,
-    use_scm_version=True,
-)
+setup(ext_modules=extensions, include_package_data=True, use_scm_version=True)

@@ -4,8 +4,8 @@ import pytest
 from PartSegCore_compiled_backend.utils import calc_bounds
 
 
-@pytest.mark.parametrize("ndim", range(2, 6))
-@pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32])
+@pytest.mark.parametrize('ndim', range(2, 6))
+@pytest.mark.parametrize('dtype', [np.uint8, np.uint16, np.uint32])
 def test_calc_bounds(ndim, dtype):
     data = np.zeros((20,) + (10,) * (ndim - 1), dtype=dtype)
     slice_arr = [slice(2, 8) for _ in range(ndim)]

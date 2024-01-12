@@ -1,41 +1,110 @@
 [build-system]
 # Minimum requirements for the build system to execute.
-requires = ["setuptools>=42.0.0", "wheel>=0.34.2", "Cython", "oldest-supported-numpy", "setuptools_scm[toml]>=3.4"]  # PEP 508 specifications.
+requires = ["setuptools>=42.0.0", "Cython", "numpy>1.25", "setuptools_scm[toml]>=3.4"]  # PEP 508 specifications.
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "PartSegCore_compiled_backend"
+description = "PartSegCore compiled backend,"
+authors = [
+    { name = "Grzegorz Bokota", email = "g.bokota@cent.uw.edu.pl" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+keywords = [
+    "bioimaging",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.25.0",
+]
+dynamic = [
+    "version",
+]
+
+[project.readme]
+file = "Readme.md"
+content-type = "text/markdown"
+
+[project.license]
+text = "BSD-3-Clause"
+
+[project.urls]
+Homepage = "https://4dnucleome.cent.uw.edu.pl/PartSeg/"
+Documentation = "https://partseg.readthedocs.io/en/stable/"
+"Source Code" = "https://github.com/4DNucleome/PartSegCore-compiled-backend"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=3.0.0",
+    "pytest-cov",
+]
+testing = [
+    "pytest",
+    "pytest-cov",
+]
+
+[tool.setuptools]
+platforms = [
+    "Linux",
+    "Windows",
+    "MacOs",
+]
+license-files = [
+    "License.txt",
+]
+include-package-data = false
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.packages.find]
+where = [
+    "src",
+]
+namespaces = false
+
+[tool.pytest.ini_options]
+testpaths = [
+    "src/tests",
+]
+
+[tool.coverage.paths]
+source = [
+    "src",
+    "*/site-packages",
+]
+
+[tool.coverage.run]
+source = [
+    "PartSegCore_compiled_backend",
+]
+omit = [
+    ".tox/*",
+    "src/**/test*.py",
+]
+parallel = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+]
 
 [tool.setuptools_scm]
 write_to = "src/PartSegCore_compiled_backend/version.py"
 
-[tool.black]
-line-length = 120
-target-version = ['py36']
-include = '\.pyi?$'
-exclude = '''
-
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-  )/
-  | foo.py           # also separately exclude a file named foo.py in
-                     # the root of the project
-  | src/PartSegCore_compiled_backend/version.py
-)
-'''
-
-[tool.isort]
-line_length=120
-known_first_party=['PartSegCore_compiled_backend']
-profile="black"
-src_paths=["src"]
 
 
 [tool.check-manifest]
@@ -50,3 +119,14 @@ build = "*64"
 
 [tool.cibuildwheel.macos]
 before-all = "bash {project}/build_utils/build_libomp.sh"
+
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+docstring-code-format = true
+line-ending = "lf"
+skip-magic-trailing-comma = true

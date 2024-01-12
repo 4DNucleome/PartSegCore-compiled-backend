@@ -11,7 +11,7 @@ def label_unique(array, numpy_fallback=False):
             return unique3d(array)
         elif numpy_fallback:
             return np.unique(array)
-        raise RuntimeError("Array must be 2d or 3d")
+        raise RuntimeError('Array must be 2d or 3d')
     except TypeError:
         if numpy_fallback:
             return np.unique(array)

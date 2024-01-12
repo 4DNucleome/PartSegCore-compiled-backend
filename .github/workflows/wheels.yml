@@ -28,12 +28,18 @@ jobs:
         name: Install Python ${{ matrix.python_version }}
         with:
           python-version: ${{ matrix.python_version }}
-      - if: runner.os == 'macOS'
+      - name: install openbls
+        if: runner.os == 'macOS'
         run: brew install libomp
       - name: Install tox
         run: pip install tox numpy tox-gh-actions
       - name: Test Backend
         run: OPENBLAS="$(brew --prefix openblas)" tox
+        if: runner.os == 'macOS'
+      - name: Test Backend
+        run: tox
+        if: runner.os != 'macOS'
+
 
   build_wheels:
     needs: test

@@ -24,6 +24,30 @@ ctypedef fused numpy_int_types:
     np.int64_t
 
 
+def unique1d(np.ndarray[numpy_int_types, ndim=1] array):
+    cdef unordered_set[numpy_int_types] unique_values
+    cdef vector[unordered_set[numpy_int_types]] unique_values_vector
+    cdef Py_ssize_t i, j, n_rows, n_cols, id_num
+    cdef numpy_int_types prev_val, v
+    n_items = array.shape[0]
+    unique_values_vector.resize(50) # openmp.omp_get_num_threads())
+
+    with nogil, parallel():
+        id_num = threadid()
+
+        for i in prange(n_items):
+            prev_val = array[i]
+            unique_values_vector[id_num].insert(prev_val)
+            if array[i] != prev_val:
+                prev_val = array[i]
+                unique_values_vector[id_num].insert(prev_val)
+
+    for s in unique_values_vector:
+        for v in s:
+            unique_values.insert(v)
+    return np.sort(np.fromiter(unique_values, dtype=array.dtype))
+
+
 def unique2d(np.ndarray[numpy_int_types, ndim=2] array):
     cdef unordered_set[numpy_int_types] unique_values
     cdef vector[unordered_set[numpy_int_types]] unique_values_vector

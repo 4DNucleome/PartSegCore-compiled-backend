@@ -1,10 +1,12 @@
 import numpy as np
 
-from ._fast_unique import unique2d, unique3d
+from ._fast_unique import unique1d, unique2d, unique3d
 
 
 def label_unique(array, numpy_fallback=False):
     try:
+        if array.ndim == 1:
+            return unique1d(array)
         if array.ndim == 2:
             return unique2d(array)
         elif array.ndim == 3:

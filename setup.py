@@ -3,21 +3,22 @@ import platform
 
 import numpy as np
 from setuptools import Extension, setup
+from Cython.Build import cythonize
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 package_dir = os.path.join(current_dir, 'src')
 
-cpp_standard = ['-std=c++17', '-g0', '-O2', '-DNDEBUG']  # "-DDEBUG", "-O0", "-ggdb3" ]
+cpp_standard = ['-std=c++11', '-g0', '-O2', '-DNDEBUG']  # "-DDEBUG", "-O0", "-ggdb3" ]
 sprawl_utils_path = [os.path.join(package_dir, 'PartSegCore_compiled_backend', 'sprawl_utils')]
 
 if platform.system() == 'Darwin':
-    cpp_standard += ['-stdlib=libc++', '-mmacosx-version-min=10.9', '-Wno-nullability-completeness']
-    omp = ['-Xpreprocesssor', '-fopenmp']
+    cpp_standard += ['-stdlib=libc++', '-Wno-nullability-completeness']
+    # omp = ['-Xpreprocesssor', '-fopenmp']
+    omp = []
 elif platform.system() == 'Linux':
     omp = ['-fopenmp']
 else:
     omp = ["/openmp"]
-
 
 
 extensions = [
@@ -81,12 +82,10 @@ extensions = [
         'PartSegCore_compiled_backend._fast_unique',
         sources=['src/PartSegCore_compiled_backend/_fast_unique.pyx'],
         include_dirs=[np.get_include()],
-        extra_compile_args=cpp_standard + omp
-        if platform.system() == 'Darwin'
-        else ['-fopenmp'],
+        extra_compile_args=cpp_standard + omp,
         extra_link_args=cpp_standard + omp,
         language='c++',
     ),
 ]
 
-setup(ext_modules=extensions, include_package_data=True, use_scm_version=True)
+setup(ext_modules=cythonize(extensions), include_package_data=True, use_scm_version=True)

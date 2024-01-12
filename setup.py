@@ -7,11 +7,11 @@ from setuptools import Extension, setup
 current_dir = os.path.dirname(os.path.abspath(__file__))
 package_dir = os.path.join(current_dir, 'src')
 
-cpp_standard = ['-std=c++17', '-g0', '-O2', '-DNDEBUG', "-Wno-nullability-completeness"]  # "-DDEBUG", "-O0", "-ggdb3" ]
+cpp_standard = ['-std=c++17', '-g0', '-O2', '-DNDEBUG']  # "-DDEBUG", "-O0", "-ggdb3" ]
 sprawl_utils_path = [os.path.join(package_dir, 'PartSegCore_compiled_backend', 'sprawl_utils')]
 
 if platform.system() == 'Darwin':
-    cpp_standard += ['-stdlib=libc++', '-mmacosx-version-min=10.9']
+    cpp_standard += ['-stdlib=libc++', '-mmacosx-version-min=10.9', '-Wno-nullability-completeness']
     omp = ['-Xpreprocesssor', '-fopenmp']
 elif platform.system() == 'Linux':
     omp = ['-fopenmp']

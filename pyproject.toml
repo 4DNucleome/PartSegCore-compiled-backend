@@ -1,6 +1,6 @@
 [build-system]
 # Minimum requirements for the build system to execute.
-requires = ["setuptools>=42.0.0", "Cython", "numpy>1.25", "setuptools_scm[toml]>=3.4"]  # PEP 508 specifications.
+requires = ["setuptools>=42.0.0", "Cython", "numpy>=1.25", "setuptools_scm[toml]>=3.4"]  # PEP 508 specifications.
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -114,7 +114,7 @@ ignore = ["src/PartSegCore_compiled_backend/changelog.py", "src/PartSegCore_comp
 [tool.cibuildwheel]
 test-command = "pytest {project}/src/tests"
 test-extras = ["test"]
-skip = "pp*macos*"
+skip = "pp*macos* pp31*"
 build = "*64"
 
 [tool.cibuildwheel.macos]

@@ -49,6 +49,7 @@ Documentation = "https://partseg.readthedocs.io/en/stable/"
 test = [
     "pytest>=7.0.0",
     "pytest-cov",
+    "scikit-image",
 ]
 testing = [
     "pytest",

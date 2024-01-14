@@ -49,7 +49,7 @@ def _zero_preserving_modulo_par(label_types[:] labels, label_types modulo, label
 
 def _map_array_par(label_types[:] labels, dict dkt, out_types[:] out, out_types def_val=0):
     # build the map from the input and output vectors
-    cdef size_t i, n_map, n_array
+    cdef Py_ssize_t i, n_map, n_array
     cdef unordered_map[label_types, out_types].iterator it
     cdef unordered_map[label_types, out_types] lut
     for key, val in dkt.items():
@@ -69,7 +69,7 @@ def _map_array_par(label_types[:] labels, dict dkt, out_types[:] out, out_types 
 
 def _map_array_seq(label_types[:] labels, dict dkt, out_types[:] out, out_types def_val=0):
     # build the map from the input and output vectors
-    cdef size_t i, n_map, n_array
+    cdef Py_ssize_t i, n_map, n_array
     cdef unordered_map[label_types, out_types].iterator it
     cdef unordered_map[label_types, out_types] lut
     for key, val in dkt.items():

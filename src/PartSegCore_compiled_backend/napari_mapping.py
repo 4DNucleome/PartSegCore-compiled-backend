@@ -14,7 +14,7 @@ def _allocate_output(data: np.ndarray, num_values: int) -> np.ndarray:
     return np.empty_like(data, dtype=dtype)
 
 
-def zero_preserving_sequential(
+def zero_preserving_modulo_sequential(
     data: np.ndarray, modulo_factor: int, to_zero: int, out: Optional[np.ndarray] = None
 ) -> np.ndarray:
     """
@@ -42,7 +42,7 @@ def zero_preserving_sequential(
     return out.reshape(original_shape)
 
 
-def zero_preserving_parallel(
+def zero_preserving_modulo_parallel(
     data: np.ndarray, modulo_factor: int, to_zero: int, out: Optional[np.ndarray] = None
 ) -> np.ndarray:
     """

@@ -3,8 +3,8 @@ import numpy.testing as npt
 import pytest
 from skimage.util import map_array
 from PartSegCore_compiled_backend.napari_mapping import (
-    zero_preserving_parallel,
-    zero_preserving_sequential,
+    zero_preserving_modulo_parallel,
+    zero_preserving_modulo_sequential,
     map_array_parallel,
     map_array_sequential,
 )
@@ -35,7 +35,7 @@ DATA_LI = [
 DATA_IDS = ['uint32', 'int32', 'uint64', 'int64', 'uint32_2d']
 
 
-@pytest.mark.parametrize('func', [zero_preserving_parallel, zero_preserving_sequential])
+@pytest.mark.parametrize('func', [zero_preserving_modulo_parallel, zero_preserving_modulo_sequential])
 @pytest.mark.parametrize('data', DATA_LI, ids=DATA_IDS)
 def test_zero_preserving_modulo(func, data):
     out = func(data, 10, 0)

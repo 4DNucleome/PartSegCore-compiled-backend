@@ -20,7 +20,7 @@ if platform.system() == 'Darwin':
 elif platform.system() == 'Linux':
     omp = ['-fopenmp']
 else:
-    omp = ["/openmp"]
+    omp = ['/openmp']
 
 
 extensions = [

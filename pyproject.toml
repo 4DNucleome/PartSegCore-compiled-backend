@@ -48,7 +48,6 @@ Documentation = "https://partseg.readthedocs.io/en/stable/"
 [project.optional-dependencies]
 test = [
     "pytest>=7.0.0",
-    "scikit-image",
 ]
 
 [tool.setuptools]

@@ -1,7 +1,6 @@
 import numpy as np
 import numpy.testing as npt
 import pytest
-from skimage.util import map_array
 from PartSegCore_compiled_backend.napari_mapping import (
     zero_preserving_modulo_parallel,
     zero_preserving_modulo_sequential,
@@ -17,12 +16,7 @@ def _zero_preserving_modulo_numpy(values: np.ndarray, n: int, dtype: np.dtype, t
 
 
 def _map_array(values: np.ndarray, map_dict: dict, dtype: np.dtype) -> np.ndarray:
-    input_vals = np.empty(len(map_dict), dtype=values.dtype)
-    output_vals = np.empty(len(map_dict), dtype=dtype)
-    for i, (key, value) in enumerate(map_dict.items()):
-        input_vals[i] = key
-        output_vals[i] = value
-    return map_array(values, input_vals, output_vals)
+    return np.array([map_dict.get(x, 0) for x in values.flatten()], dtype=dtype).reshape(values.shape)
 
 
 DATA_LI = [

@@ -13,7 +13,7 @@ extra_link_args = []
 
 if platform.system() == 'Darwin':
     cpp_standard += ['-stdlib=libc++', '-Wno-nullability-completeness']
-    omp = ['-Xpreprocessor', '-fopenmp']
+    omp = ['-Xpreprocessor', '-fopenmp', '-lomp']
     if omp_prefix := os.environ.get('OMP'):
         cpp_standard += ['-I' + os.path.join(omp_prefix, 'include')]
         extra_link_args += ['-L' + os.path.join(omp_prefix, 'lib')]

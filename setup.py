@@ -13,14 +13,14 @@ extra_link_args = []
 
 if platform.system() == 'Darwin':
     cpp_standard += ['-stdlib=libc++', '-Wno-nullability-completeness']
-    omp = ['-Xpreprocessor', '-fopenmp']
+    omp = ['-Xpreprocessor', '-fopenmp', '-lomp']
     if omp_prefix := os.environ.get('OMP'):
         cpp_standard += ['-I' + os.path.join(omp_prefix, 'include')]
         extra_link_args += ['-L' + os.path.join(omp_prefix, 'lib')]
 elif platform.system() == 'Linux':
     omp = ['-fopenmp']
 else:
-    omp = ["/openmp"]
+    omp = ['/openmp']
 
 
 extensions = [
@@ -83,6 +83,14 @@ extensions = [
     Extension(
         'PartSegCore_compiled_backend._fast_unique',
         sources=['src/PartSegCore_compiled_backend/_fast_unique.pyx'],
+        include_dirs=[np.get_include()],
+        extra_compile_args=cpp_standard + omp,
+        extra_link_args=cpp_standard + omp + extra_link_args,
+        language='c++',
+    ),
+    Extension(
+        'PartSegCore_compiled_backend._napari_mapping',
+        sources=['src/PartSegCore_compiled_backend/_napari_mapping.pyx'],
         include_dirs=[np.get_include()],
         extra_compile_args=cpp_standard + omp,
         extra_link_args=cpp_standard + omp + extra_link_args,

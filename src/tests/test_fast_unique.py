@@ -18,9 +18,7 @@ def test_label_unique(array):
 
 
 def test_label_unique_fallback():
+    data = np.random.default_rng().integers(0, 100, size=(10, 10, 10, 10))
     with pytest.raises(RuntimeError, match='Array must be'):
-        label_unique(np.random.default_rng().integers(0, 100, size=(10, 10, 10, 10)))
-    assert np.array_equal(
-        np.unique(np.random.default_rng().integers(0, 100, size=(10, 10, 10, 10))),
-        label_unique(np.random.default_rng().integers(0, 100, size=(10, 10, 10, 10)), numpy_fallback=True),
-    )
+        label_unique(data)
+    assert np.array_equal(np.unique(data), label_unique(data, numpy_fallback=True))

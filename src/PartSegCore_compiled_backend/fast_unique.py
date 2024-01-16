@@ -13,4 +13,3 @@ def label_unique(array, numpy_fallback=False):
     elif numpy_fallback:
         return np.unique(array)
     raise RuntimeError('Array must be 1d, 2d or 3d')
-

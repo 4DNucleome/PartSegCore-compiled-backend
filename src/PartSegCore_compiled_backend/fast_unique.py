@@ -24,8 +24,8 @@ def label_unique(array, numpy_fallback=False) -> np.ndarray:
         return unique1d(array)
     if array.ndim == 2:
         return unique2d(array)
-    elif array.ndim == 3:
+    if array.ndim == 3:
         return unique3d(array)
-    elif numpy_fallback:
+    if numpy_fallback:
         return np.unique(array)
     raise RuntimeError('Array must be 1d, 2d or 3d')

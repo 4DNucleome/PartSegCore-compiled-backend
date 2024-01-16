@@ -22,5 +22,5 @@ def test_label_unique_fallback():
         label_unique(np.random.default_rng().integers(0, 100, size=(10, 10, 10, 10)))
     assert np.array_equal(
         np.unique(np.random.default_rng().integers(0, 100, size=(10, 10, 10, 10))),
-        label_unique(np.random.default_rng().integers(0, 100, size=(10, 10, 10, 10)), True),
+        label_unique(np.random.default_rng().integers(0, 100, size=(10, 10, 10, 10)), numpy_fallback=True),
     )

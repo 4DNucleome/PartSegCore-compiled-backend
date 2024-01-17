@@ -50,9 +50,9 @@ cdef extern from 'mso.h' namespace 'MSO':
         size_t optimum_erosion_calculate(vector[M] &fdt_array, vector[T] &components_arr, vector[bool] & sprawl_area) except +
         size_t constrained_dilation(vector[M] &fdt_array, vector[T] &components_arr, vector[bool] & sprawl_area) except +
         size_t get_length()
-        size_t run_MSO() nogil except +
-        size_t run_MSO(size_t steps_limits) nogil except +
-        size_t run_MSO(size_t steps_limits, size_t count_steps_factor) nogil except +
+        size_t run_MSO() except + nogil
+        size_t run_MSO(size_t steps_limits) except + nogil
+        size_t run_MSO(size_t steps_limits, size_t count_steps_factor) except + nogil
         void set_data[W](T * components, W size, T background_component)
         void set_data[W](T * components, W size)
         size_t steps_done()

@@ -10,6 +10,9 @@ on:
     branches:
       - '**'
 
+concurrency:
+  group: wheel-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -19,17 +22,25 @@ jobs:
         fail-fast: false
         matrix:
           os: [windows-latest, macos-latest, ubuntu-latest]
-          python_version: ['3.8', '3.9' , '3.10', '3.11']
+          python_version: ['3.9' , '3.10', '3.11', '3.12']
       steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         name: Install Python ${{ matrix.python_version }}
         with:
           python-version: ${{ matrix.python_version }}
+      - name: install openbls
+        if: runner.os == 'macOS'
+        run: brew install libomp
       - name: Install tox
         run: pip install tox numpy tox-gh-actions
-      - name: Test PartSeg
+      - name: Test Backend
+        run: OPENBLAS="$(brew --prefix openblas)" OMP="$(brew --prefix libomp)" tox
+        if: runner.os == 'macOS'
+      - name: Test Backend
         run: tox
+        if: runner.os != 'macOS'
+
 
   build_wheels:
     needs: test
@@ -49,7 +60,7 @@ jobs:
         run: brew install openblas
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.11.4
+        uses: pypa/cibuildwheel@v2.16.2
         env:
           OPENBLAS: "$(brew --prefix openblas)"
 

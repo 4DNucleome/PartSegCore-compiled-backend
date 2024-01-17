@@ -6,7 +6,7 @@ import pytest
 from PartSegCore_compiled_backend.color_image_cython import calculate_borders, calculate_borders2d
 
 
-@pytest.mark.parametrize("label_type", [np.uint8, np.uint16, np.uint32])
+@pytest.mark.parametrize('label_type', [np.uint8, np.uint16, np.uint32])
 def test_calculate_borders(label_type):
     layers = np.zeros((1, 10, 10, 10), dtype=label_type)
     layers[:, 3:-3, 3:-3, 3:-3] = 1
@@ -22,7 +22,7 @@ def test_calculate_borders(label_type):
     assert np.all(res == expected)
 
 
-@pytest.mark.parametrize("label_type", [np.uint8, np.uint16, np.uint32])
+@pytest.mark.parametrize('label_type', [np.uint8, np.uint16, np.uint32])
 def test_calculate_borders_thick(label_type):
     layers = np.zeros((1, 16, 16, 16), dtype=label_type)
     layers[:, 3:-3, 3:-3, 3:-3] = 1
@@ -39,7 +39,7 @@ def test_calculate_borders_thick(label_type):
     assert np.all(res == expected)
 
 
-@pytest.mark.parametrize("label_type", [np.uint8, np.uint16, np.uint32])
+@pytest.mark.parametrize('label_type', [np.uint8, np.uint16, np.uint32])
 def test_calculate_borders_thick2d(label_type):
     layers = np.zeros((1, 16, 16, 16), dtype=label_type)
     layers[:, 3:-3, 3:-3, 3:-3] = 1

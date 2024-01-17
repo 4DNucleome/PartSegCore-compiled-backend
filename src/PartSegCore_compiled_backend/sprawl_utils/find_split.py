@@ -309,7 +309,7 @@ def reverse_permutation(perm: typing.List[int]) -> typing.List[int]:
 
 
 def relabel_with_perm(labeling: typing.List, perm: typing.List) -> typing.List:
-    logging.debug(f"{labeling}, {perm}")
+    logging.debug(f'{labeling}, {perm}')
     perm = reverse_permutation(perm)
     return [perm[x] for x in labeling]
 

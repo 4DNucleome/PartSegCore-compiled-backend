@@ -65,8 +65,8 @@ extensions = [
         language='c++',
     ),
     Extension(
-        'PartSegCore_compiled_backend.utils',
-        ['src/PartSegCore_compiled_backend/utils.pyx'],
+        'PartSegCore_compiled_backend.calc_bounds',
+        ['src/PartSegCore_compiled_backend/calc_bounds.pyx'],
         include_dirs=[np.get_include()],
         extra_compile_args=cpp_standard,
         extra_link_args=cpp_standard,

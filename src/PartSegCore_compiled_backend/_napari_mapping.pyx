@@ -54,7 +54,7 @@ def _map_array_par(label_types[:] labels, dict dkt, out_types[:] out, out_types 
     cdef unordered_map[label_types, out_types] lut
     for key, val in dkt.items():
         if key is not None:
-            lut[key] = <out_types> val
+            lut[<label_types>key] = <out_types> val
         else:
             def_val = <out_types> val
     # apply the map to the array
@@ -74,7 +74,7 @@ def _map_array_seq(label_types[:] labels, dict dkt, out_types[:] out, out_types 
     cdef unordered_map[label_types, out_types] lut
     for key, val in dkt.items():
         if key is not None:
-            lut[key] = <out_types> val
+            lut[<label_types>key] = <out_types> val
         else:
             def_val = <out_types> val
     # apply the map to the array

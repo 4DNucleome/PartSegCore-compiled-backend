@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from PartSegCore_compiled_backend.utils import calc_bounds
+from PartSegCore_compiled_backend.calc_bounds import calc_bounds
 
 
 @pytest.mark.parametrize('ndim', range(2, 6))

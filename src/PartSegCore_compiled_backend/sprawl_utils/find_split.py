@@ -30,22 +30,35 @@ def path_maximum_sprawl(
     components: np.ndarray,
     components_count: int,
     neighbourhood: np.ndarray,
-    distance_cache=None,
-    data_cache=None,
+    distance_cache: typing.Optional[np.ndarray] = None,
+    data_cache: typing.Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """
-    Calculate sprawl in respect to brightens. Distance between voxels is minimum brightness on
+    Calculate sprawl in respect to brightness. Distance between voxels is the maximum brightness on
     all paths connecting them.
 
-    :param data_f: array with brightness
-    :param components: core components as labeled array
-    :param components_count: number of components
-    :param neighbourhood: information about neighbourhood, shift array
-    :param distance_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is np.float64
-    :param data_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is data_m.dtype
+    Parameters
+    ----------
+    data_f : np.ndarray
+        Array with brightness.
+    components : np.ndarray
+        Core components as labeled array.
+    components_count : int
+        Number of components.
+    neighbourhood : np.ndarray
+        Information about neighbourhood, shift array.
+    distance_cache : np.ndarray, optional
+        Cache array for reducing memory allocation. Shape of data_m, dtype is np.float64.
+    data_cache : np.ndarray, optional
+        Cache array for reducing memory allocation. Shape of data_m, dtype is data_m.dtype
         (use np.uint8 instead of np.bool)
-    :return: array with updated labels
+
+    Returns
+    -------
+    np.ndarray
+        Array with updated labels.
     """
+
     if data_cache is None:
         data_cache = np.zeros(data_f.shape, data_f.dtype)
     if components_count == 1:
@@ -79,20 +92,36 @@ def path_maximum_sprawl(
 
 
 def path_minimum_sprawl(
-    data_f, components, components_count, neighbourhood, distance_cache=None, data_cache=None
+    data_f: np.ndarray,
+    components: np.ndarray,
+    components_count: int,
+    neighbourhood: np.ndarray,
+    distance_cache: typing.Optional[np.ndarray] = None,
+    data_cache: typing.Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """
-    Calculate sprawl in respect to brightens. Distance between voxels is maximum brightness on
+    Calculate sprawl in respect to brightness. Distance between voxels is the maximum brightness on
     all paths connecting them.
 
-    :param data_f: array with brightness
-    :param components: core components as labeled array
-    :param components_count: number of components
-    :param neighbourhood: information about neighbourhood, shift array
-    :param distance_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is np.float64
-    :param data_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is data_m.dtype
-        (use np.uint8 instead of np.bool)
-    :return: array with updated labels
+    Parameters
+    ----------
+    data_f : np.ndarray
+        Array with brightness.
+    components : np.ndarray
+        Core components as labeled array.
+    components_count : int
+        Number of components.
+    neighbourhood : np.ndarray
+        Information about neighbourhood, shift array.
+    distance_cache : np.ndarray, optional
+        Cache array for reducing memory allocation. Shape of data_m, dtype is np.float64.
+    data_cache : np.ndarray, optional
+        Cache array for reducing memory allocation. Shape of data_m, dtype is data_m.dtype (use np.uint8 instead of np.bool).
+
+    Returns
+    -------
+    np.ndarray
+        Array with updated labels.
     """
     maximum = data_f.max()
     if data_cache is None:
@@ -139,15 +168,28 @@ def euclidean_sprawl(
     """
     Calculate euclidean sprawl (watershed)
 
-    :param data_m: area for sprawl
-    :param components: core components as labeled array
-    :param components_count: number of components
-    :param neigh_arr: information about neighbourhood, shift array
-    :param dist_arr: information about neighbourhood, distance array for shifted position
-    :param distance_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is np.float64
-    :param data_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is data_m.dtype
-        (use np.uint8 instead of np.bool)
-    :return: array with updated labels
+    Parameters
+    ----------
+    data_m : np.ndarray
+        Area for sprawl.
+    components : np.ndarray
+        Core components as labeled array.
+    components_count : int
+        Number of components.
+    neigh_arr : object
+        Information about neighbourhood, shift array.
+    dist_arr : object
+        Information about neighbourhood, distance array for shifted position.
+    distance_cache : np.ndarray, optional
+        Cache array for reducing memory allocation. Shape of data_m, dtype is np.float64.
+    data_cache : np.ndarray, optional
+        Cache array for reducing memory allocation. Shape of data_m, dtype is data_m.dtype
+        (use np.uint8 instead of np.bool).
+
+    Returns
+    -------
+    np.ndarray
+        Array with updated labels.
     """
     #  return calculate_euclidean_iterative(data_m, components, neigh_arr, dist_arr, components_count)
     return distance_sprawl(
@@ -167,19 +209,34 @@ def fdt_sprawl(
     data_cache=None,
 ) -> np.ndarray:
     """
-    Function for calculate fdt sprawl
+    Calculate the FDT (Fuzzy Distance Transform) sprawl.
 
-    :param data_m: sprawl area
-    :param components: core components as labeled array
-    :param components_count: number of components
-    :param neigh_arr: information about neighbourhood, shift array
-    :param dist_arr: information about neighbourhood, distance array for shifted position
-    :param lower_bound: lower bound for calculate mu value
-    :param upper_bound: upper bound for calculate mu value
-    :param distance_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is np.float64
-    :param data_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is data_m.dtype
-        (use np.uint8 instead of np.bool)
-    :return: array with updated labels
+    Parameters
+    ----------
+    data_m : np.ndarray
+        The sprawl area.
+    components : np.ndarray
+        Core components as labeled array.
+    components_count : int
+        Number of components.
+    neigh_arr : array-like
+        Information about the neighborhood, shift array.
+    dist_arr : array-like
+        Information about the neighborhood, distance array for shifted position.
+    lower_bound : float
+        Lower bound for calculating the mu value.
+    upper_bound : float
+        Upper bound for calculating the mu value.
+    distance_cache : np.ndarray, optional
+        Cache array for reducing memory allocation. Shape of data_m, dtype is np.float64.
+    data_cache : np.ndarray, optional
+        Cache array for reducing memory allocation. Shape of data_m, dtype is data_m.dtype
+        (use np.uint8 instead of np.bool).
+
+    Returns
+    -------
+    np.ndarray
+        Array with updated labels.
     """
     if lower_bound > upper_bound:
         mu_array = 1 - calculate_mu_array(data_m, upper_bound, lower_bound, MuType.reflection_mu)
@@ -206,15 +263,27 @@ def sprawl_component(
     calculate_operator: typing.Callable,
 ) -> np.ndarray:
     """
-    calculate sprawl for single component
+    Calculate the sprawl for a single component.
 
-    :param data_m:
-    :param components: array of components
-    :param component_number: chosen component number
-    :param neigh_arr: information about neighbourhood, shift array
-    :param dist_arr: information about neighbourhood, distance array for shifted position
-    :param calculate_operator: function to be called for calculate sprawl
-    :return: array with updated labels
+    Parameters
+    ----------
+    data_m : np.ndarray
+        The sprawl area.
+    components : np.ndarray
+        Array of components.
+    component_number : int
+        Chosen component number.
+    neigh_arr : np.ndarray
+        Information about the neighborhood, shift array.
+    dist_arr : np.ndarray
+        Information about the neighborhood, distance array for shifted position.
+    calculate_operator : typing.Callable
+        Function to be called to calculate sprawl.
+
+    Returns
+    -------
+    np.ndarray
+        Array with updated labels.
     """
     data_cache = np.copy(data_m)
     data_cache[(components > 0) * (components != component_number)] = 0

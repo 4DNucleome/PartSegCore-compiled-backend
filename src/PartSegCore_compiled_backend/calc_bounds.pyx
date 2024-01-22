@@ -1,19 +1,27 @@
 # distutils: define_macros=CYTHON_TRACE_NOGIL=1
 # cython: language_level=3, boundscheck=False, wraparound=False, nonecheck=False, cdivision=True, embedsignature=True
+"""
+This module contains the cython implementation of the ``calc_bounds`` function.
 
+currently supported dimensions: 2, 3, 4, 5
+currently supported label types: uint8, uint16, uint32
+"""
+
+
+from typing import Optional
 import numpy as np
 
-cimport numpy as np
+cimport numpy as cnp
 
 ctypedef fused label_types:
-    np.uint8_t
-    np.uint16_t
-    np.uint32_t
+    cnp.uint8_t
+    cnp.uint16_t
+    cnp.uint32_t
 
-def calc_bounds(labels, components_num=None):
+def calc_bounds(labels: np.ndarray, components_num: Optional[int]=None):
     """
     Calculate the bounds of each component.
-    wrapper around calc_boundsX function for different number of dimensions
+    wrapper around ``calc_boundsX`` function for different number of dimensions
 
     Parameters
     ----------
@@ -28,7 +36,7 @@ def calc_bounds(labels, components_num=None):
         The bounds of each component.
     """
     if components_num is None:
-        components_num = np.max(labels)
+        components_num = int(np.max(labels))
     return {
         2: calc_bounds2,
         3: calc_bounds3,
@@ -37,7 +45,22 @@ def calc_bounds(labels, components_num=None):
     }[labels.ndim](labels, components_num)
 
 
-def calc_bounds5(np.ndarray[label_types, ndim=5] labels, components_num: Py_ssize_t):
+def calc_bounds5(cnp.ndarray[label_types, ndim=5] labels, components_num: Py_ssize_t):
+    """
+    Calculate the bounds of the specified labels in a 5-dimensional array.
+
+    Parameters
+    ----------
+    labels: numpy.ndarray[label_types, ndim=5]
+        The 5-dimensional array containing the labels.
+    components_num: Py_ssize_t
+        The number of components to calculate the bounds for.
+
+    Returns
+    -------
+    bounds: tuple[numpy.ndarray[cnp.int16_t, ndim=2], numpy.ndarray[cnp.int16_t, ndim=2]]
+        The bounds of each component.
+    """
     cdef Py_ssize_t x, y, z, t, s
     cdef Py_ssize_t x_max = labels.shape[4]
     cdef Py_ssize_t y_max = labels.shape[3]
@@ -45,8 +68,8 @@ def calc_bounds5(np.ndarray[label_types, ndim=5] labels, components_num: Py_ssiz
     cdef Py_ssize_t t_max = labels.shape[1]
     cdef Py_ssize_t s_max = labels.shape[0]
     cdef label_types label_val
-    cdef np.ndarray[np.int16_t, ndim=2] min_bound = np.full((components_num + 1, 5), max(x_max, y_max, z_max, t_max, s_max) + 5, dtype=np.int16)
-    cdef np.ndarray[np.int16_t, ndim=2] max_bound = np.full((components_num + 1, 5), -1, dtype=np.int16)
+    cdef cnp.ndarray[cnp.int16_t, ndim=2] min_bound = np.full((components_num + 1, 5), max(x_max, y_max, z_max, t_max, s_max) + 5, dtype=np.int16)
+    cdef cnp.ndarray[cnp.int16_t, ndim=2] max_bound = np.full((components_num + 1, 5), -1, dtype=np.int16)
 
     for s in range(0, s_max):
         for t in range(0, t_max):
@@ -71,15 +94,30 @@ def calc_bounds5(np.ndarray[label_types, ndim=5] labels, components_num: Py_ssiz
     return min_bound, max_bound
 
 
-def calc_bounds4(np.ndarray[label_types, ndim=4] labels, components_num: Py_ssize_t):
+def calc_bounds4(cnp.ndarray[label_types, ndim=4] labels, components_num: Py_ssize_t):
+    """
+    Calculate the bounds of the specified labels in a 4-dimensional array.
+
+    Parameters
+    ----------
+    labels: numpy.ndarray[label_types, ndim=4]
+        The 4-dimensional array containing the labels.
+    components_num: Py_ssize_t
+        The number of components to calculate the bounds for.
+
+    Returns
+    -------
+    bounds: tuple[numpy.ndarray[cnp.int16_t, ndim=2], numpy.ndarray[cnp.int16_t, ndim=2]]
+        The bounds of each component.
+    """
     cdef Py_ssize_t x, y, z, t
     cdef Py_ssize_t x_max = labels.shape[3]
     cdef Py_ssize_t y_max = labels.shape[2]
     cdef Py_ssize_t z_max = labels.shape[1]
     cdef Py_ssize_t t_max = labels.shape[0]
     cdef label_types label_val
-    cdef np.ndarray[np.int16_t, ndim=2] min_bound = np.full((components_num + 1, 4), max(x_max, y_max, z_max, t_max) + 5, dtype=np.int16)
-    cdef np.ndarray[np.int16_t, ndim=2] max_bound = np.full((components_num + 1, 4), -1, dtype=np.int16)
+    cdef cnp.ndarray[cnp.int16_t, ndim=2] min_bound = np.full((components_num + 1, 4), max(x_max, y_max, z_max, t_max) + 5, dtype=np.int16)
+    cdef cnp.ndarray[cnp.int16_t, ndim=2] max_bound = np.full((components_num + 1, 4), -1, dtype=np.int16)
 
     for t in range(0, t_max):
         for z in range(0, z_max):
@@ -99,14 +137,29 @@ def calc_bounds4(np.ndarray[label_types, ndim=4] labels, components_num: Py_ssiz
                     max_bound[label_val, 3] = max(max_bound[label_val, 3], x)
     return min_bound, max_bound
 
-def calc_bounds3(np.ndarray[label_types, ndim=3] labels, components_num: Py_ssize_t):
+def calc_bounds3(cnp.ndarray[label_types, ndim=3] labels, components_num: Py_ssize_t):
+    """
+    Calculate the bounds of the specified labels in a 3-dimensional array.
+
+    Parameters
+    ----------
+    labels: numpy.ndarray[label_types, ndim=3]
+        The 3-dimensional array containing the labels.
+    components_num: Py_ssize_t
+        The number of components to calculate the bounds for.
+
+    Returns
+    -------
+    bounds: tuple[numpy.ndarray[cnp.int16_t, ndim=2], numpy.ndarray[cnp.int16_t, ndim=2]]
+        The bounds of each component.
+    """
     cdef Py_ssize_t x, y, z
     cdef Py_ssize_t x_max = labels.shape[2]
     cdef Py_ssize_t y_max = labels.shape[1]
     cdef Py_ssize_t z_max = labels.shape[0]
     cdef label_types label_val
-    cdef np.ndarray[np.int16_t, ndim=2] min_bound = np.full((components_num + 1, 3), max(x_max, y_max, z_max) + 5, dtype=np.int16)
-    cdef np.ndarray[np.int16_t, ndim=2] max_bound = np.full((components_num + 1, 3), -1, dtype=np.int16)
+    cdef cnp.ndarray[cnp.int16_t, ndim=2] min_bound = np.full((components_num + 1, 3), max(x_max, y_max, z_max) + 5, dtype=np.int16)
+    cdef cnp.ndarray[cnp.int16_t, ndim=2] max_bound = np.full((components_num + 1, 3), -1, dtype=np.int16)
 
 
     for z in range(0, z_max):
@@ -125,13 +178,28 @@ def calc_bounds3(np.ndarray[label_types, ndim=3] labels, components_num: Py_ssiz
     return min_bound, max_bound
 
 
-def calc_bounds2(np.ndarray[label_types, ndim=2] labels, components_num: Py_ssize_t):
+def calc_bounds2(cnp.ndarray[label_types, ndim=2] labels, components_num: Py_ssize_t):
+    """
+    Calculate the bounds of the specified labels in a 2-dimensional array.
+
+    Parameters
+    ----------
+    labels: numpy.ndarray[label_types, ndim=2]
+        The 2-dimensional array containing the labels.
+    components_num: Py_ssize_t
+        The number of components to calculate the bounds for.
+
+    Returns
+    -------
+    bounds: tuple[numpy.ndarray[cnp.int16_t, ndim=2], numpy.ndarray[cnp.int16_t, ndim=2]]
+        The bounds of each component.
+    """
     cdef Py_ssize_t x, y
     cdef Py_ssize_t x_max = labels.shape[1]
     cdef Py_ssize_t y_max = labels.shape[0]
     cdef label_types label_val
-    cdef np.ndarray[np.int16_t, ndim=2] min_bound = np.full((components_num + 1, 2), max(x_max, y_max) + 5, dtype=np.int16)
-    cdef np.ndarray[np.int16_t, ndim=2] max_bound = np.full((components_num + 1, 2), -1, dtype=np.int16)
+    cdef cnp.ndarray[cnp.int16_t, ndim=2] min_bound = np.full((components_num + 1, 2), max(x_max, y_max) + 5, dtype=np.int16)
+    cdef cnp.ndarray[cnp.int16_t, ndim=2] max_bound = np.full((components_num + 1, 2), -1, dtype=np.int16)
 
 
     for y in range(0,y_max):

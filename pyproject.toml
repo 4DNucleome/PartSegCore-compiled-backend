@@ -49,6 +49,9 @@ Documentation = "https://partseg.readthedocs.io/en/stable/"
 test = [
     "pytest>=7.0.0",
 ]
+docs = [
+    "sphinx>=5.0.0",
+]
 
 [tool.setuptools]
 platforms = [

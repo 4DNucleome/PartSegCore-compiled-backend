@@ -1,3 +1,11 @@
+"""
+Module with fast unique calculation.
+This implementation is faster than numpy.unique and comparable to
+pandas.unique(data.ravel())` for data with continuous memory.
+If data are not continuous memory this function is faster than pandas.unique.
+
+For benchmark please see https://github.com/4DNucleome/PartSegCore-compiled-backend/blob/master/notebooks/performance_label_unique.ipynb
+"""
 import numpy as np
 
 from ._fast_unique import unique1d, unique2d, unique3d
@@ -12,7 +20,7 @@ def label_unique(array, numpy_fallback=False) -> np.ndarray:
     array : np.ndarray
         array to calculate unique values
     numpy_fallback : bool
-        if True allow to use numpy.unique if cython version is not available
+        if True allow using numpy.unique if cython version is not available
         otherwise raise RuntimeError
 
     Returns

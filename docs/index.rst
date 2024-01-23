@@ -6,6 +6,10 @@
 Welcome to PartSegCore-compiled-backend's documentation!
 ========================================================
 
+The PartSegCore-compiled-backend was created as package for PartSeg project.
+It contains parts of code that needs to be compiled. It was created to simplify
+maintenance of PartSeg project. But maybe you could find here useful functions.
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:

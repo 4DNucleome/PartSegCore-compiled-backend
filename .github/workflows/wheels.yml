@@ -2,7 +2,7 @@ name: Wheels
 
 on:
   push:
-    branch:
+    branches:
       - master
     tags:
       - '*'

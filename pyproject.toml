@@ -42,7 +42,7 @@ text = "BSD-3-Clause"
 
 [project.urls]
 Homepage = "https://4dnucleome.cent.uw.edu.pl/PartSeg/"
-Documentation = "https://partseg.readthedocs.io/en/stable/"
+Documentation = "https://partsegcore-compiled-backend.readthedocs.io/en/stable/"
 "Source Code" = "https://github.com/4DNucleome/PartSegCore-compiled-backend"
 
 [project.optional-dependencies]

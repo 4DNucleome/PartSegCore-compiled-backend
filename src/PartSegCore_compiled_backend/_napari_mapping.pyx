@@ -35,7 +35,7 @@ def _zero_preserving_modulo_seq(label_types[:] labels,  out_types_mod modulo, la
         if labels[i] == to_zero:
             out[i] = 0
         else:
-            out[i] = (modulo + ((labels[i] - 1) % modulo) % modulo) + 1
+            out[i] = ((modulo + ((labels[i] - 1) % modulo)) % modulo) + 1
 
 def _zero_preserving_modulo_par(label_types[:] labels, out_types_mod modulo, label_types to_zero, out_types_mod[:] out):
     cdef Py_ssize_t i
@@ -44,7 +44,7 @@ def _zero_preserving_modulo_par(label_types[:] labels, out_types_mod modulo, lab
         if labels[i] == to_zero:
             out[i] = 0
         else:
-            out[i] = (modulo + ((labels[i] - 1) % modulo) % modulo) + 1
+            out[i] = ((modulo + ((labels[i] - 1) % modulo)) % modulo) + 1
 
 
 def _map_array_par(label_types[:] labels, dict dkt, out_types[:] out, out_types def_val=0):

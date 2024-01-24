@@ -28,23 +28,23 @@ ctypedef fused out_types:
     out_types_mod
     cnp.float32_t
 
-def _zero_preserving_modulo_seq(label_types[:] labels,  label_types modulo, label_types to_zero, out_types_mod[:] out):
+def _zero_preserving_modulo_seq(label_types[:] labels,  out_types_mod modulo, label_types to_zero, out_types_mod[:] out):
     cdef Py_ssize_t i
     cdef Py_ssize_t n = labels.shape[0]
     for i in range(n):
         if labels[i] == to_zero:
             out[i] = 0
         else:
-            out[i] = ((labels[i] - 1)  % modulo) + 1
+            out[i] = (modulo + ((labels[i] - 1) % modulo) % modulo) + 1
 
-def _zero_preserving_modulo_par(label_types[:] labels, label_types modulo, label_types to_zero, out_types_mod[:] out):
+def _zero_preserving_modulo_par(label_types[:] labels, out_types_mod modulo, label_types to_zero, out_types_mod[:] out):
     cdef Py_ssize_t i
     cdef Py_ssize_t n = labels.shape[0]
     for i in prange(n, nogil=True):
         if labels[i] == to_zero:
             out[i] = 0
         else:
-            out[i] = ((labels[i] - 1) % modulo) + 1
+            out[i] = (modulo + ((labels[i] - 1) % modulo) % modulo) + 1
 
 
 def _map_array_par(label_types[:] labels, dict dkt, out_types[:] out, out_types def_val=0):

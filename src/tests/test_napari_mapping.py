@@ -37,6 +37,19 @@ def test_zero_preserving_modulo(func, data):
     npt.assert_array_equal(out, _zero_preserving_modulo_numpy(data, 10, np.uint8, 0))
 
 
+@pytest.mark.parametrize('func', [zero_preserving_modulo_parallel, zero_preserving_modulo_sequential])
+@pytest.mark.parametrize('background_num', [0, 1, 2, -1])
+def test_background_label(func, background_num):
+    data = np.zeros((10, 10), dtype=np.int32)
+    data[1:-1, 1:-1] = 1
+    data[2:-2, 2:-2] = 2
+    data[4:-4, 4:-4] = -1
+
+    res = func(data, 49, background_num)
+    np.testing.assert_array_equal(res == 0, data == background_num)
+    np.testing.assert_array_equal(res != 0, data != background_num)
+
+
 @pytest.mark.parametrize('func', [map_array_parallel, map_array_sequential])
 @pytest.mark.parametrize('data', DATA_LI, ids=DATA_IDS)
 def test_map_array(func, data):

@@ -28,7 +28,7 @@ ctypedef fused out_types:
     out_types_mod
     cnp.float32_t
 
-def _zero_preserving_modulo_seq(label_types[:] labels,  out_types_mod modulo, label_types to_zero, out_types_mod[:] out):
+def _zero_preserving_modulo_seq(label_types[:] labels,  int modulo, int to_zero, out_types_mod[:] out):
     cdef Py_ssize_t i
     cdef Py_ssize_t n = labels.shape[0]
     for i in range(n):
@@ -37,7 +37,7 @@ def _zero_preserving_modulo_seq(label_types[:] labels,  out_types_mod modulo, la
         else:
             out[i] = ((modulo + ((labels[i] - 1) % modulo)) % modulo) + 1
 
-def _zero_preserving_modulo_par(label_types[:] labels, out_types_mod modulo, label_types to_zero, out_types_mod[:] out):
+def _zero_preserving_modulo_par(label_types[:] labels, int modulo, int to_zero, out_types_mod[:] out):
     cdef Py_ssize_t i
     cdef Py_ssize_t n = labels.shape[0]
     for i in prange(n, nogil=True):

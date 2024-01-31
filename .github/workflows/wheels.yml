@@ -57,7 +57,7 @@ jobs:
           fetch-depth: 0
 
       - if: runner.os == 'macOS'
-        run: brew install openblas
+        run: bash build_utils/build_libomp.sh
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16.5

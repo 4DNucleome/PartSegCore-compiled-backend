@@ -57,12 +57,10 @@ jobs:
           fetch-depth: 0
 
       - if: runner.os == 'macOS'
-        run: bash build_utils/build_libomp.sh
+        run: sudo bash build_utils/build_libomp.sh
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16.5
-        env:
-          OPENBLAS: "$(brew --prefix openblas)"
 
       - uses: actions/upload-artifact@v4
         with:

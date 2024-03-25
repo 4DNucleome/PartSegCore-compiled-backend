@@ -6,6 +6,7 @@ If data are not continuous memory this function is faster than pandas.unique.
 
 For benchmark please see https://github.com/4DNucleome/PartSegCore-compiled-backend/blob/master/notebooks/performance_label_unique.ipynb
 """
+
 import numpy as np
 
 from ._fast_unique import unique1d, unique2d, unique3d

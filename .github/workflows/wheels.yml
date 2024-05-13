@@ -60,7 +60,7 @@ jobs:
         run: sudo bash build_utils/build_libomp.sh
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.5
+        uses: pypa/cibuildwheel@v2.18.0
 
       - uses: actions/upload-artifact@v4
         with:

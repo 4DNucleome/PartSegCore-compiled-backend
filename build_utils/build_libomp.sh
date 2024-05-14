@@ -2,6 +2,8 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 build_dir=${DIR}/libs_build
 
+echo MACOSX_DEPLOYMENT_TARGET $MACOSX_DEPLOYMENT_TARGET
+
 git clone --depth 1 --branch llvmorg-17.0.6 https://github.com/llvm/llvm-project
 pushd llvm-project/openmp
 mkdir build

@@ -116,7 +116,7 @@ skip = "pp*macos* pp31*"
 build = "*64"
 
 [tool.cibuildwheel.macos]
-before-all = "bash {project}/build_utils/build_libomp.sh"
+before-all = "sudo bash {project}/build_utils/build_libomp.sh"
 
 
 [tool.ruff]

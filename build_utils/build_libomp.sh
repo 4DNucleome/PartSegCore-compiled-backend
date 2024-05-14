@@ -10,7 +10,7 @@ mkdir build
 cd build
 cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ ..
 make
-make install
+sudo make install
 
 popd
 rm -rf llvm-project

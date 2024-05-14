@@ -118,7 +118,7 @@ build = "*64"
 [tool.cibuildwheel.macos]
 before-all = [
     "set",
-    "sudo bash {project}/build_utils/build_libomp.sh",
+    "bash {project}/build_utils/build_libomp.sh",
 ]
 
 

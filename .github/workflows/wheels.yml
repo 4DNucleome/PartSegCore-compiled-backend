@@ -49,7 +49,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest, macos-14]
+        os: [ubuntu-latest, windows-latest, macos-latest, macos-13]
 
     steps:
       - uses: actions/checkout@v4
@@ -57,7 +57,7 @@ jobs:
           fetch-depth: 0
 
       - if: runner.os == 'macOS'
-        run: sudo bash build_utils/build_libomp.sh
+        run: MACOSX_DEPLOYMENT_TARGET="10.9" sudo bash build_utils/build_libomp.sh
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.18.0

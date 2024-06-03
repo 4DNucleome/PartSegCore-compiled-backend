@@ -1,6 +1,6 @@
 [build-system]
 # Minimum requirements for the build system to execute.
-requires = ["setuptools>=42.0.0", "Cython", "numpy>=1.25", "setuptools_scm[toml]>=3.4"]  # PEP 508 specifications.
+requires = ["setuptools>=70.0.0", "Cython", "numpy>=2.0.0rc2", "setuptools_scm[toml]>=8.1"]  # PEP 508 specifications.
 build-backend = "setuptools.build_meta"
 
 [project]

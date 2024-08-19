@@ -7,7 +7,8 @@ from setuptools import Extension, setup
 current_dir = os.path.dirname(os.path.abspath(__file__))
 package_dir = os.path.join(current_dir, 'src')
 
-cpp_standard = ['-std=c++11', '-g0', '-O2', '-DNDEBUG']  # "-DDEBUG", "-O0", "-ggdb3" ]
+# cpp_standard = ['-std=c++11', '-g0', '-O2', '-DNDEBUG']  # "-DDEBUG", "-O0", "-ggdb3" ]
+cpp_standard = ['-std=c++11', '-DDEBUG', '-O0', '-ggdb3', '-D_GLIBCXX_DEBUG']
 sprawl_utils_path = [os.path.join(package_dir, 'PartSegCore_compiled_backend', 'sprawl_utils')]
 extra_link_args = []
 
@@ -22,6 +23,8 @@ elif platform.system() == 'Linux':
 else:
     omp = ['/openmp']
 
+define_macros = [('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')]
+
 
 extensions = [
     Extension(
@@ -31,6 +34,7 @@ extensions = [
         language='c++',
         extra_compile_args=cpp_standard,
         extra_link_args=cpp_standard,
+        define_macros=define_macros,
     ),
     Extension(
         'PartSegCore_compiled_backend.sprawl_utils.path_sprawl_cython',
@@ -39,6 +43,7 @@ extensions = [
         language='c++',
         extra_compile_args=cpp_standard,
         extra_link_args=cpp_standard,
+        define_macros=define_macros,
     ),
     Extension(
         'PartSegCore_compiled_backend.sprawl_utils.sprawl_utils',
@@ -47,6 +52,7 @@ extensions = [
         language='c++',
         extra_compile_args=cpp_standard,
         extra_link_args=cpp_standard,
+        define_macros=define_macros,
     ),
     Extension(
         'PartSegCore_compiled_backend.sprawl_utils.fuzzy_distance',
@@ -55,6 +61,7 @@ extensions = [
         language='c++',
         extra_compile_args=cpp_standard,
         extra_link_args=cpp_standard,
+        define_macros=define_macros,
     ),
     Extension(
         'PartSegCore_compiled_backend.color_image_cython',
@@ -63,6 +70,7 @@ extensions = [
         extra_compile_args=cpp_standard,
         extra_link_args=cpp_standard,
         language='c++',
+        define_macros=define_macros,
     ),
     Extension(
         'PartSegCore_compiled_backend.calc_bounds',
@@ -71,6 +79,7 @@ extensions = [
         extra_compile_args=cpp_standard,
         extra_link_args=cpp_standard,
         language='c++',
+        define_macros=define_macros,
     ),
     Extension(
         'PartSegCore_compiled_backend.multiscale_opening.mso_bind',
@@ -79,6 +88,7 @@ extensions = [
         extra_compile_args=cpp_standard,
         extra_link_args=cpp_standard,
         language='c++',
+        define_macros=define_macros,
     ),
     Extension(
         'PartSegCore_compiled_backend._fast_unique',
@@ -87,6 +97,7 @@ extensions = [
         extra_compile_args=cpp_standard + omp,
         extra_link_args=cpp_standard + omp + extra_link_args,
         language='c++',
+        define_macros=define_macros,
     ),
     Extension(
         'PartSegCore_compiled_backend._napari_mapping',
@@ -95,6 +106,16 @@ extensions = [
         extra_compile_args=cpp_standard + omp,
         extra_link_args=cpp_standard + omp + extra_link_args,
         language='c++',
+        define_macros=define_macros,
+    ),
+    Extension(
+        'PartSegCore_compiled_backend.triangulate',
+        sources=['src/PartSegCore_compiled_backend/triangulate.pyx'],
+        include_dirs=[np.get_include()],
+        extra_compile_args=cpp_standard + omp,
+        extra_link_args=cpp_standard + omp + extra_link_args,
+        language='c++',
+        define_macros=define_macros,
     ),
 ]
 

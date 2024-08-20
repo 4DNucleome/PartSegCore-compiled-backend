@@ -51,33 +51,12 @@ cdef extern from "triangulate.hpp":
         Triangle(int x, int y, int z)
         Triangle()
 
-
-cdef point_eq(const Point& a, const Point& b):
-    return a.x == b.x and a.y == b.y
-
-cdef bool cmp_point(const Point& a, const Point& b):
-    if a.x == b.x:
-        return a.y < b.y
-    return a.x < b.x
-
-cdef bool cmp_event(const Event& a, const Event& b):
-    if a.y == b.y:
-        return a.x < b.x
-    return a.y < b.y
-
-cdef bool cmp_event_x(const Event& a, const Event& b):
-    if a.x == b.x:
-        return a.is_left > b.is_left
-    return a.x < b.x
-
-
-
-
-cdef inline bool _on_segment(const Point& p, const Point& q, const Point& r):
-    if (q.x <= max(p.x, r.x) and q.x >= min(p.x, r.x) and
-        q.y <= max(p.y, r.y) and q.y >= min(p.y, r.y)):
-        return True
-    return False
+    bool point_eq(const Point& a, const Point& b)
+    bool cmp_point(const Point& a, const Point& b)
+    bool cmp_event(const Event& p, const Event& q)
+    bool _on_segment(const Point& p, const Point& q, const Point& r)
+    int _orientation(const Point& p, const Point& q, const Point& r)
+    bool _do_intersect(const Segment& s1, const Segment& s2)
 
 
 def on_segment(p: Sequence[float], q: Sequence[float], r: Sequence[float]) -> bool:
@@ -103,14 +82,6 @@ def on_segment(p: Sequence[float], q: Sequence[float], r: Sequence[float]) -> bo
         Point(r[0], r[1])
         )
 
-
-cdef int _orientation(const Point& p, const Point& q, const Point& r):
-    cdef float val
-    val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y)
-    if val == 0:
-        return 0
-    return 1 if val > 0 else 2
-
 def orientation(p: Sequence[float], q: Sequence[float], r: Sequence[float]) -> int:
     """ Check orientation of 3 points
 
@@ -133,35 +104,6 @@ def orientation(p: Sequence[float], q: Sequence[float], r: Sequence[float]) -> i
         Point(q[0], q[1]),
         Point(r[0], r[1])
         )
-
-
-cdef bool _do_intersect(const Segment& s1, const Segment& s2):
-    cdef Point p1, q1, p2, q2
-    cdef int o1, o2, o3, o4
-    p1 = s1.left
-    q1 = s1.right
-    p2 = s2.left
-    q2 = s2.right
-    if point_eq(p1, p2) or point_eq(p1, q2) or point_eq(q1, p2) or point_eq(q1, q2):
-        return False
-    o1 = _orientation(p1, q1, p2)
-    o2 = _orientation(p1, q1, q2)
-    o3 = _orientation(p2, q2, p1)
-    o4 = _orientation(p2, q2, q1)
-
-    if o1 != o2 and o3 != o4:
-        return True
-
-    if o1 == 0 and _on_segment(p1, p2, q1):
-        return True
-    if o2 == 0 and _on_segment(p1, q2, q1):
-        return True
-    if o3 == 0 and _on_segment(p2, p1, q2):
-        return True
-    if o4 == 0 and _on_segment(p2, q1, q2):
-        return True
-
-    return False
 
 
 def do_intersect(s1: Sequence[Sequence[float]], s2: Sequence[Sequence[float]]) -> bool:
@@ -209,7 +151,7 @@ cdef unordered_set[pair[int, int], PairHash] _find_intersections(const vector[Se
         events.push_back(Event(segments[i].left.x, segments[i].left.y, i, True))
         events.push_back(Event(segments[i].right.x, segments[i].right.y, i, False))
 
-    sort(events.begin(), events.end(), cmp_event_x)
+    sort(events.begin(), events.end(), cmp_event)
 
     for i in range(events.size()):
         current = events[i]

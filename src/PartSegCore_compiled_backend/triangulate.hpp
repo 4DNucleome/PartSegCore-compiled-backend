@@ -123,7 +123,7 @@ std::set<Event>::iterator succ(std::set<Event>& s, std::set<Event>::iterator it)
     return ++it;
 }
 
-std::unordered_map<std::pair<int, int>, int, PairHash> _find_intersections(const std::vector<Segment>& segments){
+std::unordered_map<std::pair<int, int>, int, PairHash> __find_intersections(const std::vector<Segment>& segments){
     std::unordered_map<std::pair<int, int>, int, PairHash> intersections;
     std::vector<Event> events;
     events.reserve(2 * segments.size());

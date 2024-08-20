@@ -44,3 +44,12 @@ struct Segment{
     Segment(Point left, Point right) : left(left), right(right) {}
     Segment() {}
 };
+
+
+struct Triangle{
+    int x;
+    int y;
+    int z;
+    Triangle(int x, int y, int z) : x(x), y(y), z(z) {}
+    Triangle() {}
+};

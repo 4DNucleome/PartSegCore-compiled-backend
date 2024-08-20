@@ -13,6 +13,7 @@ from libcpp cimport bool
 from libcpp.unordered_set cimport unordered_set
 from libcpp.utility cimport pair
 from libcpp.vector cimport vector
+from libcpp.unordered_map cimport unordered_map
 from libcpp.set cimport set as cpp_set
 from libcpp.algorithm cimport sort
 
@@ -43,15 +44,28 @@ cdef extern from "triangulate.hpp":
         Segment(Point left, Point right)
         Segment()
 
-cdef point_eq(Point a, Point b):
+    cdef cppclass Triangle:
+        int x
+        int y
+        int z
+        Triangle(int x, int y, int z)
+        Triangle()
+
+
+cdef point_eq(const Point& a, const Point& b):
     return a.x == b.x and a.y == b.y
 
-cdef bool cmp_event(Event a, Event b):
+cdef bool cmp_point(const Point& a, const Point& b):
+    if a.x == b.x:
+        return a.y < b.y
+    return a.x < b.x
+
+cdef bool cmp_event(const Event& a, const Event& b):
     if a.y == b.y:
         return a.x < b.x
     return a.y < b.y
 
-cdef bool cmp_event_x(Event a, Event b):
+cdef bool cmp_event_x(const Event& a, const Event& b):
     if a.x == b.x:
         return a.is_left > b.is_left
     return a.x < b.x
@@ -59,7 +73,7 @@ cdef bool cmp_event_x(Event a, Event b):
 
 
 
-cdef inline bool _on_segment(Point p, Point q, Point r):
+cdef inline bool _on_segment(const Point& p, const Point& q, const Point& r):
     if (q.x <= max(p.x, r.x) and q.x >= min(p.x, r.x) and
         q.y <= max(p.y, r.y) and q.y >= min(p.y, r.y)):
         return True
@@ -90,7 +104,7 @@ def on_segment(p: Sequence[float], q: Sequence[float], r: Sequence[float]) -> bo
         )
 
 
-cdef int _orientation(Point p, Point q, Point r):
+cdef int _orientation(const Point& p, const Point& q, const Point& r):
     cdef float val
     val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y)
     if val == 0:
@@ -121,7 +135,7 @@ def orientation(p: Sequence[float], q: Sequence[float], r: Sequence[float]) -> i
         )
 
 
-cdef bool _do_intersect(Segment s1, Segment s2):
+cdef bool _do_intersect(const Segment& s1, const Segment& s2):
     cdef Point p1, q1, p2, q2
     cdef int o1, o2, o3, o4
     p1 = s1.left
@@ -180,7 +194,7 @@ cdef cpp_set[Event].iterator succ(cpp_set[Event]& s,  cpp_set[Event].iterator it
     return preincrement(it)
 
 
-cdef unordered_set[pair[int, int], PairHash] _find_intersections(vector[Segment] segments):
+cdef unordered_set[pair[int, int], PairHash] _find_intersections(const vector[Segment]& segments):
     cdef unordered_set[pair[int, int], PairHash] intersections
     cdef vector[Event] events
     cdef cpp_set[Event] active, viewed
@@ -233,7 +247,7 @@ cdef unordered_set[pair[int, int], PairHash] _find_intersections(vector[Segment]
     return intersections
 
 
-def find_intersections(segments: Sequence[Sequence[Sequence[float]]]) -> list[tuple[int]]:
+def find_intersections(segments: Sequence[Sequence[Sequence[float]]]) -> list[tuple[int, int]]:
     """ Find intersections between segments"""
     cdef vector[Segment] segments_vector
     cdef unordered_set[pair[int, int], PairHash] intersections
@@ -250,3 +264,156 @@ def find_intersections(segments: Sequence[Sequence[Sequence[float]]]) -> list[tu
     for p in intersections:
         result.append((p.first, p.second))
     return result
+
+
+cdef Point _find_intersection(const Segment& s1, const Segment& s2):
+    cdef float a1, b1, c1, a2, b2, c2, det, x, y
+    a1 = s1.right.y - s1.left.y
+    b1 = s1.left.x - s1.right.x
+    c1 = a1 * s1.left.x + b1 * s1.left.y
+    a2 = s2.right.y - s2.left.y
+    b2 = s2.left.x - s2.right.x
+    c2 = a2 * s2.left.x + b2 * s2.left.y
+    det = a1 * b2 - a2 * b1
+    if det == 0:
+        return Point(0, 0)
+    x = (b2 * c1 - b1 * c2) / det
+    y = (a1 * c2 - a2 * c1) / det
+    return Point(x, y)
+
+
+def find_intersection(s1: Sequence[Sequence[float]], s2: Sequence[Sequence[float]]) -> tuple[float, float]:
+    """ Find intersection between two segments
+
+    Parameters
+    ----------
+    s1: sequence of 2 sequences of 2 floats
+        first segment
+    s2: sequence of 2 sequences of 2 floats
+        second segment
+
+    Returns
+    -------
+    sequence of 2 floats:
+        intersection point
+    """
+    cdef Point p = _find_intersection(
+        Segment(Point(s1[0][0], s1[0][1]), Point(s1[1][0], s1[1][1])),
+        Segment(Point(s2[0][0], s2[0][1]), Point(s2[1][0], s2[1][1]))
+        )
+    return (p.x, p.y)
+
+
+cdef bool _is_convex(const vector[Point]& polygon):
+    cdef Py_ssize_t i, j, k
+    cdef int orientation = 0, triangle_orientation
+    cdef float val
+    for i in range(polygon.size()-2):
+        j = (i + 1)
+        k = (i + 2)
+        triangle_orientation = _orientation(polygon[i], polygon[j], polygon[k])
+        if triangle_orientation == 0:
+            continue
+        if orientation == 0:
+            orientation = triangle_orientation
+        elif orientation != triangle_orientation:
+            return False
+    triangle_orientation = _orientation(polygon[polygon.size()-2], polygon[polygon.size()-1], polygon[0])
+    if triangle_orientation != 0 and orientation != triangle_orientation:
+        return False
+    triangle_orientation = _orientation(polygon[polygon.size()-1], polygon[0], polygon[1])
+    if triangle_orientation != 0 and orientation != triangle_orientation:
+        return False
+
+    return True
+
+
+def is_convex(polygon: Sequence[Sequence[float]]) -> bool:
+    """ Check if polygon is convex"""
+    cdef vector[Point] polygon_vector
+    cdef pair[bool, vector[int]] result
+
+    polygon_vector.reserve(len(polygon))
+    for point in polygon:
+        polygon_vector.push_back(Point(point[0], point[1]))
+
+    return _is_convex(polygon_vector)
+
+
+cdef vector[Triangle] _triangle_convex_polygon(const vector[Point]& polygon):
+    cdef vector[Triangle] result
+    cdef Py_ssize_t start_index, i, size, current_index
+    size = polygon.size()
+    for i in range(1, size-1):
+        if _orientation(polygon[0], polygon[i], polygon[i+1]) != 0:
+            result.push_back(Triangle(0, i, i+1))
+
+    return result
+
+
+cdef vector[Triangle] _triangulate_polygon(vector[Point] polygon):
+    cdef vector[Segment] edges, edges_with_intersections
+    cdef Py_ssize_t i, j, edges_count
+    cdef unordered_set[pair[int, int], PairHash] intersections
+    cdef unordered_map[int, vector[Point]] intersections_points
+    cdef pair[int, vector[Point]] p_it
+    cdef vector[Triangle] triangles
+    cdef vector[Point] intersections_points_vector
+    cdef Point p_int
+    cdef pair[int, int] p
+
+    if _is_convex(polygon):
+        return _triangle_convex_polygon(polygon)
+
+    edges.reserve(polygon.size())
+    for i in range(polygon.size() - 1):
+        if polygon[i].x < polygon[i+1].x:
+            edges.push_back(Segment(polygon[i], polygon[i+1]))
+        else:
+            edges.push_back(Segment(polygon[i+1], polygon[i]))
+
+    intersections = _find_intersections(edges)
+    intersections_points.reserve(intersections.size())
+    for p in intersections:
+        p_int = _find_intersection(edges[p.first], edges[p.second])
+        intersections_points[p.first].push_back(p_int)
+        intersections_points[p.second].push_back(p_int)
+
+    edges_count = edges.size()
+    for p_it in intersections_points:
+        edges_count += p_it.second.size() - 1
+
+    edges_with_intersections.reserve(edges_count)
+
+    for i in range(edges.size()):
+        if not intersections_points.count(i):
+            edges_with_intersections.push_back(edges[i])
+        else:
+            intersections_points_vector = intersections_points.at(i)
+            intersections_points_vector.push_back(edges[i].left)
+            intersections_points_vector.push_back(edges[i].right)
+            sort(intersections_points_vector.begin(), intersections_points_vector.end(), cmp_point)
+            for j in range(intersections_points_vector.size() - 1):
+                edges_with_intersections.push_back(Segment(intersections_points_vector[j], intersections_points_vector[j+1]))
+
+    return triangles
+
+
+def triangulate_polygon(polygon: Sequence[Sequence[float]]) -> list[tuple[int, int, int]]:
+    """ Triangulate polygon"""
+    cdef vector[Point] polygon_vector
+    cdef Point p1, p2
+    cdef vector[Triangle] result
+
+
+    polygon_vector.reserve(len(polygon))
+    polygon_vector.push_back(Point(polygon[0][0], polygon[0][1]))
+    for point in polygon[1:]:
+        p1 = polygon_vector[polygon_vector.size() - 1]
+        p2 = Point(point[0], point[1])
+        if not point_eq(p1, p2):
+            # prevent from adding the same point twice
+            polygon_vector.push_back(p2)
+
+    result = _triangulate_polygon(polygon_vector)
+    return [(triangle.x, triangle.y, triangle.z) for triangle in result]

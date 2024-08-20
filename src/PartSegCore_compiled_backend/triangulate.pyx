@@ -198,7 +198,7 @@ def find_intersections(segments: Sequence[Sequence[Sequence[float]]]) -> list[tu
     segments_vector.reserve(len(segments))
 
     for segment in segments:
-        if segment[0][0] < segment[1][0]:
+        if segment[0][0] < segment[1][0] or (segment[0][0] == segment[1][0] and segment[0][1] < segment[1][1]):
             segments_vector.push_back(Segment(Point(segment[0][0], segment[0][1]), Point(segment[1][0], segment[1][1])))
         else:
             segments_vector.push_back(Segment(Point(segment[1][0], segment[1][1]), Point(segment[0][0], segment[0][1])))

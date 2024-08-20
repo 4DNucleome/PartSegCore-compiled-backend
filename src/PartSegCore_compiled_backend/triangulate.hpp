@@ -12,16 +12,16 @@ struct Event {
     Event() {}
 
     bool operator<(const Event& e) const {
-        if(y==e.y){
-            if(x==e.x){
+        if (x == e.x) {
+            if(y==e.y){
                 if (is_left == e.is_left){
                     return index < e.index;
                 }
-                return is_left < e.is_left;
+                return is_left > e.is_left;
             }
-            return x < e.x;
+            return y < e.y;
         }
-        return y < e.y;
+        return x < e.x;
     }
 };
 
@@ -95,6 +95,8 @@ bool _do_intersect(const Segment& s1, const Segment& s2){
     const Point& q1 = s1.right;
     const Point& p2 = s2.left;
     const Point& q2 = s2.right;
+    if (point_eq(p1, p2) || point_eq(p1, q2) || point_eq(q1, p2) || point_eq(q1, q2))
+        return false;
 
     int o1 = _orientation(p1, q1, p2);
     int o2 = _orientation(p1, q1, q2);

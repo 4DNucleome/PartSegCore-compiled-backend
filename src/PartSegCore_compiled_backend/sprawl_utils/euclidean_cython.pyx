@@ -21,7 +21,7 @@ def calculate_euclidean(np.ndarray[uint8_t, ndim=3] object_area, np.ndarray[uint
     :param base_object: Core object from which watersheed start
     :param neighbourhood: negihbourhood defined as array of size (neigbourhood_size, 3)
     :param distance: array for distances of negibours. Need have size (neighbourhood_szie).
-        Used for handling spacin in image.
+        Used for handling spacinh in image.
     :return: distance from core object
     """
     cdef np.ndarray[uint8_t, ndim=3] consumed_area = np.copy(base_object)

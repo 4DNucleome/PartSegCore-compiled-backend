@@ -131,3 +131,6 @@ indent-style = "space"
 docstring-code-format = true
 line-ending = "lf"
 skip-magic-trailing-comma = true
+
+[tool.codespell]
+skip = "notebooks/*"

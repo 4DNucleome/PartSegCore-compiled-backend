@@ -236,3 +236,13 @@ bool _is_convex(const std::vector<Point>& polygon){
         return false;
     return true;
 }
+
+std::vector<Triangle> _triangle_convex_polygon(const std::vector<Point> & polygon){
+    std::vector<Triangle> result;
+    for (int i=1; i<polygon.size() - 1; i++){
+        if (_orientation(polygon[0], polygon[i], polygon[i+1]) !=0){
+            result.push_back(Triangle(0, i, i+1));
+        }
+    }
+    return result;
+}

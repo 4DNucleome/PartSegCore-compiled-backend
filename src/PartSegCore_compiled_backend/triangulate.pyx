@@ -60,6 +60,7 @@ cdef extern from "triangulate.hpp":
     unordered_set[pair[int, int], PairHash] _find_intersections(const vector[Segment]& segments)
     Point _find_intersection(const Segment& s1, const Segment& s2)
     bool _is_convex(const vector[Point]& polygon)
+    vector[Triangle] _triangle_convex_polygon(const vector[Point]& polygon)
 
 
 
@@ -177,17 +178,6 @@ def is_convex(polygon: Sequence[Sequence[float]]) -> bool:
         polygon_vector.push_back(Point(point[0], point[1]))
 
     return _is_convex(polygon_vector)
-
-
-cdef vector[Triangle] _triangle_convex_polygon(const vector[Point]& polygon):
-    cdef vector[Triangle] result
-    cdef Py_ssize_t start_index, i, size, current_index
-    size = polygon.size()
-    for i in range(1, size-1):
-        if _orientation(polygon[0], polygon[i], polygon[i+1]) != 0:
-            result.push_back(Triangle(0, i, i+1))
-
-    return result
 
 
 cdef vector[Triangle] _triangulate_polygon(vector[Point] polygon):

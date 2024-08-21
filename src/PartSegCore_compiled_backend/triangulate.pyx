@@ -57,6 +57,9 @@ cdef extern from "triangulate.hpp":
     bool _on_segment(const Point& p, const Point& q, const Point& r)
     int _orientation(const Point& p, const Point& q, const Point& r)
     bool _do_intersect(const Segment& s1, const Segment& s2)
+    unordered_set[pair[int, int], PairHash] _find_intersections(const vector[Segment]& segments)
+    Point _find_intersection(const Segment& s1, const Segment& s2)
+
 
 
 def on_segment(p: Sequence[float], q: Sequence[float], r: Sequence[float]) -> bool:
@@ -127,101 +130,18 @@ def do_intersect(s1: Sequence[Sequence[float]], s2: Sequence[Sequence[float]]) -
         )
 
 
-cdef cpp_set[Event].iterator pred(cpp_set[Event]& s,  cpp_set[Event].iterator it):
-    if it == s.begin():
-        return s.end()
-    return predecrement(it)
-
-cdef cpp_set[Event].iterator succ(cpp_set[Event]& s,  cpp_set[Event].iterator it):
-    return preincrement(it)
-
-
-cdef unordered_set[pair[int, int], PairHash] _find_intersections(const vector[Segment]& segments):
-    cdef unordered_set[pair[int, int], PairHash] intersections
-    cdef vector[Event] events
-    cdef cpp_set[Event] active, viewed
-    cdef Py_ssize_t i, j
-    cdef Event current #, next_event, prev_event
-    cdef int current_index
-    cdef cpp_set[Event].iterator next_, prev, it
-    cdef bool flag
-
-    events.reserve(2 * segments.size())
-    for i in range(segments.size()):
-        events.push_back(Event(segments[i].left.x, segments[i].left.y, i, True))
-        events.push_back(Event(segments[i].right.x, segments[i].right.y, i, False))
-
-    sort(events.begin(), events.end(), cmp_event)
-
-    for i in range(events.size()):
-        current = events[i]
-        current_index = current.index
-        if current.is_left:
-            next_ = active.lower_bound(current)
-            prev = pred(active, next_)
-            # next_event = dereference(next_)
-            # prev_event = dereference(prev)
-            flag = False
-            if next_ != active.end() and _do_intersect(segments[current_index], segments[deref(next_).index]):
-                if current_index < deref(next_).index:
-                    intersections.insert(pair[int, int](current_index, deref(next_).index))
-                else:
-                    intersections.insert(pair[int, int](deref(next_).index, current_index))
-            if prev != active.end() and _do_intersect(segments[current_index], segments[deref(prev).index]):
-                if current_index < deref(prev).index:
-                    intersections.insert(pair[int, int](current_index, deref(prev).index))
-                else:
-                    intersections.insert(pair[int, int](deref(prev).index, current_index))
-            active.insert(current)
-            viewed.insert(current)
-        else:
-            it = active.find(Event(segments[current_index].left.x, segments[current_index].left.y, current_index, True))
-            next_ = succ(active, it)
-            prev = pred(active, it)
-            # next_event = dereference(next_)
-            # prev_event = dereference(prev)
-            if next_ != active.end() and prev != active.end() and _do_intersect(segments[deref(next_).index], segments[deref(prev).index]):
-                if deref(next_).index < deref(prev).index:
-                    intersections.insert(pair[int, int](deref(next_).index, deref(prev).index))
-                else:
-                    intersections.insert(pair[int, int](deref(prev).index, deref(next_).index))
-            active.erase(it)
-    return intersections
-
-
 def find_intersections(segments: Sequence[Sequence[Sequence[float]]]) -> list[tuple[int, int]]:
     """ Find intersections between segments"""
     cdef vector[Segment] segments_vector
     cdef unordered_set[pair[int, int], PairHash] intersections
     cdef pair[int, int] p
-    cdef list result = []
+
     segments_vector.reserve(len(segments))
-
     for segment in segments:
-        if segment[0][0] < segment[1][0] or (segment[0][0] == segment[1][0] and segment[0][1] < segment[1][1]):
-            segments_vector.push_back(Segment(Point(segment[0][0], segment[0][1]), Point(segment[1][0], segment[1][1])))
-        else:
-            segments_vector.push_back(Segment(Point(segment[1][0], segment[1][1]), Point(segment[0][0], segment[0][1])))
+        segments_vector.push_back(Segment(Point(segment[0][0], segment[0][1]), Point(segment[1][0], segment[1][1])))
     intersections = _find_intersections(segments_vector)
-    for p in intersections:
-        result.append((p.first, p.second))
-    return result
 
-
-cdef Point _find_intersection(const Segment& s1, const Segment& s2):
-    cdef float a1, b1, c1, a2, b2, c2, det, x, y
-    a1 = s1.right.y - s1.left.y
-    b1 = s1.left.x - s1.right.x
-    c1 = a1 * s1.left.x + b1 * s1.left.y
-    a2 = s2.right.y - s2.left.y
-    b2 = s2.left.x - s2.right.x
-    c2 = a2 * s2.left.x + b2 * s2.left.y
-    det = a1 * b2 - a2 * b1
-    if det == 0:
-        return Point(0, 0)
-    x = (b2 * c1 - b1 * c2) / det
-    y = (a1 * c2 - a2 * c1) / det
-    return Point(x, y)
+    return [(p.first, p.second) for p  in intersections]
 
 
 def find_intersection(s1: Sequence[Sequence[float]], s2: Sequence[Sequence[float]]) -> tuple[float, float]:

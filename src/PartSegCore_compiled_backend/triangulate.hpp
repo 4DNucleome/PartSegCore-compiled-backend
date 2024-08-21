@@ -2,6 +2,25 @@
 #include <unordered_map>
 #include <unordered_set>
 
+
+struct Point{
+    float x;
+    float y;
+    bool operator==(const Point& p) const {
+        return x == p.x && y == p.y;
+    }
+    Point(float x, float y) : x(x), y(y) {}
+    Point() {}
+
+    bool operator<(const Point& p) const {
+        if (this->x == p.x) {
+            return this->y < p.y;
+        }
+        return this->x < p.x;
+    }
+};
+
+
 struct Event {
     float x;
     float y;
@@ -9,6 +28,7 @@ struct Event {
     bool is_left;
 
     Event(float x, float y, int index, bool is_left) : x(x), y(y), index(index), is_left(is_left) {}
+    Event(const Point& p, int index, bool is_left): x(p.x), y(p.y), index(index), is_left(is_left) {}
     Event() {}
 
     bool operator<(const Event& e) const {
@@ -31,21 +51,20 @@ struct PairHash{
     }
 };
 
-struct Point{
-    float x;
-    float y;
-    bool operator==(const Point& p) const {
-        return x == p.x && y == p.y;
-    }
-    Point(float x, float y) : x(x), y(y) {}
-    Point() {}
-
-};
 
 struct Segment{
     Point left;
     Point right;
-    Segment(Point left, Point right) : left(left), right(right) {}
+    Segment(Point p1, Point p2){
+        if (p1 < p2){
+            this->left = p1;
+            this->right = p2;
+        } else {
+            this->left = p2;
+            this->right = p1;
+        }
+
+    }
     Segment() {}
 };
 
@@ -125,8 +144,66 @@ std::set<Event>::iterator succ(std::set<Event>& s, std::set<Event>::iterator it)
     return ++it;
 }
 
-std::unordered_map<std::pair<int, int>, int, PairHash> __find_intersections(const std::vector<Segment>& segments){
-    std::unordered_map<std::pair<int, int>, int, PairHash> intersections;
+std::unordered_set<std::pair<int, int>, PairHash>
+_find_intersections(const std::vector<Segment>& segments){
+    std::unordered_set<std::pair<int, int>, PairHash> intersections;
     std::vector<Event> events;
+    std::set<Event> active;
     events.reserve(2 * segments.size());
+    for (int i=0; i<segments.size(); i++){
+        events.push_back(Event(segments[i].left, i, true));
+        events.push_back(Event(segments[i].right, i, false));
+    }
+    std::sort(events.begin(), events.end(), cmp_event);
+
+    for (auto event = events.begin(); event != events.end(); event++){
+        if (event->is_left){
+            auto next = active.lower_bound(*event);
+            auto prev = pred(active, next);
+            if (next != active.end() && _do_intersect(segments[event->index], segments[next->index])){
+                if (event->index < next->index){
+                    intersections.emplace(event->index, next->index);
+                } else {
+                    intersections.emplace(next->index, event->index);
+                }
+            }
+            if (prev != active.end() && _do_intersect(segments[event->index], segments[prev->index])){
+                if (event->index < prev->index){
+                    intersections.emplace(event->index, prev->index);
+                } else {
+                    intersections.emplace(prev->index, event->index);
+                }
+            }
+            active.insert(*event);
+        } else {
+            auto it = active.find(Event(segments[event->index].left, event->index, true));
+            auto next = succ(active, it);
+            auto prev = pred(active, it);
+            if (next != active.end() && prev != active.end() && _do_intersect(segments[next->index], segments[prev->index])){
+                if (next->index < prev->index){
+                    intersections.emplace(next->index, prev->index);
+                } else {
+                    intersections.emplace(prev->index, next->index);
+                }
+            }
+            active.erase(it);
+        }
+    }
+    return intersections;
+}
+
+Point _find_intersection(const Segment& s1, const Segment& s2){
+    float a1, b1, c1, a2, b2, c2, det, x, y;
+    a1 = s1.right.y - s1.left.y;
+    b1 = s1.left.x - s1.right.x;
+    c1 = a1 * s1.left.x + b1 * s1.left.y;
+    a2 = s2.right.y - s2.left.y;
+    b2 = s2.left.x - s2.right.x;
+    c2 = a2 * s2.left.x + b2 * s2.left.y;
+    det = a1 * b2 - a2 * b1;
+    if (det == 0)
+        return Point(0, 0);
+    x = (b2 * c1 - b1 * c2) / det;
+    y = (a1 * c2 - a2 * c1) / det;
+    return Point(x, y);
 }

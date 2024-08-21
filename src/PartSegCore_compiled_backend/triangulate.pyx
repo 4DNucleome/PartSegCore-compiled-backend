@@ -59,6 +59,7 @@ cdef extern from "triangulate.hpp":
     bool _do_intersect(const Segment& s1, const Segment& s2)
     unordered_set[pair[int, int], PairHash] _find_intersections(const vector[Segment]& segments)
     Point _find_intersection(const Segment& s1, const Segment& s2)
+    bool _is_convex(const vector[Point]& polygon)
 
 
 
@@ -164,30 +165,6 @@ def find_intersection(s1: Sequence[Sequence[float]], s2: Sequence[Sequence[float
         Segment(Point(s2[0][0], s2[0][1]), Point(s2[1][0], s2[1][1]))
         )
     return (p.x, p.y)
-
-
-cdef bool _is_convex(const vector[Point]& polygon):
-    cdef Py_ssize_t i, j, k
-    cdef int orientation = 0, triangle_orientation
-    cdef float val
-    for i in range(polygon.size()-2):
-        j = (i + 1)
-        k = (i + 2)
-        triangle_orientation = _orientation(polygon[i], polygon[j], polygon[k])
-        if triangle_orientation == 0:
-            continue
-        if orientation == 0:
-            orientation = triangle_orientation
-        elif orientation != triangle_orientation:
-            return False
-    triangle_orientation = _orientation(polygon[polygon.size()-2], polygon[polygon.size()-1], polygon[0])
-    if triangle_orientation != 0 and orientation != triangle_orientation:
-        return False
-    triangle_orientation = _orientation(polygon[polygon.size()-1], polygon[0], polygon[1])
-    if triangle_orientation != 0 and orientation != triangle_orientation:
-        return False
-
-    return True
 
 
 def is_convex(polygon: Sequence[Sequence[float]]) -> bool:

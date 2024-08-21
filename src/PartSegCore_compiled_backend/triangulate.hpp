@@ -207,3 +207,32 @@ Point _find_intersection(const Segment& s1, const Segment& s2){
     y = (a1 * c2 - a2 * c1) / det;
     return Point(x, y);
 }
+
+bool _is_convex(const std::vector<Point>& polygon){
+    int orientation = 0;
+    int triangle_orientation;
+    for (int i=0; i < polygon.size()-2; i++){
+        triangle_orientation = _orientation(polygon[i], polygon[i+1], polygon[i+2]);
+        if (triangle_orientation == 0)
+            continue;
+        if (orientation == 0)
+            orientation = triangle_orientation;
+        else if (orientation != triangle_orientation)
+            return false;
+    }
+    triangle_orientation = _orientation(
+        polygon[polygon.size() -2],
+        polygon[polygon.size() -1],
+        polygon[0]
+    );
+    if (triangle_orientation != 0 && triangle_orientation != orientation)
+        return false;
+    triangle_orientation = _orientation(
+        polygon[polygon.size() - 1],
+        polygon[0],
+        polygon[1]
+    );
+    if (triangle_orientation != 0 && triangle_orientation != orientation)
+        return false;
+    return true;
+}

@@ -246,3 +246,9 @@ std::vector<Triangle> _triangle_convex_polygon(const std::vector<Point> & polygo
     }
     return result;
 }
+
+std::pair<std::vector<Triangle>, std::vector<Point>>
+_triangulate_polygon(const std::vector<Point>& polygon) {
+    if (_is_convex(polygon)):
+        return std::make_pair(_triangle_convex_polygon(polygon), polygon)
+}

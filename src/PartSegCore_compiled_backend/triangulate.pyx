@@ -196,10 +196,7 @@ cdef vector[Triangle] _triangulate_polygon(vector[Point] polygon):
 
     edges.reserve(polygon.size())
     for i in range(polygon.size() - 1):
-        if polygon[i].x < polygon[i+1].x:
-            edges.push_back(Segment(polygon[i], polygon[i+1]))
-        else:
-            edges.push_back(Segment(polygon[i+1], polygon[i]))
+        edges.push_back(Segment(polygon[i], polygon[i+1]))
 
     intersections = _find_intersections(edges)
     intersections_points.reserve(intersections.size())
@@ -241,7 +238,7 @@ def triangulate_polygon(polygon: Sequence[Sequence[float]]) -> list[tuple[int, i
         p1 = polygon_vector[polygon_vector.size() - 1]
         p2 = Point(point[0], point[1])
         if not point_eq(p1, p2):
-            # prevent from adding the same point twice
+            # prevent from adding polygon edge of width 0
             polygon_vector.push_back(p2)
 
     result = _triangulate_polygon(polygon_vector)

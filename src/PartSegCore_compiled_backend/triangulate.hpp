@@ -44,10 +44,18 @@ struct Event {
 };
 
 struct PairHash {
-  std::size_t operator()(const std::pair<int, int> &p) const {
+  std::size_t operator()(const std::pair<int, int>& p) const {
     return std::hash<int>()(p.first) * 31 + std::hash<int>()(p.second);
   }
 };
+
+
+struct PointHash {
+  std::size_t operator()(const Point& p) const{
+    return std::hash<int>()(p.x) * 31 + std::hash<int>()(p.y);
+  }
+};
+
 
 struct Segment {
   Point left;
@@ -72,15 +80,17 @@ struct Triangle {
   Triangle() {}
 };
 
+typedef std::unordered_map<Point, std::vector<std::pair<int, Point>>, PointHash> PointToEdges;
+
 bool point_eq(const Point &p, const Point &q) {
   return p.x == q.x && p.y == q.y;
 }
 
-bool cmp_point(const Point &p, const Point &q) {
-  if (p.x == q.x) {
-    return p.y < q.y;
-  }
-  return p.x < q.x;
+bool cmp_point(const Point &p, const Point &q) { return p < q; }
+
+bool cmp_pair_point(const std::pair<Point, int> &p,
+                    const std::pair<Point, int> &q) {
+  return p.first < q.first;
 }
 
 bool cmp_event(const Event &p, const Event &q) { return p < q; }
@@ -244,8 +254,111 @@ _triangle_convex_polygon(const std::vector<Point> &polygon) {
   return result;
 }
 
+std::vector<Segment> calc_edges(const std::vector<Point>& polygon){
+  std::vector<Segment> edges;
+  edges.reserve(polygon.size());
+  for (int i = 0; i < polygon.size() - 1; i++) {
+    edges.push_back(Segment(polygon[i], polygon[i + 1]));
+  }
+  edges.push_back(Segment(polygon[polygon.size() - 1], polygon[0]));
+  return edges;
+}
+
+std::vector<Point> find_intersection_points(const std::vector<Point>& polygon) {
+  /* find all edge intersedions and add mid points for all such intersection
+   * place*/
+  auto edges = calc_edges(polygon);
+
+  auto intersections = _find_intersections(edges);
+  if (intersections.size() == 0)
+    return polygon;
+  std::unordered_map<int, std::vector<Point>> intersections_points;
+  for (auto p = intersections.begin(); p != intersections.end(); p++) {
+    auto inter_point = _find_intersection(edges[p->first], edges[p->second]);
+    intersections_points[p->first].push_back(inter_point);
+    intersections_points[p->second].push_back(inter_point);
+  }
+  int points_count = polygon.size();
+  for (auto iter_inter = intersections_points.begin();
+       iter_inter != intersections_points.end(); iter_inter++) {
+    points_count += iter_inter->second.size() - 1;
+    iter_inter->second.push_back(edges[iter_inter->first].right);
+    iter_inter->second.push_back(edges[iter_inter->first].left);
+    std::sort(iter_inter->second.begin(), iter_inter->second.end(), cmp_point);
+  }
+
+  std::vector<Point> new_polygon;
+  new_polygon.reserve(points_count);
+  for (int i = 0; i < polygon.size(); i++) {
+    auto point = polygon[i];
+    new_polygon.push_back(point);
+    if (intersections_points.count(i)) {
+      auto new_points = intersections_points[i];
+      if (new_points[0] == point) {
+        for (int j = 1; j < new_points.size() - 1; j++) {
+          new_polygon.push_back(new_points[j]);
+        }
+      } else {
+        for (int j = new_points.size() - 2; j > 0; j++) {
+          new_polygon.push_back(new_points[j]);
+        }
+      }
+    }
+  }
+  return new_polygon;
+}
+
+bool is_normal_point(
+  Point p,
+  PointToEdges point_to_edges
+  ){
+  if (point_to_edges.at(p).size() != 2)
+    return false;
+  auto edges = point_to_edges.at(p);
+  return (edges[0].second < p && p < edges[1].second) || (p < edges[0].second && p < edges[0].second);
+}
+
+bool is_merge_point(
+  Point p,
+  PointToEdges point_to_edges
+  ){
+  if (point_to_edges.at(p).size() != 2)
+    return false;
+  auto edges = point_to_edges.at(p);
+  return (edges[0].second < p && edges[1].second < p);
+}
+
+bool is_split_point(
+  Point p,
+  PointToEdges point_to_edges
+  ){
+  if (point_to_edges.at(p).size() != 2)
+    return false;
+  auto edges = point_to_edges.at(p);
+  return (p < edges[0].second && p < edges[1].second);
+}
+
+
 std::pair<std::vector<Triangle>, std::vector<Point>>
-_triangulate_polygon(const std::vector<Point> &polygon) {
+_triangulate_polygon(const std::vector<Point>& polygon) {
   if (_is_convex(polygon))
-    return std::make_pair(_triangle_convex_polygon(polygon), polygon)
+    return std::make_pair(_triangle_convex_polygon(polygon), polygon);
+
+  // Implement sweeping line algorithm for triangulation
+  // described on this lecture:
+  // https://www.youtube.com/playlist?list=PLtTatrCwXHzEqzJMaTUFgqoCNllgwk4DH
+  // 
+  auto new_polygon = find_intersection_points(polygon);
+  auto edges = calc_edges(new_polygon);
+  PointToEdges point_to_edges; 
+  for (int i=0; i<edges.size(); i++){
+    point_to_edges[edges[i].left].push_back(std::make_pair(i, edges[i].right));
+    point_to_edges[edges[i].right].push_back(std::make_pair(i, edges[i].left));
+  }
+  std::vector<Point> sorted_points = new_polygon;
+  // copy to avoid modification of original vector
+  std::sort(sorted_points.begin(), sorted_points.end(), cmp_point);
+  for (auto point = sorted_points.begin(); point != sorted_points.end(); point++){
+    is_normal_point(*point, point_to_edges);
+  }
 }

@@ -347,10 +347,10 @@ _triangulate_polygon(const std::vector<Point>& polygon) {
   // Implement sweeping line algorithm for triangulation
   // described on this lecture:
   // https://www.youtube.com/playlist?list=PLtTatrCwXHzEqzJMaTUFgqoCNllgwk4DH
-  // 
+  //
   auto new_polygon = find_intersection_points(polygon);
   auto edges = calc_edges(new_polygon);
-  PointToEdges point_to_edges; 
+  PointToEdges point_to_edges;
   for (int i=0; i<edges.size(); i++){
     point_to_edges[edges[i].left].push_back(std::make_pair(i, edges[i].right));
     point_to_edges[edges[i].right].push_back(std::make_pair(i, edges[i].left));

@@ -322,7 +322,7 @@ class MSO {
                          std::vector<mu_type> distances) {
     if (neighbourhood.size() != ndim * distances.size()) {
       throw std::length_error(
-          "Size of neighbouthood need to be 3* Size of distances");
+          "Size of neighbourhood need to be 3* Size of distances");
     }
     this->neighbourhood = neighbourhood;
     this->distances = distances;

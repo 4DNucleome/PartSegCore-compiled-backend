@@ -76,6 +76,12 @@ struct Segment {
   Segment() {}
 };
 
+struct Line{
+    Segment left, right;
+    Line() {};
+    Line(const Segment& left, const Segment& right): left(left), right(right) {};
+};
+
 struct Triangle {
   int x;
   int y;
@@ -357,6 +363,20 @@ sweeping_line_triangulation(const std::vector<Point>& polygon){
   std::sort(sorted_points.begin(), sorted_points.end(), cmp_point);
   for (auto point = sorted_points.begin(); point != sorted_points.end(); point++){
     auto point_type = get_point_type(*point, point_to_edges);
+//    switch (point_type){
+//        case PointType::NORMAL:
+//        break;
+//        case PointType::SPLIT:
+//        auto line = Line(
+//            Segment(*point, point_to_edges.at(*point)[0].second),
+//            Segment(*point, point_to_edges.at(*point)[1].second)
+//        );
+//        break;
+//        case PointType::MERGE:
+//        break;
+//        case PointType::INTERSECTION:
+//        break;
+//    }
   }
   return std::make_pair(result, polygon);
 }

@@ -8,13 +8,11 @@ import numpy as np
 
 cimport numpy as cnp
 
-from cython.operator cimport preincrement, predecrement, dereference as deref
 from libcpp cimport bool
 from libcpp.unordered_set cimport unordered_set
 from libcpp.utility cimport pair
 from libcpp.vector cimport vector
 from libcpp.unordered_map cimport unordered_map
-from libcpp.set cimport set as cpp_set
 from libcpp.algorithm cimport sort
 
 
@@ -179,6 +177,21 @@ def is_convex(polygon: Sequence[Sequence[float]]) -> bool:
 
     return _is_convex(polygon_vector)
 
+def triangle_convex_polygon(polygon: Sequence[Sequence[float]])  -> list[tuple[int, int, int]]:
+    cdef vector[Point] polygon_vector
+    cdef vector[Triangle] result
+
+    polygon_vector.reserve(len(polygon))
+    polygon_vector.push_back(Point(polygon[0][0], polygon[0][1]))
+    for point in polygon[1:]:
+        p1 = polygon_vector[polygon_vector.size() - 1]
+        p2 = Point(point[0], point[1])
+        if not point_eq(p1, p2):
+            # prevent from adding polygon edge of width 0
+            polygon_vector.push_back(p2)
+
+    result = _triangle_convex_polygon(polygon_vector)
+    return [(triangle.x, triangle.y, triangle.z) for triangle in result]
 
 cdef vector[Triangle] _triangulate_polygon(vector[Point] polygon):
     cdef vector[Segment] edges, edges_with_intersections

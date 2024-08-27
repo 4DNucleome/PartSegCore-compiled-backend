@@ -6,6 +6,7 @@ from PartSegCore_compiled_backend.triangulate import (
     find_intersection,
     is_convex,
     triangulate_polygon,
+    triangle_convex_polygon,
 )
 
 
@@ -61,6 +62,11 @@ def test_is_convex():
 
     assert is_convex([(0, 0), (0, 0.5), (0, 1), (1, 1), (1, 0)])
     assert not is_convex([(0, 0), (0.1, 0.5), (0, 1), (1, 1), (1, 0)])
+
+
+def test_triangle_convex_polygon():
+    assert triangle_convex_polygon([(0, 0), (0, 1), (1, 1), (1, 0)]) == [(0, 1, 2), (0, 2, 3)]
+    assert triangle_convex_polygon([(0, 0), (0, 0.5), (0, 1), (1, 1), (1, 0)]) == [(0, 2, 3), (0, 3, 4)]
 
 
 def test_triangulate_polygon():

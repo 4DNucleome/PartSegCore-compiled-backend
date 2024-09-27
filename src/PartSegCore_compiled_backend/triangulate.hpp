@@ -343,20 +343,27 @@ sweeping_line_triangulation(const std::vector<Point> &polygon) {
   for (auto point = sorted_points.begin(); point != sorted_points.end();
        point++) {
     auto point_type = get_point_type(*point, point_to_edges);
-    //    switch (point_type){
-    //        case PointType::NORMAL:
-    //        break;
-    //        case PointType::SPLIT:
-    //        auto line = Line(
-    //            Segment(*point, point_to_edges.at(*point)[0].second),
-    //            Segment(*point, point_to_edges.at(*point)[1].second)
-    //        );
-    //        break;
-    //        case PointType::MERGE:
-    //        break;
-    //        case PointType::INTERSECTION:
-    //        break;
-    //    }
+    switch (point_type) {
+      case PointType::NORMAL:
+        // change edge adjusted to current sweeping line
+        break;
+      case PointType::SPLIT:
+        // split sweeping line on two lines
+        // add edge sor cutting polygon on two parts
+        auto line = Line(Segment(*point, point_to_edges.at(*point)[0].second),
+                         Segment(*point, point_to_edges.at(*point)[1].second));
+        break;
+      case PointType::MERGE:
+        // merge two sweeping lines to one
+        // save point as point to start new line for SPLIT pointcase
+        break;
+      case PointType::INTERSECTION:
+        // this is merge and split point at same time
+        // this is not described in original algorithm
+        // but we need it to handle self intersecting polygons
+        // Remember about more than 4 edges case
+        break;
+    }
   }
   return std::make_pair(result, polygon);
 }

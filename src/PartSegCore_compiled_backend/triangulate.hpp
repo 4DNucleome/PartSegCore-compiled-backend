@@ -2,9 +2,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-enum PointType{
-  NORMAL, SPLIT, MERGE, INTERSECTION
-};
+enum PointType { NORMAL, SPLIT, MERGE, INTERSECTION };
 
 struct Point {
   float x;
@@ -48,18 +46,16 @@ struct Event {
 };
 
 struct PairHash {
-  std::size_t operator()(const std::pair<int, int>& p) const {
+  std::size_t operator()(const std::pair<int, int> &p) const {
     return std::hash<int>()(p.first) * 31 + std::hash<int>()(p.second);
   }
 };
 
-
 struct PointHash {
-  std::size_t operator()(const Point& p) const{
+  std::size_t operator()(const Point &p) const {
     return std::hash<int>()(p.x) * 31 + std::hash<int>()(p.y);
   }
 };
-
 
 struct Segment {
   Point left;
@@ -76,10 +72,10 @@ struct Segment {
   Segment() {}
 };
 
-struct Line{
-    Segment left, right;
-    Line() {};
-    Line(const Segment& left, const Segment& right): left(left), right(right) {};
+struct Line {
+  Segment left, right;
+  Line() {};
+  Line(const Segment &left, const Segment &right) : left(left), right(right) {};
 };
 
 struct Triangle {
@@ -90,7 +86,8 @@ struct Triangle {
   Triangle() {}
 };
 
-typedef std::unordered_map<Point, std::vector<std::pair<int, Point>>, PointHash> PointToEdges;
+typedef std::unordered_map<Point, std::vector<std::pair<int, Point>>, PointHash>
+    PointToEdges;
 
 bool point_eq(const Point &p, const Point &q) {
   return p.x == q.x && p.y == q.y;
@@ -114,8 +111,7 @@ bool _on_segment(const Point &p, const Point &q, const Point &r) {
 
 int _orientation(const Point &p, const Point &q, const Point &r) {
   float val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
-  if (val == 0)
-    return 0;
+  if (val == 0) return 0;
   return (val > 0) ? 1 : 2;
 }
 
@@ -133,17 +129,12 @@ bool _do_intersect(const Segment &s1, const Segment &s2) {
   int o3 = _orientation(p2, q2, p1);
   int o4 = _orientation(p2, q2, q1);
 
-  if (o1 != o2 && o3 != o4)
-    return true;
+  if (o1 != o2 && o3 != o4) return true;
 
-  if (o1 == 0 && _on_segment(p1, p2, q1))
-    return true;
-  if (o2 == 0 && _on_segment(p1, q2, q1))
-    return true;
-  if (o3 == 0 && _on_segment(p2, p1, q2))
-    return true;
-  if (o4 == 0 && _on_segment(p2, q1, q2))
-    return true;
+  if (o1 == 0 && _on_segment(p1, p2, q1)) return true;
+  if (o2 == 0 && _on_segment(p1, q2, q1)) return true;
+  if (o3 == 0 && _on_segment(p2, p1, q2)) return true;
+  if (o4 == 0 && _on_segment(p2, q1, q2)) return true;
 
   return false;
 }
@@ -161,8 +152,8 @@ std::set<Event>::iterator succ(std::set<Event> &s,
   return ++it;
 }
 
-std::unordered_set<std::pair<int, int>, PairHash>
-_find_intersections(const std::vector<Segment> &segments) {
+std::unordered_set<std::pair<int, int>, PairHash> _find_intersections(
+    const std::vector<Segment> &segments) {
   std::unordered_set<std::pair<int, int>, PairHash> intersections;
   std::vector<Event> events;
   std::set<Event> active;
@@ -222,8 +213,7 @@ Point _find_intersection(const Segment &s1, const Segment &s2) {
   b2 = s2.left.x - s2.right.x;
   c2 = a2 * s2.left.x + b2 * s2.left.y;
   det = a1 * b2 - a2 * b1;
-  if (det == 0)
-    return Point(0, 0);
+  if (det == 0) return Point(0, 0);
   x = (b2 * c1 - b1 * c2) / det;
   y = (a1 * c2 - a2 * c1) / det;
   return Point(x, y);
@@ -235,8 +225,7 @@ bool _is_convex(const std::vector<Point> &polygon) {
   for (size_t i = 0; i < polygon.size() - 2; i++) {
     triangle_orientation =
         _orientation(polygon[i], polygon[i + 1], polygon[i + 2]);
-    if (triangle_orientation == 0)
-      continue;
+    if (triangle_orientation == 0) continue;
     if (orientation == 0)
       orientation = triangle_orientation;
     else if (orientation != triangle_orientation)
@@ -253,8 +242,8 @@ bool _is_convex(const std::vector<Point> &polygon) {
   return true;
 }
 
-std::vector<Triangle>
-_triangle_convex_polygon(const std::vector<Point> &polygon) {
+std::vector<Triangle> _triangle_convex_polygon(
+    const std::vector<Point> &polygon) {
   std::vector<Triangle> result;
   for (size_t i = 1; i < polygon.size() - 1; i++) {
     if (_orientation(polygon[0], polygon[i], polygon[i + 1]) != 0) {
@@ -264,7 +253,7 @@ _triangle_convex_polygon(const std::vector<Point> &polygon) {
   return result;
 }
 
-std::vector<Segment> calc_edges(const std::vector<Point>& polygon){
+std::vector<Segment> calc_edges(const std::vector<Point> &polygon) {
   std::vector<Segment> edges;
   edges.reserve(polygon.size());
   for (size_t i = 0; i < polygon.size() - 1; i++) {
@@ -274,14 +263,13 @@ std::vector<Segment> calc_edges(const std::vector<Point>& polygon){
   return edges;
 }
 
-std::vector<Point> find_intersection_points(const std::vector<Point>& polygon) {
+std::vector<Point> find_intersection_points(const std::vector<Point> &polygon) {
   /* find all edge intersedions and add mid points for all such intersection
    * place*/
   auto edges = calc_edges(polygon);
 
   auto intersections = _find_intersections(edges);
-  if (intersections.size() == 0)
-    return polygon;
+  if (intersections.size() == 0) return polygon;
   std::unordered_map<int, std::vector<Point>> intersections_points;
   for (auto p = intersections.begin(); p != intersections.end(); p++) {
     auto inter_point = _find_intersection(edges[p->first], edges[p->second]);
@@ -318,81 +306,74 @@ std::vector<Point> find_intersection_points(const std::vector<Point>& polygon) {
   return new_polygon;
 }
 
-
-
 /*
 Calculate point type.
 If there is more than two edges adjusted to point, it is intersection point.
-If there are two adjusted edges, it could be one of split, merge and normal point.
-If both adjusted edges have opposite end before given point p, this is merge point.
-If both adjusted edges have opposite end after given point p, split point.
-Otherwise it is normal point.
+If there are two adjusted edges, it could be one of split, merge and normal
+point. If both adjusted edges have opposite end before given point p, this is
+merge point. If both adjusted edges have opposite end after given point p, split
+point. Otherwise it is normal point.
 */
-PointType get_point_type(
-    Point p,
-    PointToEdges& point_to_edges
-){
-    if (point_to_edges.at(p).size() != 2)
-        return PointType::INTERSECTION;
-    auto edges = point_to_edges.at(p);
-    if (edges[0].second < p && edges[1].second < p)
-        return PointType::MERGE;
-    if (p < edges[0].second && p < edges[1].second)
-        return PointType::SPLIT;
-    return PointType::NORMAL;
+PointType get_point_type(Point p, PointToEdges &point_to_edges) {
+  if (point_to_edges.at(p).size() != 2) return PointType::INTERSECTION;
+  auto edges = point_to_edges.at(p);
+  if (edges[0].second < p && edges[1].second < p) return PointType::MERGE;
+  if (p < edges[0].second && p < edges[1].second) return PointType::SPLIT;
+  return PointType::NORMAL;
 }
-
 
 /*
 This is implementation of sweeping line triangulation of polygon
-Its assumes that there is no edge intersections, but may be a point with more than 2 edges.
-described on this lecture:
+Its assumes that there is no edge intersections, but may be a point with more
+than 2 edges. described on this lecture:
 https://www.youtube.com/playlist?list=PLtTatrCwXHzEqzJMaTUFgqoCNllgwk4DH
 */
 std::pair<std::vector<Triangle>, std::vector<Point>>
-sweeping_line_triangulation(const std::vector<Point>& polygon){
+sweeping_line_triangulation(const std::vector<Point> &polygon) {
   std::vector<Triangle> result;
   auto edges = calc_edges(polygon);
   PointToEdges point_to_edges;
-  for (size_t i=0; i<edges.size(); i++){
+  for (size_t i = 0; i < edges.size(); i++) {
     point_to_edges[edges[i].left].push_back(std::make_pair(i, edges[i].right));
     point_to_edges[edges[i].right].push_back(std::make_pair(i, edges[i].left));
   }
   std::vector<Point> sorted_points = polygon;
   // copy to avoid modification of original vector
   std::sort(sorted_points.begin(), sorted_points.end(), cmp_point);
-  for (auto point = sorted_points.begin(); point != sorted_points.end(); point++){
+  for (auto point = sorted_points.begin(); point != sorted_points.end();
+       point++) {
     auto point_type = get_point_type(*point, point_to_edges);
-//    switch (point_type){
-//        case PointType::NORMAL:
-//        break;
-//        case PointType::SPLIT:
-//        auto line = Line(
-//            Segment(*point, point_to_edges.at(*point)[0].second),
-//            Segment(*point, point_to_edges.at(*point)[1].second)
-//        );
-//        break;
-//        case PointType::MERGE:
-//        break;
-//        case PointType::INTERSECTION:
-//        break;
-//    }
+    //    switch (point_type){
+    //        case PointType::NORMAL:
+    //        break;
+    //        case PointType::SPLIT:
+    //        auto line = Line(
+    //            Segment(*point, point_to_edges.at(*point)[0].second),
+    //            Segment(*point, point_to_edges.at(*point)[1].second)
+    //        );
+    //        break;
+    //        case PointType::MERGE:
+    //        break;
+    //        case PointType::INTERSECTION:
+    //        break;
+    //    }
   }
   return std::make_pair(result, polygon);
 }
 
-
-std::pair<std::vector<Triangle>, std::vector<Point>>
-_triangulate_polygon(const std::vector<Point>& polygon) {
-  if (polygon.size() <3)
+std::pair<std::vector<Triangle>, std::vector<Point>> _triangulate_polygon(
+    const std::vector<Point> &polygon) {
+  if (polygon.size() < 3)
     return std::make_pair(std::vector<Triangle>(), polygon);
   if (polygon.size() == 3)
     return std::make_pair(std::vector<Triangle>({Triangle(0, 1, 2)}), polygon);
-  if (polygon.size() == 4){
-    if (_orientation(polygon[0], polygon[1], polygon[2]) != _orientation(polygon[0], polygon[3], polygon[2]))
-      return std::make_pair(std::vector<Triangle>({Triangle(0, 1, 2), Triangle(0, 3, 2)}), polygon);
+  if (polygon.size() == 4) {
+    if (_orientation(polygon[0], polygon[1], polygon[2]) !=
+        _orientation(polygon[0], polygon[3], polygon[2]))
+      return std::make_pair(
+          std::vector<Triangle>({Triangle(0, 1, 2), Triangle(0, 3, 2)}),
+          polygon);
   }
-
 
   if (_is_convex(polygon))
     return std::make_pair(_triangle_convex_polygon(polygon), polygon);

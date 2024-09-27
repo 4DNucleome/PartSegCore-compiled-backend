@@ -119,7 +119,7 @@ class ArrayLimits {
     this->upper_bound.fill(1);
   };
   ArrayLimits(std::array<T, K> lower_bound_, std::array<T, K> upper_bound_)
-      : lower_bound(lower_bound_), upper_bound(upper_bound_){};
+      : lower_bound(lower_bound_), upper_bound(upper_bound_) {};
   ArrayLimits(std::array<T, K> upper_bound_) : upper_bound(upper_bound_) {
     this->lower_bound.fill(0);
   };
@@ -214,12 +214,13 @@ class ArrayLimits {
 
 namespace MSO {
 struct BadInitialization : public std::runtime_error {
-  BadInitialization(char const* const message) : std::runtime_error(message){};
-  BadInitialization(const std::string& message) : std::runtime_error(message){};
+  BadInitialization(char const* const message) : std::runtime_error(message) {};
+  BadInitialization(const std::string& message)
+      : std::runtime_error(message) {};
 };
 struct BadArgumentSize : public std::runtime_error {
-  BadArgumentSize(char const* const message) : std::runtime_error(message){};
-  BadArgumentSize(const std::string& message) : std::runtime_error(message){};
+  BadArgumentSize(char const* const message) : std::runtime_error(message) {};
+  BadArgumentSize(const std::string& message) : std::runtime_error(message) {};
 };
 
 template <typename T, typename M = double, size_t N = 3>

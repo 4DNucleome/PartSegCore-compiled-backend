@@ -1,5 +1,3 @@
 #include "mso.h"
 
-namespace MSO {
-
-} // namespace MSO
+namespace MSO {}  // namespace MSO

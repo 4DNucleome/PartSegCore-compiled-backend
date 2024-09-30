@@ -3,7 +3,7 @@
 #include <unordered_set>
 
 enum PointType { NORMAL, SPLIT, MERGE, INTERSECTION };
-
+/* Point class with x and y coordinates */
 struct Point {
   float x;
   float y;
@@ -78,15 +78,36 @@ struct Line {
   Line(const Segment &left, const Segment &right) : left(left), right(right) {};
 };
 
+
+struct OrderedPolygon {
+  Point top;
+  Point bottom;
+  std::vector<Point> left;
+  std::vector<Point> right;
+};
+
+
 struct Triangle {
   int x;
   int y;
   int z;
-  Triangle(int x, int y, int z) : x(x), y(y), z(z) {}
-  Triangle() {}
+  Triangle(int x, int y, int z) : x(x), y(y), z(z) {};
+  Triangle() {};
 };
 
-typedef std::unordered_map<Point, std::vector<std::pair<int, Point>>, PointHash>
+typedef size_t EdgeIndex;
+
+struct PointEdges {
+    EdgeIndex edge_index;
+    Point opposite_point;
+    PointEdges(EdgeIndex edge_index, Point opposite_point)
+        : edge_index(edge_index), opposite_point(opposite_point) {}
+    bool operator<(const PointEdges &e) const {
+        return opposite_point < e.opposite_point;
+    }
+};
+
+typedef std::unordered_map<Point, std::vector<PointEdges>, PointHash>
     PointToEdges;
 
 bool point_eq(const Point &p, const Point &q) {
@@ -101,6 +122,10 @@ bool cmp_pair_point(const std::pair<Point, int> &p,
 }
 
 bool cmp_event(const Event &p, const Event &q) { return p < q; }
+
+bool cmp_point_edges(const PointEdges &p, const PointEdges &q) {
+  return p < q;
+}
 
 bool _on_segment(const Point &p, const Point &q, const Point &r) {
   if (q.x <= std::max(p.x, r.x) && q.x >= std::min(p.x, r.x) &&
@@ -317,9 +342,25 @@ point. Otherwise it is normal point.
 PointType get_point_type(Point p, PointToEdges &point_to_edges) {
   if (point_to_edges.at(p).size() != 2) return PointType::INTERSECTION;
   auto edges = point_to_edges.at(p);
-  if (edges[0].second < p && edges[1].second < p) return PointType::MERGE;
-  if (p < edges[0].second && p < edges[1].second) return PointType::SPLIT;
+  if (edges[0].opposite_point < p && edges[1].opposite_point < p) return PointType::MERGE;
+  if (p < edges[0].opposite_point && p < edges[1].opposite_point) return PointType::SPLIT;
   return PointType::NORMAL;
+}
+
+/*
+Get map from point to list of edges which contains this point.
+Also sort each list by point order.
+*/
+PointEdges get_points_edges(std::vector<Segment> & edges) {
+  PointToEdges point_to_edges;
+  for (size_t i = 0; i < edges.size(); i++) {
+    point_to_edges[edges[i].left].push_back(PointEdges(i, edges[i].right));
+    point_to_edges[edges[i].right].push_back(PointEdges(i, edges[i].left));
+  }
+  for (size_t i = 0; i < point_to_edges.size(); i++){
+    std::sort(point_to_edges[i].begin(), point_to_edges[i].end(), cmp_point_edges);
+  }
+  return point_to_edges
 }
 
 /*
@@ -332,14 +373,14 @@ std::pair<std::vector<Triangle>, std::vector<Point>>
 sweeping_line_triangulation(const std::vector<Point> &polygon) {
   std::vector<Triangle> result;
   auto edges = calc_edges(polygon);
-  PointToEdges point_to_edges;
-  for (size_t i = 0; i < edges.size(); i++) {
-    point_to_edges[edges[i].left].push_back(std::make_pair(i, edges[i].right));
-    point_to_edges[edges[i].right].push_back(std::make_pair(i, edges[i].left));
-  }
+  PointToEdges point_to_edges = get_points_edges(edges);
+
   std::vector<Point> sorted_points = polygon;
   // copy to avoid modification of original vector
   std::sort(sorted_points.begin(), sorted_points.end(), cmp_point);
+  std::vector<OrderedPolygon> ordered_polygon_li;
+  ordered_polygon_li.push_back(OrderedPolygon());
+  Line line;
   for (auto point = sorted_points.begin(); point != sorted_points.end();
        point++) {
     auto point_type = get_point_type(*point, point_to_edges);
@@ -350,8 +391,8 @@ sweeping_line_triangulation(const std::vector<Point> &polygon) {
       case PointType::SPLIT:
         // split sweeping line on two lines
         // add edge sor cutting polygon on two parts
-        auto line = Line(Segment(*point, point_to_edges.at(*point)[0].second),
-                         Segment(*point, point_to_edges.at(*point)[1].second));
+        line = Line(Segment(*point, point_to_edges.at(*point)[0].opposite_point),
+                    Segment(*point, point_to_edges.at(*point)[1].opposite_point));
         break;
       case PointType::MERGE:
         // merge two sweeping lines to one

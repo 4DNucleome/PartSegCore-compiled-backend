@@ -351,7 +351,7 @@ PointType get_point_type(Point p, PointToEdges &point_to_edges) {
 Get map from point to list of edges which contains this point.
 Also sort each list by point order.
 */
-PointEdges get_points_edges(std::vector<Segment> & edges) {
+PointToEdges get_points_edges(std::vector<Segment> & edges) {
   PointToEdges point_to_edges;
   for (size_t i = 0; i < edges.size(); i++) {
     point_to_edges[edges[i].left].push_back(PointEdges(i, edges[i].right));

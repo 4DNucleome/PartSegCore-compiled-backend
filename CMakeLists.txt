@@ -81,6 +81,11 @@ python_add_library(_napari_mapping MODULE "${napari_mapping_cython_cxx}" WITH_SO
 target_include_directories(_napari_mapping PRIVATE "${NUMPY_INCLUDE_DIR}")
 target_link_libraries(_napari_mapping PRIVATE OpenMP::OpenMP_CXX)
 
+cython_transpile(src/PartSegCore_compiled_backend/triangulate.pyx LANGUAGE CXX OUTPUT_VARIABLE triangulate_cython_cxx)
+python_add_library(triangulate MODULE "${triangulate_cython_cxx}" WITH_SOABI)
+target_include_directories(triangulate PRIVATE "${NUMPY_INCLUDE_DIR}")
+target_include_directories(triangulate PRIVATE src/PartSegCore_compiled_backend/)
+
 
 install(TARGETS euclidean_cython DESTINATION PartSegCore_compiled_backend/sprawl_utils)
 install(TARGETS path_sprawl_cython DESTINATION PartSegCore_compiled_backend/sprawl_utils)
@@ -91,3 +96,4 @@ install(TARGETS calc_bounds DESTINATION PartSegCore_compiled_backend)
 install(TARGETS mso_bind DESTINATION PartSegCore_compiled_backend/multiscale_opening)
 install(TARGETS _fast_unique DESTINATION PartSegCore_compiled_backend)
 install(TARGETS _napari_mapping DESTINATION PartSegCore_compiled_backend)
+install(TARGETS triangulate DESTINATION PartSegCore_compiled_backend)

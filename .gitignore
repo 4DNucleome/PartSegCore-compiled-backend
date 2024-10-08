@@ -1,3 +1,4 @@
+cmake
 *.cpp
 src/PartSegCore_compiled_backend/version.py
 src/**.html

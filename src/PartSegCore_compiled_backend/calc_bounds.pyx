@@ -45,7 +45,7 @@ def calc_bounds(labels: np.ndarray, components_num: Optional[int]=None):
     }[labels.ndim](labels, components_num)
 
 
-def calc_bounds5(cnp.ndarray[label_types, ndim=5] labels, components_num: Py_ssize_t):
+def calc_bounds5(cnp.ndarray[label_types, ndim=5] labels, Py_ssize_t components_num):
     """
     Calculate the bounds of the specified labels in a 5-dimensional array.
 
@@ -94,7 +94,7 @@ def calc_bounds5(cnp.ndarray[label_types, ndim=5] labels, components_num: Py_ssi
     return min_bound, max_bound
 
 
-def calc_bounds4(cnp.ndarray[label_types, ndim=4] labels, components_num: Py_ssize_t):
+def calc_bounds4(cnp.ndarray[label_types, ndim=4] labels, Py_ssize_t components_num):
     """
     Calculate the bounds of the specified labels in a 4-dimensional array.
 
@@ -137,7 +137,7 @@ def calc_bounds4(cnp.ndarray[label_types, ndim=4] labels, components_num: Py_ssi
                     max_bound[label_val, 3] = max(max_bound[label_val, 3], x)
     return min_bound, max_bound
 
-def calc_bounds3(cnp.ndarray[label_types, ndim=3] labels, components_num: Py_ssize_t):
+def calc_bounds3(cnp.ndarray[label_types, ndim=3] labels, Py_ssize_t components_num):
     """
     Calculate the bounds of the specified labels in a 3-dimensional array.
 
@@ -178,7 +178,7 @@ def calc_bounds3(cnp.ndarray[label_types, ndim=3] labels, components_num: Py_ssi
     return min_bound, max_bound
 
 
-def calc_bounds2(cnp.ndarray[label_types, ndim=2] labels, components_num: Py_ssize_t):
+def calc_bounds2(cnp.ndarray[label_types, ndim=2] labels, Py_ssize_t components_num):
     """
     Calculate the bounds of the specified labels in a 2-dimensional array.
 

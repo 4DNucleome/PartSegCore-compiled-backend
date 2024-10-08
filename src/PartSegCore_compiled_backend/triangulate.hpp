@@ -354,13 +354,13 @@ Also sort each list by point order.
 PointToEdges get_points_edges(std::vector<Segment> & edges) {
   PointToEdges point_to_edges;
   for (size_t i = 0; i < edges.size(); i++) {
-    point_to_edges[edges[i].left].push_back(PointEdges(i, edges[i].right));
-    point_to_edges[edges[i].right].push_back(PointEdges(i, edges[i].left));
+    point_to_edges[edges[i].left].emplace_back(i, edges[i].right);
+    point_to_edges[edges[i].right].emplace_back(i, edges[i].left);
   }
-  for (size_t i = 0; i < point_to_edges.size(); i++){
-    std::sort(point_to_edges[i].begin(), point_to_edges[i].end(), cmp_point_edges);
+  for (auto & point_to_edge : point_to_edges) {
+    std::sort(point_to_edge.second.begin(), point_to_edge.second.end(), cmp_point_edges);
   }
-  return point_to_edges
+  return point_to_edges;
 }
 
 /*

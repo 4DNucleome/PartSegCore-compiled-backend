@@ -7,6 +7,9 @@ build-backend = "scikit_build_core.build"
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 sdist.include = ["src/PartSegCore_compiled_backend/version.py"]
 cmake.version = ">=3.21"
+sdist.exclude = [".github", "tox.ini", "build_utils", "notebooks", ".readthedocs.yaml"]
+wheel.exclude = ["**.pyx"]
+
 
 [project]
 name = "PartSegCore_compiled_backend"

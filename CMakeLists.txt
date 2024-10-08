@@ -6,6 +6,11 @@ set(CMAKE_CXX_STANDARD 11)
 # Define compiler directive
 add_definitions(-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION)
 
+if(DEFINED ENV{CUSTOM_MODULE_PATH})
+    list(APPEND CMAKE_MODULE_PATH $ENV{CUSTOM_MODULE_PATH})
+    message("Custom module path: ${CMAKE_MODULE_PATH}")
+endif()
+
 
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 find_package(Cython MODULE REQUIRED VERSION 3.0)

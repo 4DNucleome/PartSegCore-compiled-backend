@@ -19,6 +19,7 @@ struct Point {
   float x;
   float y;
   bool operator==(const Point &p) const { return x == p.x && y == p.y; }
+  bool operator!=(const Point &p) const { return !(*this == p); }
   Point(float x, float y) : x(x), y(y) {}
   Point() = default;
 
@@ -28,23 +29,15 @@ struct Point {
     }
     return this->x < p.x;
   }
+
+  struct PointHash {
+    std::size_t operator()(const Point &p) const {
+      return std::hash<float>()(p.x) * 31 + std::hash<float>()(p.y);
+    }
+  };
 };
 
-struct PointHash {
-  std::size_t operator()(const Point &p) const {
-    return std::hash<float>()(p.x) * 31 + std::hash<float>()(p.y);
-  }
-};
-
-bool point_eq(const Point &p, const Point &q) {
-  return p.x == q.x && p.y == q.y;
-}
-
-bool cmp_pair_point(const std::pair<Point, int> &p,
-                    const std::pair<Point, int> &q) {
-  return p.first < q.first;
-}
-
+/*Struct to represent edge of polygon with points ordered*/
 struct Segment {
   Point left{};
   Point right{};
@@ -59,9 +52,18 @@ struct Segment {
   }
   Segment() = default;
 };
-
-bool cmp_point(const Point &p, const Point &q) { return p < q; }
 }  // namespace point
 }  // namespace partsegcore
+
+// overload of hash function for
+// unordered map and set
+namespace std {
+template <>
+struct hash<partsegcore::point::Point> {
+  std::size_t operator()(const partsegcore::point::Point &point) const {
+    return partsegcore::point::Point::PointHash()(point);
+  }
+};
+}  // namespace std
 
 #endif  // PARTSEGCORE_POINT_H

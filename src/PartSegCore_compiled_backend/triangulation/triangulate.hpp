@@ -49,11 +49,7 @@ struct PointEdges {
   }
 };
 
-typedef std::unordered_map<point::Point, std::vector<PointEdges>,
-                           point::PointHash>
-    PointToEdges;
-
-bool cmp_point_edges(const PointEdges &p, const PointEdges &q) { return p < q; }
+typedef std::unordered_map<point::Point, std::vector<PointEdges>> PointToEdges;
 
 bool _is_convex(const std::vector<point::Point> &polygon) {
   int orientation = 0;
@@ -124,7 +120,7 @@ std::vector<point::Point> find_intersection_points(
         edges[intersections_point.first].right);
     intersections_point.second.push_back(edges[intersections_point.first].left);
     std::sort(intersections_point.second.begin(),
-              intersections_point.second.end(), point::cmp_point);
+              intersections_point.second.end());
   }
 
   std::vector<point::Point> new_polygon;
@@ -177,8 +173,7 @@ PointToEdges get_points_edges(std::vector<point::Segment> &edges) {
     point_to_edges[edges[i].right].emplace_back(i, edges[i].left);
   }
   for (auto &point_to_edge : point_to_edges) {
-    std::sort(point_to_edge.second.begin(), point_to_edge.second.end(),
-              cmp_point_edges);
+    std::sort(point_to_edge.second.begin(), point_to_edge.second.end());
   }
   return point_to_edges;
 }
@@ -197,7 +192,7 @@ sweeping_line_triangulation(const std::vector<point::Point> &polygon) {
 
   std::vector<point::Point> sorted_points = polygon;
   // copy to avoid modification of original vector
-  std::sort(sorted_points.begin(), sorted_points.end(), point::cmp_point);
+  std::sort(sorted_points.begin(), sorted_points.end());
   std::vector<OrderedPolygon> ordered_polygon_li;
   ordered_polygon_li.emplace_back();
   Line line;

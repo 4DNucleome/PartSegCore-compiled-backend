@@ -22,7 +22,8 @@ cdef extern from "triangulation/point.hpp" namespace "partsegcore::point":
         float y
         Point(float x, float y)
         Point()
-        operator==(const Point& other) const
+        bool operator==(const Point& other) const
+        bool operator!=(const Point& other) const
 
     cdef cppclass Segment:
         Point left
@@ -30,8 +31,6 @@ cdef extern from "triangulation/point.hpp" namespace "partsegcore::point":
         Segment(Point left, Point right)
         Segment()
 
-    bool point_eq(const Point& a, const Point& b)
-    bool cmp_point(const Point& a, const Point& b)
 
 cdef extern from "triangulation/intersection.hpp" namespace "partsegcore::intersection":
     cdef cppclass Event:
@@ -45,7 +44,6 @@ cdef extern from "triangulation/intersection.hpp" namespace "partsegcore::inters
     cdef cppclass PairHash:
         size_t operator()(pair[int, int] p) const
 
-    bool cmp_event(const Event& p, const Event& q)
     bool _on_segment(const Point& p, const Point& q, const Point& r)
     int _orientation(const Point& p, const Point& q, const Point& r)
     bool _do_intersect(const Segment& s1, const Segment& s2)
@@ -191,7 +189,7 @@ def triangle_convex_polygon(polygon: Sequence[Sequence[float]])  -> list[tuple[i
     for point in polygon[1:]:
         p1 = polygon_vector[polygon_vector.size() - 1]
         p2 = Point(point[0], point[1])
-        if not point_eq(p1, p2):
+        if p1 != p2:
             # prevent from adding polygon edge of width 0
             polygon_vector.push_back(p2)
 
@@ -236,7 +234,7 @@ cdef vector[Triangle] _triangulate_polygon(vector[Point] polygon):
             intersections_points_vector = intersections_points.at(i)
             intersections_points_vector.push_back(edges[i].left)
             intersections_points_vector.push_back(edges[i].right)
-            sort(intersections_points_vector.begin(), intersections_points_vector.end(), cmp_point)
+            sort(intersections_points_vector.begin(), intersections_points_vector.end())
             for j in range(intersections_points_vector.size() - 1):
                 edges_with_intersections.push_back(Segment(intersections_points_vector[j], intersections_points_vector[j+1]))
 
@@ -255,7 +253,7 @@ def triangulate_polygon(polygon: Sequence[Sequence[float]]) -> list[tuple[int, i
     for point in polygon[1:]:
         p1 = polygon_vector[polygon_vector.size() - 1]
         p2 = Point(point[0], point[1])
-        if not point_eq(p1, p2):
+        if p1 != p2:
             # prevent from adding polygon edge of width 0
             polygon_vector.push_back(p2)
 

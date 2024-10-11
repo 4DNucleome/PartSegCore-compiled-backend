@@ -70,9 +70,7 @@ bool _do_intersect(const point::Segment &s1, const point::Segment &s2) {
   const point::Point &q1 = s1.right;
   const point::Point &p2 = s2.left;
   const point::Point &q2 = s2.right;
-  if (point::point_eq(p1, p2) || point::point_eq(p1, q2) ||
-      point::point_eq(q1, p2) || point::point_eq(q1, q2))
-    return false;
+  if (p1 == p2 || p1 == q2 || q1 == p2 || q1 == q2) return false;
 
   int o1 = _orientation(p1, q1, p2);
   int o2 = _orientation(p1, q1, q2);
@@ -102,9 +100,9 @@ std::set<Event>::iterator succ(std::set<Event> &s,
   return ++it;
 }
 
-std::unordered_set<std::pair<int, int>, intersection::PairHash>
-_find_intersections(const std::vector<point::Segment> &segments) {
-  std::unordered_set<std::pair<int, int>, intersection::PairHash> intersections;
+std::unordered_set<std::pair<int, int>, PairHash> _find_intersections(
+    const std::vector<point::Segment> &segments) {
+  std::unordered_set<std::pair<int, int>, PairHash> intersections;
   std::vector<Event> events;
   std::set<Event> active;
   events.reserve(2 * segments.size());
@@ -112,7 +110,7 @@ _find_intersections(const std::vector<point::Segment> &segments) {
     events.emplace_back(segments[i].left, i, true);
     events.emplace_back(segments[i].right, i, false);
   }
-  std::sort(events.begin(), events.end(), cmp_event);
+  std::sort(events.begin(), events.end());
 
   for (auto &event : events) {
     if (event.is_left) {
@@ -154,6 +152,18 @@ _find_intersections(const std::vector<point::Segment> &segments) {
   return intersections;
 }
 
+/**
+ * @brief Finds the intersection point of two line segments, if it exists.
+ *
+ * This function calculates the intersection point of two given line segments.
+ * Each segment is defined by two endpoints. If the segments do not intersect,
+ * the function returns the point (0, 0).
+ *
+ * @param s1 The first line segment.
+ * @param s2 The second line segment.
+ * @return The intersection point of the two segments, or (0, 0) if they do not
+ * intersect.
+ */
 point::Point _find_intersection(const point::Segment &s1,
                                 const point::Segment &s2) {
   float a1, b1, c1, a2, b2, c2, det, x, y;

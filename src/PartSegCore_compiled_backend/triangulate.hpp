@@ -60,15 +60,15 @@ struct PointHash {
 };
 
 struct Segment {
-  Point left;
-  Point right;
+  Point left{};
+  Point right{};
   Segment(Point p1, Point p2) {
     if (p1 < p2) {
-      this->left = p1;
-      this->right = p2;
+      left = p1;
+      right = p2;
     } else {
-      this->left = p2;
-      this->right = p1;
+      left = p2;
+      right = p1;
     }
   }
   Segment() = default;
@@ -92,7 +92,7 @@ struct Triangle {
   std::size_t y;
   std::size_t z;
   Triangle(std::size_t x, std::size_t y, std::size_t z) : x(x), y(y), z(z) {};
-  Triangle() {};
+  Triangle() = default;
 };
 
 typedef std::size_t EdgeIndex;
@@ -187,30 +187,30 @@ std::unordered_set<std::pair<int, int>, PairHash> _find_intersections(
   }
   std::sort(events.begin(), events.end(), cmp_event);
 
-  for (auto event = events.begin(); event != events.end(); event++) {
-    if (event->is_left) {
-      auto next = active.lower_bound(*event);
+  for (auto &event : events) {
+    if (event.is_left) {
+      auto next = active.lower_bound(event);
       auto prev = pred(active, next);
       if (next != active.end() &&
-          _do_intersect(segments[event->index], segments[next->index])) {
-        if (event->index < next->index) {
-          intersections.emplace(event->index, next->index);
+          _do_intersect(segments[event.index], segments[next->index])) {
+        if (event.index < next->index) {
+          intersections.emplace(event.index, next->index);
         } else {
-          intersections.emplace(next->index, event->index);
+          intersections.emplace(next->index, event.index);
         }
       }
       if (prev != active.end() &&
-          _do_intersect(segments[event->index], segments[prev->index])) {
-        if (event->index < prev->index) {
-          intersections.emplace(event->index, prev->index);
+          _do_intersect(segments[event.index], segments[prev->index])) {
+        if (event.index < prev->index) {
+          intersections.emplace(event.index, prev->index);
         } else {
-          intersections.emplace(prev->index, event->index);
+          intersections.emplace(prev->index, event.index);
         }
       }
-      active.insert(*event);
+      active.insert(event);
     } else {
       auto it =
-          active.find(Event(segments[event->index].left, event->index, true));
+          active.find(Event(segments[event.index].left, event.index, true));
       auto next = succ(active, it);
       auto prev = pred(active, it);
       if (next != active.end() && prev != active.end() &&
@@ -287,25 +287,27 @@ std::vector<Segment> calc_edges(const std::vector<Point> &polygon) {
 }
 
 std::vector<Point> find_intersection_points(const std::vector<Point> &polygon) {
-  /* find all edge intersedions and add mid points for all such intersection
+  /* find all edge intersections and add mid-points for all such intersection
    * place*/
   auto edges = calc_edges(polygon);
 
   auto intersections = _find_intersections(edges);
   if (intersections.empty()) return polygon;
   std::unordered_map<std::size_t, std::vector<Point>> intersections_points;
-  for (auto p = intersections.begin(); p != intersections.end(); p++) {
-    auto inter_point = _find_intersection(edges[p->first], edges[p->second]);
-    intersections_points[p->first].push_back(inter_point);
-    intersections_points[p->second].push_back(inter_point);
+  for (const auto &intersection : intersections) {
+    auto inter_point = _find_intersection(edges[intersection.first],
+                                          edges[intersection.second]);
+    intersections_points[intersection.first].push_back(inter_point);
+    intersections_points[intersection.second].push_back(inter_point);
   }
   std::size_t points_count = polygon.size();
-  for (auto iter_inter = intersections_points.begin();
-       iter_inter != intersections_points.end(); iter_inter++) {
-    points_count += iter_inter->second.size() - 1;
-    iter_inter->second.push_back(edges[iter_inter->first].right);
-    iter_inter->second.push_back(edges[iter_inter->first].left);
-    std::sort(iter_inter->second.begin(), iter_inter->second.end(), cmp_point);
+  for (auto &intersections_point : intersections_points) {
+    points_count += intersections_point.second.size() - 1;
+    intersections_point.second.push_back(
+        edges[intersections_point.first].right);
+    intersections_point.second.push_back(edges[intersections_point.first].left);
+    std::sort(intersections_point.second.begin(),
+              intersections_point.second.end(), cmp_point);
   }
 
   std::vector<Point> new_polygon;
@@ -320,7 +322,7 @@ std::vector<Point> find_intersection_points(const std::vector<Point> &polygon) {
           new_polygon.push_back(new_points[j]);
         }
       } else {
-        for (int j = new_points.size() - 2; j > 0; j++) {
+        for (std::size_t j = new_points.size() - 2; j > 0; j++) {
           new_polygon.push_back(new_points[j]);
         }
       }
@@ -339,7 +341,7 @@ point. Otherwise it is normal point.
 */
 PointType get_point_type(Point p, PointToEdges &point_to_edges) {
   if (point_to_edges.at(p).size() != 2) return PointType::INTERSECTION;
-  auto edges = point_to_edges.at(p);
+  const auto &edges = point_to_edges.at(p);
   if (edges[0].opposite_point < p && edges[1].opposite_point < p)
     return PointType::MERGE;
   if (p < edges[0].opposite_point && p < edges[1].opposite_point)
@@ -380,11 +382,10 @@ sweeping_line_triangulation(const std::vector<Point> &polygon) {
   // copy to avoid modification of original vector
   std::sort(sorted_points.begin(), sorted_points.end(), cmp_point);
   std::vector<OrderedPolygon> ordered_polygon_li;
-  ordered_polygon_li.push_back(OrderedPolygon());
+  ordered_polygon_li.emplace_back();
   Line line;
-  for (auto point = sorted_points.begin(); point != sorted_points.end();
-       point++) {
-    auto point_type = get_point_type(*point, point_to_edges);
+  for (auto &sorted_point : sorted_points) {
+    auto point_type = get_point_type(sorted_point, point_to_edges);
     switch (point_type) {
       case PointType::NORMAL:
         // change edge adjusted to current sweeping line
@@ -392,9 +393,10 @@ sweeping_line_triangulation(const std::vector<Point> &polygon) {
       case PointType::SPLIT:
         // split sweeping line on two lines
         // add edge sor cutting polygon on two parts
-        line =
-            Line(Segment(*point, point_to_edges.at(*point)[0].opposite_point),
-                 Segment(*point, point_to_edges.at(*point)[1].opposite_point));
+        line = Line(Segment(sorted_point,
+                            point_to_edges.at(sorted_point)[0].opposite_point),
+                    Segment(sorted_point,
+                            point_to_edges.at(sorted_point)[1].opposite_point));
         break;
       case PointType::MERGE:
         // merge two sweeping lines to one

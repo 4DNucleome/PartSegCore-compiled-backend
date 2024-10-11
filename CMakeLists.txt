@@ -102,7 +102,13 @@ target_include_directories(_napari_mapping PRIVATE "${NUMPY_INCLUDE_DIR}")
 target_link_libraries(_napari_mapping PRIVATE OpenMP::OpenMP_CXX)
 
 cython_transpile(src/PartSegCore_compiled_backend/triangulate.pyx LANGUAGE CXX OUTPUT_VARIABLE triangulate_cython_cxx)
-python_add_library(triangulate MODULE "${triangulate_cython_cxx}" src/PartSegCore_compiled_backend/triangulate.hpp WITH_SOABI)
+python_add_library(
+        triangulate MODULE
+        "${triangulate_cython_cxx}"
+        src/PartSegCore_compiled_backend/triangulation/triangulate.hpp
+        src/PartSegCore_compiled_backend/triangulation/intersection.hpp
+        src/PartSegCore_compiled_backend/triangulation/point.hpp
+        WITH_SOABI)
 target_include_directories(triangulate PRIVATE "${NUMPY_INCLUDE_DIR}")
 target_include_directories(triangulate PRIVATE src/PartSegCore_compiled_backend/)
 

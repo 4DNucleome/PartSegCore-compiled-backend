@@ -16,19 +16,7 @@ from libcpp.unordered_map cimport unordered_map
 from libcpp.algorithm cimport sort
 
 
-cdef extern from "triangulate.hpp":
-
-    cdef cppclass Event:
-        float x
-        float y
-        int index
-        bool is_left
-        Event(float x, float y, int index, bool is_left)
-        Event()
-
-    cdef cppclass PairHash:
-        size_t operator()(pair[int, int] p) const
-
+cdef extern from "triangulation/point.hpp" namespace "partsegcore::point":
     cdef cppclass Point:
         float x
         float y
@@ -42,6 +30,31 @@ cdef extern from "triangulate.hpp":
         Segment(Point left, Point right)
         Segment()
 
+    bool point_eq(const Point& a, const Point& b)
+    bool cmp_point(const Point& a, const Point& b)
+
+cdef extern from "triangulation/intersection.hpp" namespace "partsegcore::intersection":
+    cdef cppclass Event:
+        float x
+        float y
+        int index
+        bool is_left
+        Event(float x, float y, int index, bool is_left)
+        Event()
+
+    cdef cppclass PairHash:
+        size_t operator()(pair[int, int] p) const
+
+    bool cmp_event(const Event& p, const Event& q)
+    bool _on_segment(const Point& p, const Point& q, const Point& r)
+    int _orientation(const Point& p, const Point& q, const Point& r)
+    bool _do_intersect(const Segment& s1, const Segment& s2)
+    unordered_set[pair[int, int], PairHash] _find_intersections(const vector[Segment]& segments)
+    Point _find_intersection(const Segment& s1, const Segment& s2)
+
+
+cdef extern from "triangulation/triangulate.hpp" namespace "partsegcore::triangulation":
+
     cdef cppclass Triangle:
         int x
         int y
@@ -49,14 +62,6 @@ cdef extern from "triangulate.hpp":
         Triangle(int x, int y, int z)
         Triangle()
 
-    bool point_eq(const Point& a, const Point& b)
-    bool cmp_point(const Point& a, const Point& b)
-    bool cmp_event(const Event& p, const Event& q)
-    bool _on_segment(const Point& p, const Point& q, const Point& r)
-    int _orientation(const Point& p, const Point& q, const Point& r)
-    bool _do_intersect(const Segment& s1, const Segment& s2)
-    unordered_set[pair[int, int], PairHash] _find_intersections(const vector[Segment]& segments)
-    Point _find_intersection(const Segment& s1, const Segment& s2)
     bool _is_convex(const vector[Point]& polygon)
     vector[Triangle] _triangle_convex_polygon(const vector[Point]& polygon)
 

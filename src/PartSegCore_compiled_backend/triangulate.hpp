@@ -1,6 +1,8 @@
+#include <algorithm>
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 enum PointType { NORMAL, SPLIT, MERGE, INTERSECTION };
 /* Point class with x and y coordinates */
@@ -9,7 +11,7 @@ struct Point {
   float y;
   bool operator==(const Point &p) const { return x == p.x && y == p.y; }
   Point(float x, float y) : x(x), y(y) {}
-  Point() {}
+  Point() = default;
 
   bool operator<(const Point &p) const {
     if (this->x == p.x) {
@@ -29,7 +31,7 @@ struct Event {
       : x(x), y(y), index(index), is_left(is_left) {}
   Event(const Point &p, int index, bool is_left)
       : x(p.x), y(p.y), index(index), is_left(is_left) {}
-  Event() {}
+  Event() = default;
 
   bool operator<(const Event &e) const {
     if (x == e.x) {
@@ -53,7 +55,7 @@ struct PairHash {
 
 struct PointHash {
   std::size_t operator()(const Point &p) const {
-    return std::hash<int>()(p.x) * 31 + std::hash<int>()(p.y);
+    return std::hash<float>()(p.x) * 31 + std::hash<float>()(p.y);
   }
 };
 
@@ -69,12 +71,12 @@ struct Segment {
       this->right = p1;
     }
   }
-  Segment() {}
+  Segment() = default;
 };
 
 struct Line {
   Segment left, right;
-  Line() {};
+  Line() = default;
   Line(const Segment &left, const Segment &right) : left(left), right(right) {};
 };
 
@@ -86,14 +88,14 @@ struct OrderedPolygon {
 };
 
 struct Triangle {
-  int x;
-  int y;
-  int z;
-  Triangle(int x, int y, int z) : x(x), y(y), z(z) {};
+  std::size_t x;
+  std::size_t y;
+  std::size_t z;
+  Triangle(std::size_t x, std::size_t y, std::size_t z) : x(x), y(y), z(z) {};
   Triangle() {};
 };
 
-typedef size_t EdgeIndex;
+typedef std::size_t EdgeIndex;
 
 struct PointEdges {
   EdgeIndex edge_index;
@@ -179,9 +181,9 @@ std::unordered_set<std::pair<int, int>, PairHash> _find_intersections(
   std::vector<Event> events;
   std::set<Event> active;
   events.reserve(2 * segments.size());
-  for (size_t i = 0; i < segments.size(); i++) {
-    events.push_back(Event(segments[i].left, i, true));
-    events.push_back(Event(segments[i].right, i, false));
+  for (std::size_t i = 0; i < segments.size(); i++) {
+    events.emplace_back(segments[i].left, i, true);
+    events.emplace_back(segments[i].right, i, false);
   }
   std::sort(events.begin(), events.end(), cmp_event);
 
@@ -234,16 +236,16 @@ Point _find_intersection(const Segment &s1, const Segment &s2) {
   b2 = s2.left.x - s2.right.x;
   c2 = a2 * s2.left.x + b2 * s2.left.y;
   det = a1 * b2 - a2 * b1;
-  if (det == 0) return Point(0, 0);
+  if (det == 0) return {0, 0};
   x = (b2 * c1 - b1 * c2) / det;
   y = (a1 * c2 - a2 * c1) / det;
-  return Point(x, y);
+  return {x, y};
 }
 
 bool _is_convex(const std::vector<Point> &polygon) {
   int orientation = 0;
   int triangle_orientation;
-  for (size_t i = 0; i < polygon.size() - 2; i++) {
+  for (std::size_t i = 0; i < polygon.size() - 2; i++) {
     triangle_orientation =
         _orientation(polygon[i], polygon[i + 1], polygon[i + 2]);
     if (triangle_orientation == 0) continue;
@@ -266,9 +268,9 @@ bool _is_convex(const std::vector<Point> &polygon) {
 std::vector<Triangle> _triangle_convex_polygon(
     const std::vector<Point> &polygon) {
   std::vector<Triangle> result;
-  for (size_t i = 1; i < polygon.size() - 1; i++) {
+  for (std::size_t i = 1; i < polygon.size() - 1; i++) {
     if (_orientation(polygon[0], polygon[i], polygon[i + 1]) != 0) {
-      result.push_back(Triangle(0, i, i + 1));
+      result.emplace_back(0, i, i + 1);
     }
   }
   return result;
@@ -277,10 +279,10 @@ std::vector<Triangle> _triangle_convex_polygon(
 std::vector<Segment> calc_edges(const std::vector<Point> &polygon) {
   std::vector<Segment> edges;
   edges.reserve(polygon.size());
-  for (size_t i = 0; i < polygon.size() - 1; i++) {
-    edges.push_back(Segment(polygon[i], polygon[i + 1]));
+  for (std::size_t i = 0; i < polygon.size() - 1; i++) {
+    edges.emplace_back(polygon[i], polygon[i + 1]);
   }
-  edges.push_back(Segment(polygon[polygon.size() - 1], polygon[0]));
+  edges.emplace_back(polygon[polygon.size() - 1], polygon[0]);
   return edges;
 }
 
@@ -290,14 +292,14 @@ std::vector<Point> find_intersection_points(const std::vector<Point> &polygon) {
   auto edges = calc_edges(polygon);
 
   auto intersections = _find_intersections(edges);
-  if (intersections.size() == 0) return polygon;
-  std::unordered_map<int, std::vector<Point>> intersections_points;
+  if (intersections.empty()) return polygon;
+  std::unordered_map<std::size_t, std::vector<Point>> intersections_points;
   for (auto p = intersections.begin(); p != intersections.end(); p++) {
     auto inter_point = _find_intersection(edges[p->first], edges[p->second]);
     intersections_points[p->first].push_back(inter_point);
     intersections_points[p->second].push_back(inter_point);
   }
-  int points_count = polygon.size();
+  std::size_t points_count = polygon.size();
   for (auto iter_inter = intersections_points.begin();
        iter_inter != intersections_points.end(); iter_inter++) {
     points_count += iter_inter->second.size() - 1;
@@ -308,13 +310,13 @@ std::vector<Point> find_intersection_points(const std::vector<Point> &polygon) {
 
   std::vector<Point> new_polygon;
   new_polygon.reserve(points_count);
-  for (size_t i = 0; i < polygon.size(); i++) {
+  for (std::size_t i = 0; i < polygon.size(); i++) {
     auto point = polygon[i];
     new_polygon.push_back(point);
     if (intersections_points.count(i)) {
       auto new_points = intersections_points[i];
       if (new_points[0] == point) {
-        for (size_t j = 1; j < new_points.size() - 1; j++) {
+        for (std::size_t j = 1; j < new_points.size() - 1; j++) {
           new_polygon.push_back(new_points[j]);
         }
       } else {
@@ -351,7 +353,7 @@ Also sort each list by point order.
 */
 PointToEdges get_points_edges(std::vector<Segment> &edges) {
   PointToEdges point_to_edges;
-  for (size_t i = 0; i < edges.size(); i++) {
+  for (std::size_t i = 0; i < edges.size(); i++) {
     point_to_edges[edges[i].left].emplace_back(i, edges[i].right);
     point_to_edges[edges[i].right].emplace_back(i, edges[i].left);
   }

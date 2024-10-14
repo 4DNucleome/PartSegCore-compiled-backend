@@ -2,6 +2,7 @@
 #define PARTSEGCORE_TRIANGULATE_H
 
 #include <algorithm>
+#include <map>
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
@@ -15,11 +16,22 @@ namespace triangulation {
 
 enum PointType { NORMAL, SPLIT, MERGE, INTERSECTION };
 
-struct Line {
-  point::Segment left, right;
-  Line() = default;
-  Line(const point::Segment &left, const point::Segment &right)
-      : left(left), right(right) {};
+struct Interval {
+  point::Point last_seen;
+  Interval() = default;
+  explicit Interval(const point::Point &p) : last_seen(p) {};
+};
+
+/* Comparator for segments
+ * To determine if segment is left or right of other segment
+ *
+ * It assumes that segments are not intersecting
+ */
+
+struct SegmentLeftRightComparator {
+  bool operator()(const point::Segment &s1, const point::Segment &s2) const {
+    return false;
+  }
 };
 
 struct OrderedPolygon {
@@ -50,6 +62,8 @@ struct PointEdges {
 };
 
 typedef std::unordered_map<point::Point, std::vector<PointEdges>> PointToEdges;
+typedef std::map<point::Segment, Interval *, SegmentLeftRightComparator>
+    SegmentToLine;
 
 bool _is_convex(const std::vector<point::Point> &polygon) {
   int orientation = 0;
@@ -178,6 +192,58 @@ PointToEdges get_points_edges(std::vector<point::Segment> &edges) {
   return point_to_edges;
 }
 
+void _process_normal_point(
+    const point::Point &p, const std::vector<point::Segment> &edges,
+    const PointToEdges &point_to_edges,
+    std::map<point::Segment, Interval *> &segment_to_line) {
+  const point::Segment &edge_prev =
+      edges[point_to_edges.at(p).at(0).edge_index];
+  const point::Segment &edge_next =
+      edges[point_to_edges.at(p).at(1).edge_index];
+  segment_to_line[edge_next] = segment_to_line.at(edge_prev);
+  segment_to_line.at(edge_prev)->last_seen = p;
+  segment_to_line.erase(edge_prev);
+}
+
+void _process_split_point(
+    const point::Point &p, const std::vector<point::Segment> &edges,
+    const PointToEdges &point_to_edges,
+    std::map<point::Segment, Interval *> &segment_to_line) {
+  const point::Segment &edge_left =
+      edges[point_to_edges.at(p).at(0).edge_index];
+  const point::Segment &edge_right =
+      edges[point_to_edges.at(p).at(1).edge_index];
+}
+
+/* process merge point
+ * When merge point is found, we need to merge two intervals into one
+ *
+ */
+void _process_merge_point(
+    const point::Point &p, const std::vector<point::Segment> &edges,
+    const PointToEdges &point_to_edges,
+    std::map<point::Segment, Interval *> &segment_to_line) {
+  const point::Segment &edge_left =
+      edges[point_to_edges.at(p).at(0).edge_index];
+  const point::Segment &edge_right =
+      edges[point_to_edges.at(p).at(1).edge_index];
+}
+
+///* this is processing of point that have more than 2 edges adjusted */
+// void _process_intersection_point(
+//     const point::Point &p, std::unordered_map<point::Segment, Interval>
+//     &segment_to_line, std::unordered_set<point::Segment>
+//     &sweeping_line_intersect) {
+//   for (auto &edge : point_to_edges[p]) {
+//     sweeping_line_intersect.insert(edges[edge.edge_index]);
+//   }
+//   std::vector<Interval> intervals;
+//   for (auto &edge : point_to_edges[p]) {
+//     intervals.push_back(Interval(p, edges[edge.edge_index],
+//     edges[edge.edge_index]));
+//   }
+// }
+
 /*
     This is implementation of sweeping line triangulation of polygon
     Its assumes that there is no edge intersections, but may be a point with
@@ -187,6 +253,7 @@ PointToEdges get_points_edges(std::vector<point::Segment> &edges) {
 std::pair<std::vector<Triangle>, std::vector<point::Point>>
 sweeping_line_triangulation(const std::vector<point::Point> &polygon) {
   std::vector<Triangle> result;
+  point::Segment *edge_prev, *edge_next;
   auto edges = calc_edges(polygon);
   PointToEdges point_to_edges = get_points_edges(edges);
 
@@ -194,26 +261,30 @@ sweeping_line_triangulation(const std::vector<point::Point> &polygon) {
   // copy to avoid modification of original vector
   std::sort(sorted_points.begin(), sorted_points.end());
   std::vector<OrderedPolygon> ordered_polygon_li;
+  std::map<point::Segment, Interval *> segment_to_line;
+  std::vector<Interval> intervals;
   ordered_polygon_li.emplace_back();
-  Line line;
+  Interval line;
   for (auto &sorted_point : sorted_points) {
     auto point_type = get_point_type(sorted_point, point_to_edges);
     switch (point_type) {
       case PointType::NORMAL:
         // change edge adjusted to current sweeping line
+        _process_normal_point(sorted_point, edges, point_to_edges,
+                              segment_to_line);
+
         break;
       case PointType::SPLIT:
         // split sweeping line on two lines
         // add edge sor cutting polygon on two parts
-        line = Line(
-            point::Segment(sorted_point,
-                           point_to_edges.at(sorted_point)[0].opposite_point),
-            point::Segment(sorted_point,
-                           point_to_edges.at(sorted_point)[1].opposite_point));
+        _process_split_point(sorted_point, edges, point_to_edges,
+                             segment_to_line);
         break;
       case PointType::MERGE:
         // merge two sweeping lines to one
-        // save point as point to start new line for SPLIT pointcase
+        // save point as point to start new line for SPLIT point case
+        _process_merge_point(sorted_point, edges, point_to_edges,
+                             segment_to_line);
         break;
       case PointType::INTERSECTION:
         // this is merge and split point at same time

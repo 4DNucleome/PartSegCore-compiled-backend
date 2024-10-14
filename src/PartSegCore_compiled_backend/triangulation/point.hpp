@@ -6,6 +6,7 @@
 #define PARTSEGCORE_POINT_H
 
 #include <algorithm>
+#include <iostream>
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
@@ -25,9 +26,15 @@ struct Point {
 
   bool operator<(const Point &p) const {
     if (this->x == p.x) {
-      return this->y < p.y;
+      return this->y > p.y;
     }
     return this->x < p.x;
+  }
+
+  // Overload the << operator for Point
+  friend std::ostream &operator<<(std::ostream &os, const Point &point) {
+    os << "(x=" << point.x << ", y=" << point.y << ")";
+    return os;
   }
 
   struct PointHash {
@@ -51,6 +58,31 @@ struct Segment {
     }
   }
   Segment() = default;
+
+  bool operator<(const Segment &s) const {
+    if (this->left == s.left) {
+      return this->right < s.right;
+    }
+    return this->left < s.left;
+  }
+
+  bool operator==(const Segment &s) const {
+    return this->left == s.left && this->right == s.right;
+  }
+
+  // Overload the << operator for Segment
+  friend std::ostream &operator<<(std::ostream &os, const Segment &segment) {
+    os << "[" << segment.left << " -- " << segment.right << "]";
+    return os;
+  }
+
+  struct SegmentHash {
+    std::size_t operator()(const Segment &segment) const {
+      std::size_t h1 = Point::PointHash()(segment.left);
+      std::size_t h2 = Point::PointHash()(segment.right);
+      return h1 ^ (h2 << 1);
+    }
+  };
 };
 }  // namespace point
 }  // namespace partsegcore
@@ -60,10 +92,18 @@ struct Segment {
 namespace std {
 template <>
 struct hash<partsegcore::point::Point> {
-  std::size_t operator()(const partsegcore::point::Point &point) const {
+  size_t operator()(const partsegcore::point::Point &point) const {
     return partsegcore::point::Point::PointHash()(point);
   }
 };
+
+template <>
+struct hash<partsegcore::point::Segment> {
+  size_t operator()(const partsegcore::point::Segment &segment) const {
+    return partsegcore::point::Segment::SegmentHash()(segment);
+  }
+};
+
 }  // namespace std
 
 #endif  // PARTSEGCORE_POINT_H

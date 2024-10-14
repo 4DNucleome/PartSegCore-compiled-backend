@@ -147,7 +147,7 @@ def find_intersections(segments: Sequence[Sequence[Sequence[float]]]) -> list[tu
     return [(p.first, p.second) for p  in intersections]
 
 
-def find_intersection(s1: Sequence[Sequence[float]], s2: Sequence[Sequence[float]]) -> tuple[float, float]:
+def find_intersection_point(s1: Sequence[Sequence[float]], s2: Sequence[Sequence[float]]) -> tuple[float, float]:
     """ Find intersection between two segments
 
     Parameters

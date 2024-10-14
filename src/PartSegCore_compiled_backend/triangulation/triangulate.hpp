@@ -65,6 +65,18 @@ typedef std::unordered_map<point::Point, std::vector<PointEdges>> PointToEdges;
 typedef std::map<point::Segment, Interval *, SegmentLeftRightComparator>
     SegmentToLine;
 
+/**
+ * Checks if a given polygon is convex.
+ *
+ * This function takes a polygon represented as a vector of points and
+ * determines if it is convex. A convex polygon is one where all the interior
+ * angles are less than 180 degrees, meaning that the edges never turn back on
+ * themselves.
+ *
+ * @param polygon A vector of points representing the vertices of the polygon in
+ * order.
+ * @return True if the polygon is convex, false otherwise.
+ */
 bool _is_convex(const std::vector<point::Point> &polygon) {
   int orientation = 0;
   int triangle_orientation;
@@ -88,6 +100,16 @@ bool _is_convex(const std::vector<point::Point> &polygon) {
   return true;
 }
 
+/**
+ * Divides a convex polygon into triangles using the fan triangulation method.
+ * Starting from the first point in the polygon, each triangle is formed by
+ * connecting the first point with two consecutive points from the polygon list.
+ *
+ * @param polygon A vector of Point objects representing the vertices of the
+ * polygon.
+ * @return A vector of Triangle objects where each triangle is defined by
+ * indices corresponding to the vertices in the input polygon.
+ */
 std::vector<Triangle> _triangle_convex_polygon(
     const std::vector<point::Point> &polygon) {
   std::vector<Triangle> result;

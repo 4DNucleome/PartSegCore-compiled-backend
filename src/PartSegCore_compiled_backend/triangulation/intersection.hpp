@@ -126,8 +126,11 @@ std::unordered_set<std::pair<int, int>, PairHash> _find_intersections(
     if (event.is_left) {
       auto next = active.lower_bound(event);
       auto prev = pred(active, next);
+      // we use while, because more than two segments can intersect at the same
+      // point
       while (next != active.end() &&
              _do_intersect(segments[event.index], segments[next->index])) {
+        // to not lost some intersection, but exclude edges, that share endpoint
         if (!_share_endpoint(segments[event.index], segments[next->index])) {
           if (event.index < next->index) {
             intersections.emplace(event.index, next->index);
@@ -137,8 +140,11 @@ std::unordered_set<std::pair<int, int>, PairHash> _find_intersections(
         }
         next = succ(active, next);
       }
+      // we use while, because more than two segments can intersect at the same
+      // point
       while (prev != active.end() &&
              _do_intersect(segments[event.index], segments[prev->index])) {
+        // to not lost some intersection, but exclude edges, that share endpoint
         if (!_share_endpoint(segments[event.index], segments[prev->index])) {
           if (event.index < prev->index) {
             intersections.emplace(event.index, prev->index);
@@ -152,9 +158,6 @@ std::unordered_set<std::pair<int, int>, PairHash> _find_intersections(
     } else {
       auto it =
           active.find(Event(segments[event.index].left, event.index, true));
-      if (it == active.end()) {
-        throw std::runtime_error("Segment not found in active set");
-      }
       auto next = succ(active, it);
       auto prev = pred(active, it);
       if (next != active.end() && prev != active.end() &&

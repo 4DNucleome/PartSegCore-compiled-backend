@@ -25,10 +25,10 @@ struct Point {
   Point() = default;
 
   bool operator<(const Point &p) const {
-    if (this->x == p.x) {
-      return this->y > p.y;
+    if (this->y == p.y) {
+      return this->x < p.x;
     }
-    return this->x < p.x;
+    return this->y < p.y;
   }
 
   // Overload the << operator for Point
@@ -46,40 +46,43 @@ struct Point {
 
 /*Struct to represent edge of polygon with points ordered*/
 struct Segment {
-  Point left{};
-  Point right{};
+  Point bottom{};
+  Point top{};
   Segment(Point p1, Point p2) {
     if (p1 < p2) {
-      left = p1;
-      right = p2;
+      bottom = p1;
+      top = p2;
     } else {
-      left = p2;
-      right = p1;
+      bottom = p2;
+      top = p1;
     }
   }
+
+  bool is_horizontal() const { return bottom.y == top.y; }
+
   Segment() = default;
 
   bool operator<(const Segment &s) const {
-    if (this->left == s.left) {
-      return this->right < s.right;
+    if (this->bottom == s.bottom) {
+      return this->top < s.top;
     }
-    return this->left < s.left;
+    return this->bottom < s.bottom;
   }
 
   bool operator==(const Segment &s) const {
-    return this->left == s.left && this->right == s.right;
+    return this->bottom == s.bottom && this->top == s.top;
   }
 
   // Overload the << operator for Segment
   friend std::ostream &operator<<(std::ostream &os, const Segment &segment) {
-    os << "[" << segment.left << " -- " << segment.right << "]";
+    os << "[bottom=" << segment.bottom << ", top=" << segment.top << "]";
     return os;
   }
 
   struct SegmentHash {
     std::size_t operator()(const Segment &segment) const {
-      std::size_t h1 = Point::PointHash()(segment.left);
-      std::size_t h2 = Point::PointHash()(segment.right);
+      std::size_t h1 = Point::PointHash()(segment.bottom);
+      std::size_t h2 = Point::PointHash()(segment.top);
       return h1 ^ (h2 << 1);
     }
   };

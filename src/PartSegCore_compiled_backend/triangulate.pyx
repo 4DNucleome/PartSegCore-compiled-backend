@@ -20,16 +20,16 @@ cdef extern from "triangulation/point.hpp" namespace "partsegcore::point":
     cdef cppclass Point:
         float x
         float y
-        Point(float x, float y)
         Point()
+        Point(float x, float y)
         bool operator==(const Point& other) const
         bool operator!=(const Point& other) const
 
     cdef cppclass Segment:
-        Point left
-        Point right
-        Segment(Point left, Point right)
+        Point bottom
+        Point top
         Segment()
+        Segment(Point bottom, Point top)
 
 
 cdef extern from "triangulation/intersection.hpp" namespace "partsegcore::intersection":
@@ -38,8 +38,8 @@ cdef extern from "triangulation/intersection.hpp" namespace "partsegcore::inters
         float y
         int index
         bool is_left
-        Event(float x, float y, int index, bool is_left)
         Event()
+        Event(float x, float y, int index, bool is_left)
 
     cdef cppclass PairHash:
         size_t operator()(pair[int, int] p) const
@@ -57,11 +57,12 @@ cdef extern from "triangulation/triangulate.hpp" namespace "partsegcore::triangu
         int x
         int y
         int z
-        Triangle(int x, int y, int z)
         Triangle()
+        Triangle(int x, int y, int z)
 
     bool _is_convex(const vector[Point]& polygon)
     vector[Triangle] _triangle_convex_polygon(const vector[Point]& polygon)
+    bool left_to_right(const Segment& s1, const Segment& s2)
 
 
 
@@ -232,8 +233,8 @@ cdef vector[Triangle] _triangulate_polygon(vector[Point] polygon):
             edges_with_intersections.push_back(edges[i])
         else:
             intersections_points_vector = intersections_points.at(i)
-            intersections_points_vector.push_back(edges[i].left)
-            intersections_points_vector.push_back(edges[i].right)
+            intersections_points_vector.push_back(edges[i].bottom)
+            intersections_points_vector.push_back(edges[i].top)
             sort(intersections_points_vector.begin(), intersections_points_vector.end())
             for j in range(intersections_points_vector.size() - 1):
                 edges_with_intersections.push_back(Segment(intersections_points_vector[j], intersections_points_vector[j+1]))
@@ -259,3 +260,11 @@ def triangulate_polygon(polygon: Sequence[Sequence[float]]) -> list[tuple[int, i
 
     result = _triangulate_polygon(polygon_vector)
     return [(triangle.x, triangle.y, triangle.z) for triangle in result]
+
+
+def segment_left_to_right_comparator(s1: Sequence[Sequence[float]], s2: Sequence[Sequence[float]]) -> bool:
+    """ Compare segments by bottom point"""
+    return left_to_right(
+        Segment(Point(s1[0][0], s1[0][1]), Point(s1[1][0], s1[1][1])),
+        Segment(Point(s2[0][0], s2[0][1]), Point(s2[1][0], s2[1][1]))
+        )

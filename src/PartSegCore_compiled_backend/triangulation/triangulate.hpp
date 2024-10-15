@@ -22,15 +22,51 @@ struct Interval {
   explicit Interval(const point::Point &p) : last_seen(p) {};
 };
 
-/* Comparator for segments
- * To determine if segment is left or right of other segment
+/**
+ * Comparator function to determine the relative positioning of two given
+ * segments.
  *
- * It assumes that segments are not intersecting
+ * Compares two segments to identify if the first segment (`s1`) is to the left
+ * and below the second segment (`s2`) when moving left to right. The function
+ * assumes that the segments do not intersect.
+ *
+ * TODO Investigate if it could be implemented in a more efficient way.
+ *
+ * @param s1 The first segment to compare.
+ * @param s2 The second segment to compare.
+ *
+ * @return `true` if `s1` is to the left and below `s2`, `false` otherwise.
  */
+bool left_to_right(const point::Segment &s1, const point::Segment &s2) {
+  if (s1.is_horizontal() && s2.is_horizontal()) {
+    return s1.bottom.x < s2.bottom.x;
+  }
+  if (s1.is_horizontal()) {
+    int i1 = intersection::_orientation(s2.bottom, s2.top, s1.top);
+    int i2 = intersection::_orientation(s2.bottom, s2.top, s1.bottom);
+    return (i1 == 2 || i2 == 2);
+  }
+  if (s2.is_horizontal()) {
+    int i1 = intersection::_orientation(s1.bottom, s1.top, s2.top);
+    int i2 = intersection::_orientation(s1.bottom, s1.top, s2.bottom);
+    return (i1 == 1 || i2 == 1);
+  }
+
+  if ((s1.top.y < s2.top.y)) {
+    if (s1.top == s2.top) {
+      return intersection::_orientation(s2.top, s2.bottom, s1.bottom) == 1;
+    }
+    return intersection::_orientation(s2.top, s2.bottom, s1.top) == 1;
+  }
+  if (s1.top == s2.top) {
+    return intersection::_orientation(s1.top, s1.bottom, s2.bottom) == 2;
+  }
+  return intersection::_orientation(s1.top, s1.bottom, s2.top) == 2;
+}
 
 struct SegmentLeftRightComparator {
   bool operator()(const point::Segment &s1, const point::Segment &s2) const {
-    return false;
+    return left_to_right(s1, s2);
   }
 };
 
@@ -152,9 +188,9 @@ std::vector<point::Point> find_intersection_points(
   std::size_t points_count = polygon.size();
   for (auto &intersections_point : intersections_points) {
     points_count += intersections_point.second.size() - 1;
+    intersections_point.second.push_back(edges[intersections_point.first].top);
     intersections_point.second.push_back(
-        edges[intersections_point.first].right);
-    intersections_point.second.push_back(edges[intersections_point.first].left);
+        edges[intersections_point.first].bottom);
     std::sort(intersections_point.second.begin(),
               intersections_point.second.end());
   }
@@ -205,8 +241,8 @@ PointType get_point_type(point::Point p, PointToEdges &point_to_edges) {
 PointToEdges get_points_edges(std::vector<point::Segment> &edges) {
   PointToEdges point_to_edges;
   for (std::size_t i = 0; i < edges.size(); i++) {
-    point_to_edges[edges[i].left].emplace_back(i, edges[i].right);
-    point_to_edges[edges[i].right].emplace_back(i, edges[i].left);
+    point_to_edges[edges[i].bottom].emplace_back(i, edges[i].top);
+    point_to_edges[edges[i].top].emplace_back(i, edges[i].bottom);
   }
   for (auto &point_to_edge : point_to_edges) {
     std::sort(point_to_edge.second.begin(), point_to_edge.second.end());

@@ -385,7 +385,7 @@ def reverse_permutation(perm: list[int]) -> list[int]:
 
 
 def relabel_with_perm(labeling: list, perm: list) -> list:
-    logging.debug('{labeling}, {perm}', extra={'labeling': labeling, 'perm': perm})
+    logging.debug('%(labeling), %(perm)', extra={'labeling': labeling, 'perm': perm})
     perm = reverse_permutation(perm)
     return [perm[x] for x in labeling]
 

@@ -1,14 +1,17 @@
-import numpy as np
 import typing
-from .euclidean_cython import calculate_euclidean as calculate_euclidean
-from .fuzzy_distance import MuType as MuType, calculate_mu_array as calculate_mu_array, fuzzy_distance as fuzzy_distance
-from .path_sprawl_cython import calculate_maximum as calculate_maximum, calculate_minimum as calculate_minimum
-from .sprawl_utils import (
-    get_closest_component as get_closest_component,
-    get_maximum_component as get_maximum_component,
-    get_minimum_component as get_minimum_component,
-)
 from typing import Any
+
+import numpy as np
+
+from PartSegCore_compiled_backend.sprawl_utils.euclidean_cython import calculate_euclidean as calculate_euclidean
+from PartSegCore_compiled_backend.sprawl_utils.fuzzy_distance import MuType as MuType
+from PartSegCore_compiled_backend.sprawl_utils.fuzzy_distance import calculate_mu_array as calculate_mu_array
+from PartSegCore_compiled_backend.sprawl_utils.fuzzy_distance import fuzzy_distance as fuzzy_distance
+from PartSegCore_compiled_backend.sprawl_utils.path_sprawl_cython import calculate_maximum as calculate_maximum
+from PartSegCore_compiled_backend.sprawl_utils.path_sprawl_cython import calculate_minimum as calculate_minimum
+from PartSegCore_compiled_backend.sprawl_utils.sprawl_utils import get_closest_component as get_closest_component
+from PartSegCore_compiled_backend.sprawl_utils.sprawl_utils import get_maximum_component as get_maximum_component
+from PartSegCore_compiled_backend.sprawl_utils.sprawl_utils import get_minimum_component as get_minimum_component
 
 def path_maximum_sprawl(
     data_f: np.ndarray,
@@ -60,7 +63,7 @@ def distance_sprawl(
     data_cache: Any | None = ...,
     parallel: bool = ...,
 ) -> np.ndarray: ...
-def reverse_permutation(perm: typing.List[int]) -> typing.List[int]: ...
-def relabel_with_perm(labeling: typing.List, perm: typing.List) -> typing.List: ...
-def verify_cohesion(elements: typing.List[int], graph: typing.List[typing.List[int]]) -> bool: ...
-def relabel_array(data: np.ndarray, perm: typing.List[int]) -> np.ndarray: ...
+def reverse_permutation(perm: list[int]) -> list[int]: ...
+def relabel_with_perm(labeling: list, perm: list) -> list: ...
+def verify_cohesion(elements: list[int], graph: list[list[int]]) -> bool: ...
+def relabel_array(data: np.ndarray, perm: list[int]) -> np.ndarray: ...

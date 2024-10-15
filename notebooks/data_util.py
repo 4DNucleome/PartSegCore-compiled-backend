@@ -1,6 +1,8 @@
-import numpy as np
-from typing import Sequence, Optional, Union, Tuple, Callable
 import itertools
+from collections.abc import Sequence
+from typing import Callable, Optional, Union
+
+import numpy as np
 from skimage import morphology
 
 
@@ -41,7 +43,7 @@ def _generate_density(radius: int, ndim: int) -> np.ndarray:
 
 
 def _structure_at_coordinates(
-    shape: Tuple[int],
+    shape: tuple[int],
     coordinates: np.ndarray,
     structure: np.ndarray,
     *,
@@ -115,7 +117,7 @@ def labeled_particles(
     n: int = 144,
     seed: Optional[int] = None,
     return_density: bool = False,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+) -> Union[np.ndarray, tuple[np.ndarray, np.ndarray, np.ndarray]]:
     """Generate labeled blobs of given shape and dtype.
 
     Parameters

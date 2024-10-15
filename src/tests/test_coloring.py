@@ -34,7 +34,7 @@ def test_calculate_borders_thick(label_type):
         for x in range(3):
             cord = [c1, c2]
             cord.insert(x, slice(None))
-            expected[tuple([0] + cord)] = 0
+            expected[(0, *cord)] = 0
 
     assert np.all(res == expected)
 

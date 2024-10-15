@@ -2,6 +2,8 @@
 This module contains function to perform multiple component sprawl (watershed like)
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import typing
@@ -10,16 +12,20 @@ from functools import partial
 
 import numpy as np
 
-from .euclidean_cython import calculate_euclidean
-from .fuzzy_distance import MuType, calculate_mu_array, fuzzy_distance
-from .path_sprawl_cython import calculate_maximum, calculate_minimum
-from .sprawl_utils import get_closest_component, get_maximum_component, get_minimum_component
+from PartSegCore_compiled_backend.sprawl_utils.euclidean_cython import calculate_euclidean
+from PartSegCore_compiled_backend.sprawl_utils.fuzzy_distance import MuType, calculate_mu_array, fuzzy_distance
+from PartSegCore_compiled_backend.sprawl_utils.path_sprawl_cython import calculate_maximum, calculate_minimum
+from PartSegCore_compiled_backend.sprawl_utils.sprawl_utils import (
+    get_closest_component,
+    get_maximum_component,
+    get_minimum_component,
+)
 
 
-def _allocate_cache(distance_cache: typing.Optional[np.ndarray], data_shape: tuple):
+def _allocate_cache(distance_cache: np.ndarray | None, data_shape: tuple):
     if distance_cache is None or distance_cache.shape[0] < 3:
         cache_size = 5
-        distance_cache = np.zeros((cache_size + 1,) + data_shape, dtype=np.float64)
+        distance_cache = np.zeros((cache_size + 1, *data_shape), dtype=np.float64)
     else:
         cache_size = distance_cache.shape[0] - 1
     components_numbers_translate = np.zeros(cache_size + 1, dtype=np.uint32)
@@ -31,8 +37,8 @@ def path_maximum_sprawl(
     components: np.ndarray,
     components_count: int,
     neighbourhood: np.ndarray,
-    distance_cache: typing.Optional[np.ndarray] = None,
-    data_cache: typing.Optional[np.ndarray] = None,
+    distance_cache: np.ndarray | None = None,
+    data_cache: np.ndarray | None = None,
 ) -> np.ndarray:
     """
     Calculate sprawl in respect to brightness. Distance between voxels is the maximum brightness on
@@ -97,8 +103,8 @@ def path_minimum_sprawl(
     components: np.ndarray,
     components_count: int,
     neighbourhood: np.ndarray,
-    distance_cache: typing.Optional[np.ndarray] = None,
-    data_cache: typing.Optional[np.ndarray] = None,
+    distance_cache: np.ndarray | None = None,
+    data_cache: np.ndarray | None = None,
 ) -> np.ndarray:
     """
     Calculate sprawl in respect to brightness. Distance between voxels is the maximum brightness on
@@ -371,20 +377,20 @@ def distance_sprawl(
     return components
 
 
-def reverse_permutation(perm: typing.List[int]) -> typing.List[int]:
+def reverse_permutation(perm: list[int]) -> list[int]:
     rev = [0] * len(perm)
     for i, x in enumerate(perm, 1):
         rev[x - 1] = i
     return rev
 
 
-def relabel_with_perm(labeling: typing.List, perm: typing.List) -> typing.List:
-    logging.debug(f'{labeling}, {perm}')
+def relabel_with_perm(labeling: list, perm: list) -> list:
+    logging.debug('{labeling}, {perm}', extra={'labeling': labeling, 'perm': perm})
     perm = reverse_permutation(perm)
     return [perm[x] for x in labeling]
 
 
-def verify_cohesion(elements: typing.List[int], graph: typing.List[typing.List[int]]) -> bool:
+def verify_cohesion(elements: list[int], graph: list[list[int]]) -> bool:
     start = elements[0]
     elements_set = set(elements)
     elements_set.remove(start)
@@ -397,7 +403,7 @@ def verify_cohesion(elements: typing.List[int], graph: typing.List[typing.List[i
     return len(elements_set) == 0
 
 
-def relabel_array(data: np.ndarray, perm: typing.List[int]) -> np.ndarray:
+def relabel_array(data: np.ndarray, perm: list[int]) -> np.ndarray:
     result = np.zeros(data.shape, dtype=data.dtype)
     for i, val in enumerate(perm):
         result[data == i + 1] = val

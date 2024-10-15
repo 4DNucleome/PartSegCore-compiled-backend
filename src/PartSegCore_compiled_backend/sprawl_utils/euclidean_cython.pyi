@@ -1,4 +1,3 @@
-from typing import Optional
 import numpy as np
 
 def calculate_euclidean(
@@ -6,5 +5,5 @@ def calculate_euclidean(
     base_object: np.ndarray,
     neighbourhood: np.ndarray,
     distance: np.ndarray,
-    distance_cache: Optional[np.ndarray] = None,
+    distance_cache: np.ndarray | None = None,
 ) -> np.ndarray: ...

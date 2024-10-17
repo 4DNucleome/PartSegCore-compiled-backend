@@ -71,18 +71,18 @@ def test_find_intersections():
         ([[(0, 0), (1, 1)], [(2, 2), (3, 3)]], []),
         # One intersection, T-shaped intersection
         ([[(0, 0), (2, 0)], [(1, -1), (1, 1)]], [(0, 1)]),
-        # # Multiple intersections, grid shape
-        # (
-        #     [
-        #         [(0, 0), (2, 0)],
-        #         [(0, 1), (2, 1)],
-        #         [(0, 2), (2, 2)],
-        #         [(0, 0), (0, 2)],
-        #         [(1, 0), (1, 2)],
-        #         [(2, 0), (2, 2)],
-        #     ],
-        #     {(0, 4), (1, 3), (1, 4), (1, 5), (2, 4)},
-        # ),
+        # Multiple intersections, grid shape
+        (
+            [
+                [(0, 0), (2, 0)],
+                [(0, 1), (2, 1)],
+                [(0, 2), (2, 2)],
+                [(0, 0), (0, 2)],
+                [(1, 0), (1, 2)],
+                [(2, 0), (2, 2)],
+            ],
+            {(0, 4), (1, 3), (1, 4), (1, 5), (2, 4)},
+        ),
     ],
     ids=[
         'No intersections, simple square',
@@ -90,7 +90,7 @@ def test_find_intersections():
         'Multiple intersections, complex shape',
         'No intersections, non-intersecting lines',
         'One intersection, T-shaped intersection',
-        # 'Multiple intersections, grid shape',
+        'Multiple intersections, grid shape',
     ],
 )
 def test_find_intersections_param(segments, expected):

@@ -37,9 +37,9 @@ cdef extern from "triangulation/intersection.hpp" namespace "partsegcore::inters
         float x
         float y
         int index
-        bool is_left
+        bool is_top
         Event()
-        Event(float x, float y, int index, bool is_left)
+        Event(float x, float y, int index, bool is_top)
 
     cdef cppclass PairHash:
         size_t operator()(pair[int, int] p) const

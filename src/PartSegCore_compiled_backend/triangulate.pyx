@@ -66,6 +66,7 @@ cdef extern from "triangulation/triangulate.hpp" namespace "partsegcore::triangu
     bool _is_convex(const vector[Point]& polygon)
     vector[Triangle] _triangle_convex_polygon(const vector[Point]& polygon)
     bool left_to_right(const Segment& s1, const Segment& s2)
+    vector[Point] find_intersection_points(const vector[Point]& segments)
 
 
 
@@ -271,3 +272,16 @@ def segment_left_to_right_comparator(s1: Sequence[Sequence[float]], s2: Sequence
         Segment(Point(s1[0][0], s1[0][1]), Point(s1[1][0], s1[1][1])),
         Segment(Point(s2[0][0], s2[0][1]), Point(s2[1][0], s2[1][1]))
         )
+
+
+def find_intersection_points_py(polygon: Sequence[Sequence[float]]) -> Sequence[Sequence[float]]:
+    """ Find intersection points in polygon"""
+    cdef vector[Point] polygon_vector
+    cdef vector[Point] result
+
+    polygon_vector.reserve(len(polygon))
+    for point in polygon:
+        polygon_vector.push_back(Point(point[0], point[1]))
+
+    result = find_intersection_points(polygon_vector)
+    return [(point.x, point.y) for point in result]

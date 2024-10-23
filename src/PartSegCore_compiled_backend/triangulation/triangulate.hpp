@@ -199,16 +199,19 @@ std::vector<point::Point> find_intersection_points(
   new_polygon.reserve(points_count);
   for (std::size_t i = 0; i < polygon.size(); i++) {
     auto point = polygon[i];
-    new_polygon.push_back(point);
+    if (new_polygon[new_polygon.size() - 1] != point)
+      new_polygon.push_back(point);
     if (intersections_points.count(i)) {
       auto new_points = intersections_points[i];
       if (new_points[0] == point) {
         for (std::size_t j = 1; j < new_points.size() - 1; j++) {
-          new_polygon.push_back(new_points[j]);
+          if (new_polygon[new_polygon.size() - 1] != new_points[j])
+            new_polygon.push_back(new_points[j]);
         }
       } else {
         for (std::size_t j = new_points.size() - 2; j > 0; j++) {
-          new_polygon.push_back(new_points[j]);
+          if (new_polygon[new_polygon.size() - 1] != new_points[j])
+            new_polygon.push_back(new_points[j]);
         }
       }
     }

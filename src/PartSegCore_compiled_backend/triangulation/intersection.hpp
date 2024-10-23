@@ -253,7 +253,7 @@ std::unordered_set<OrderedPair> _find_intersections(
     //    i++;
     auto &event_data = event_it->second;
     //    std::cout << "Active: ";
-    print_map(std::cout, active, "\n");
+    //    print_map(std::cout, active, "\n");
     if (!event_data.tops.empty()) {
       for (const auto &active_el : active) {
         for (auto event_index : event_data.tops) {
@@ -299,8 +299,9 @@ std::unordered_set<OrderedPair> _find_intersections(
     }
     if (!event_data.bottoms.empty()) {
       for (auto event_index : event_data.bottoms) {
-        std::cout << "Event index: " << event_index << " " << active.size()
-                  << std::endl;
+        //        std::cout << "Event index: " << event_index << " " <<
+        //        active.size()
+        //                  << std::endl;
         auto it = active.find(segments[event_index].top);
 
         //        auto next = succ(active, it);

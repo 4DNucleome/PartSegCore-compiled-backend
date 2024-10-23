@@ -6,6 +6,7 @@ from PartSegCore_compiled_backend.triangulate import (
     do_intersect,
     find_intersections,
     find_intersection_point,
+    find_intersection_points_py,
     is_convex,
     triangulate_polygon,
     triangle_convex_polygon,
@@ -205,3 +206,47 @@ def test_triangulate_polygon():
 def test_segment_left_to_right_comparator(segment1, segment2):
     assert segment_left_to_right_comparator(segment1, segment2)
     assert not segment_left_to_right_comparator(segment2, segment1)
+
+
+def test_find_intersection_points_py_cross():
+    r"""
+    (1, 0) --- (1, 1)
+        \     /
+         \   /
+          \ /
+           X
+          / \
+         /   \
+        /     \
+    (0, 0) --- (0, 1)
+    """
+    assert find_intersection_points_py([(0, 0), (1, 1), (1, 0), (0, 1)]) == [
+        (0, 0),
+        (0.5, 0.5),
+        (1, 1),
+        (1, 0),
+        (0.5, 0.5),
+        (0, 1),
+    ]
+
+
+def test_find_intersection_points_py_cross_intersect_in_point():
+    r"""
+    (1, 0) --- (1, 1)
+        \     /
+         \   /
+          \ /
+           X
+          / \
+         /   \
+        /     \
+    (0, 0) --- (0, 1)
+    """
+    assert find_intersection_points_py([(0, 0), (0.5, 0.5), (1, 1), (1, 0), (0, 1)]) == [
+        (0, 0),
+        (0.5, 0.5),
+        (1, 1),
+        (1, 0),
+        (0.5, 0.5),
+        (0, 1),
+    ]

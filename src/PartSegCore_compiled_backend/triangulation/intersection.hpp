@@ -55,11 +55,39 @@ struct EventData {
   std::vector<std::size_t> bottoms;
 };
 
-struct PairHash {
-  std::size_t operator()(const std::pair<int, int> &p) const {
-    return std::hash<int>()(p.first) * 31 + std::hash<int>()(p.second);
+struct OrderedPair {
+  std::size_t first;
+  std::size_t second;
+  OrderedPair() = default;
+  OrderedPair(std::size_t first, std::size_t second) {
+    if (first < second) {
+      this->first = first;
+      this->second = second;
+    } else {
+      this->first = second;
+      this->second = first;
+    }
+  }
+  bool operator==(const OrderedPair &pair) const {
+    return first == pair.first && second == pair.second;
   }
 };
+}  // namespace intersection
+}  // namespace partsegcore
+namespace std {
+
+template <>
+struct hash<partsegcore::intersection::OrderedPair> {
+  std::size_t operator()(
+      const partsegcore::intersection::OrderedPair &pair) const {
+    return std::hash<std::size_t>()(pair.first) ^
+           std::hash<std::size_t>()(pair.second);
+  }
+};
+}  // namespace std
+
+namespace partsegcore {
+namespace intersection {
 
 typedef std::map<point::Point, EventData> IntersectionEvents;
 
@@ -203,9 +231,9 @@ typename T::iterator succ(T &s, typename T::iterator it) {
   return ++it;
 }
 
-std::unordered_set<std::pair<int, int>, PairHash> _find_intersections(
+std::unordered_set<OrderedPair> _find_intersections(
     const std::vector<point::Segment> &segments) {
-  std::unordered_set<std::pair<int, int>, PairHash> intersections;
+  std::unordered_set<OrderedPair> intersections;
   IntersectionEvents intersection_events;
   std::vector<Event> events;
   std::map<point::Point, std::unordered_set<std::size_t>> active;
@@ -214,52 +242,58 @@ std::unordered_set<std::pair<int, int>, PairHash> _find_intersections(
     intersection_events[segments[i].top].tops.push_back(i);
     intersection_events[segments[i].bottom].bottoms.push_back(i);
   }
-  std::cout << "Intersection events: " << std::endl;
+  //  std::cout << "Segments ";
+  //  print_vector(std::cout, segments, "\n");
   int i = 0;
   while (!intersection_events.empty()) {
     auto event_it = --intersection_events.end();
-    std::cout << "Event " << i << ": " << event_it->first << " ";
-    print_vector(std::cout, event_it->second.tops, ", ");
-    print_vector(std::cout, event_it->second.bottoms, "\n");
-    i++;
+    //    std::cout << "Event " << i << ": " << event_it->first << " tops: ";
+    //    print_vector(std::cout, event_it->second.tops, ", bottoms: ");
+    //    print_vector(std::cout, event_it->second.bottoms, "\n");
+    //    i++;
     auto &event_data = event_it->second;
+    //    std::cout << "Active: ";
+    print_map(std::cout, active, "\n");
     if (!event_data.tops.empty()) {
-      std::cout << "Active: ";
-      print_map(std::cout, active, "\n");
-      auto next = active.lower_bound(event_it->first);
-      auto prev = pred(active, next);
-      if (next != active.end()) {
-        std::cout << "Next: " << next->first << " ";
-        print_set(std::cout, next->second, "\n");
+      for (const auto &active_el : active) {
         for (auto event_index : event_data.tops) {
-          for (auto index : next->second) {
+          for (auto index : active_el.second) {
             if (_do_intersect(segments[event_index], segments[index]) &&
                 !_share_endpoint(segments[event_index], segments[index])) {
-              if (event_index < index) {
-                intersections.emplace(event_index, index);
-              } else {
-                intersections.emplace(index, event_index);
-              }
+              intersections.emplace(event_index, index);
             }
           }
         }
       }
-      if (prev != active.end()) {
-        std::cout << "Prev: " << prev->first << " ";
-        print_set(std::cout, prev->second, "\n");
-        for (auto event_index : event_data.tops) {
-          for (auto index : prev->second) {
-            if (_do_intersect(segments[event_index], segments[index]) &&
-                !_share_endpoint(segments[event_index], segments[index])) {
-              if (event_index < index) {
-                intersections.emplace(event_index, index);
-              } else {
-                intersections.emplace(index, event_index);
-              }
-            }
-          }
-        }
-      }
+      //      auto next = active.lower_bound(event_it->first);
+      //      auto prev = pred(active, next);
+      //      if (next != active.end()) {
+      //        std::cout << "Next: " << next->first << " ";
+      //        print_set(std::cout, next->second, "\n");
+      //        for (auto event_index : event_data.tops) {
+      //          for (auto index : next->second) {
+      //            if (_do_intersect(segments[event_index], segments[index]) &&
+      //                !_share_endpoint(segments[event_index],
+      //                segments[index])) {
+      //              intersections.emplace(event_index, index);
+      //            }
+      //          }
+      //        }
+      //      }
+      //      if (prev != active.end()) {
+      //        std::cout << "Prev: " << prev->first << " ";
+      //        print_set(std::cout, prev->second, "\n");
+      //        for (auto event_index : event_data.tops) {
+      //          for (auto index : prev->second) {
+      //            if (_do_intersect(segments[event_index], segments[index]) &&
+      //                !_share_endpoint(segments[event_index],
+      //                segments[index])) { intersections.emplace(event_index,
+      //                index);
+      //
+      //            }
+      //          }
+      //        }
+      //      }
       active[event_it->first].insert(event_data.tops.begin(),
                                      event_data.tops.end());
     }
@@ -269,25 +303,25 @@ std::unordered_set<std::pair<int, int>, PairHash> _find_intersections(
                   << std::endl;
         auto it = active.find(segments[event_index].top);
 
-        auto next = succ(active, it);
-        auto prev = pred(active, it);
-        std::cout << "Is next " << (next != active.end()) << std::endl;
-        std::cout << "Is prev " << (prev != active.end()) << std::endl;
-        if (next != active.end() && prev != active.end()) {
-          std::cout << "Next: " << next->first << std::endl;
-          for (auto n_index : next->second) {
-            for (auto p_index : prev->second) {
-              if (_do_intersect(segments[n_index], segments[p_index]) &&
-                  !_share_endpoint(segments[n_index], segments[p_index])) {
-                if (n_index < p_index) {
-                  intersections.emplace(n_index, p_index);
-                } else {
-                  intersections.emplace(p_index, n_index);
-                }
-              }
-            }
-          }
-        }
+        //        auto next = succ(active, it);
+        //        auto prev = pred(active, it);
+        //        std::cout << "It " << it->first << " segment " <<
+        //        segments[event_index] << std::endl; std::cout << "Is next " <<
+        //        (next != active.end()) << std::endl; std::cout << "Is prev "
+        //        << (prev != active.end()) << std::endl; if (next !=
+        //        active.end() && prev != active.end()) {
+        //          std::cout << "Next: " << next->first << std::endl;
+        //          for (auto n_index : next->second) {
+        //            for (auto p_index : prev->second) {
+        //              if (_do_intersect(segments[n_index], segments[p_index])
+        //              &&
+        //                  !_share_endpoint(segments[n_index],
+        //                  segments[p_index])) { intersections.emplace(n_index,
+        //                  p_index);
+        //              }
+        //            }
+        //          }
+        //        }
         it->second.erase(event_index);
         if (it->second.empty()) {
           active.erase(it);

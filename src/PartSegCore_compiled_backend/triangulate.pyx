@@ -41,13 +41,16 @@ cdef extern from "triangulation/intersection.hpp" namespace "partsegcore::inters
         Event()
         Event(float x, float y, int index, bool is_top)
 
-    cdef cppclass PairHash:
-        size_t operator()(pair[int, int] p) const
+    cdef cppclass OrderedPair:
+        int first
+        int second
+        OrderedPair()
+        OrderedPair(int first, int second)
 
     bool _on_segment(const Point& p, const Point& q, const Point& r)
     int _orientation(const Point& p, const Point& q, const Point& r)
     bool _do_intersect(const Segment& s1, const Segment& s2)
-    unordered_set[pair[int, int], PairHash] _find_intersections(const vector[Segment]& segments)
+    unordered_set[OrderedPair] _find_intersections(const vector[Segment]& segments)
     Point _find_intersection(const Segment& s1, const Segment& s2)
 
 
@@ -137,8 +140,8 @@ def do_intersect(s1: Sequence[Sequence[float]], s2: Sequence[Sequence[float]]) -
 def find_intersections(segments: Sequence[Sequence[Sequence[float]]]) -> list[tuple[int, int]]:
     """ Find intersections between segments"""
     cdef vector[Segment] segments_vector
-    cdef unordered_set[pair[int, int], PairHash] intersections
-    cdef pair[int, int] p
+    cdef unordered_set[OrderedPair] intersections
+    cdef OrderedPair p
 
     segments_vector.reserve(len(segments))
     for segment in segments:
@@ -200,13 +203,13 @@ def triangle_convex_polygon(polygon: Sequence[Sequence[float]])  -> list[tuple[i
 cdef vector[Triangle] _triangulate_polygon(vector[Point] polygon):
     cdef vector[Segment] edges, edges_with_intersections
     cdef Py_ssize_t i, j, edges_count
-    cdef unordered_set[pair[int, int], PairHash] intersections
+    cdef unordered_set[OrderedPair] intersections
     cdef unordered_map[int, vector[Point]] intersections_points
     cdef pair[int, vector[Point]] p_it
     cdef vector[Triangle] triangles
     cdef vector[Point] intersections_points_vector
     cdef Point p_int
-    cdef pair[int, int] p
+    cdef OrderedPair p
 
     if _is_convex(polygon):
         return _triangle_convex_polygon(polygon)

@@ -73,6 +73,8 @@ struct Segment {
     return this->bottom == s.bottom && this->top == s.top;
   }
 
+  bool operator!=(const Segment &s) const { return !(*this == s); }
+
   // Overload the << operator for Segment
   friend std::ostream &operator<<(std::ostream &os, const Segment &segment) {
     os << "[bottom=" << segment.bottom << ", top=" << segment.top << "]";

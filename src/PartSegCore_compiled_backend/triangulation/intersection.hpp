@@ -51,8 +51,8 @@ struct Event {
 };
 
 struct EventData {
-  std::vector<std::size_t> begins;
-  std::vector<std::size_t> ends;
+  std::vector<std::size_t> tops;
+  std::vector<std::size_t> bottoms;
 };
 
 struct PairHash {
@@ -62,6 +62,43 @@ struct PairHash {
 };
 
 typedef std::map<point::Point, EventData> IntersectionEvents;
+
+template <typename T>
+void print_set(std::ostream &o, const T &s, const std::string &end = "\n") {
+  o << "{";
+  for (const auto &el : s) {
+    if (el != *s.begin()) {
+      o << ", ";
+    }
+    o << el;
+  }
+  o << "}" << end;
+}
+
+template <typename T>
+void print_vector(std::ostream &o, const T &s, const std::string &end = "\n") {
+  o << "[";
+  for (const auto &el : s) {
+    if (el != *s.begin()) {
+      o << ", ";
+    }
+    o << el;
+  }
+  o << "]" << end;
+}
+
+template <typename T>
+void print_map(std::ostream &o, const T &s, const std::string &end = "\n") {
+  o << "{";
+  for (const auto &el : s) {
+    if (el != *s.begin()) {
+      o << ", ";
+    }
+    o << el.first << ": ";
+    print_set(o, el.second, "");
+  }
+  o << "}" << end;
+}
 
 /**
  * Checks whether point q lies on the line segment defined by points p and r.
@@ -171,75 +208,95 @@ std::unordered_set<std::pair<int, int>, PairHash> _find_intersections(
   std::unordered_set<std::pair<int, int>, PairHash> intersections;
   IntersectionEvents intersection_events;
   std::vector<Event> events;
-  std::map<point::Point, std::unordered_set<int>> active;
+  std::map<point::Point, std::unordered_set<std::size_t>> active;
   events.reserve(2 * segments.size());
   for (std::size_t i = 0; i < segments.size(); i++) {
-    intersection_events[segments[i].bottom].begins.push_back(i);
-    intersection_events[segments[i].top].ends.push_back(i);
-    events.emplace_back(segments[i].top, i, true);
-    events.emplace_back(segments[i].bottom, i, false);
+    intersection_events[segments[i].top].tops.push_back(i);
+    intersection_events[segments[i].bottom].bottoms.push_back(i);
   }
-
-  std::sort(events.begin(), events.end());
-
-  //     Print events
-  std::cout << "Events: " << std::endl;
-  for (auto &event : events) {
-    std::cout << "Event: x=" << event.p.x << " y=" << event.p.y
-              << " index=" << event.index
-              << " bottom=" << (event.is_top ? "true" : "false") << std::endl;
-  }
-  std::cout << "End of events" << std::endl << std::flush;
-
-  for (auto &event : events) {
-    if (event.is_top) {
-      auto next = active.lower_bound(event.p);
+  std::cout << "Intersection events: " << std::endl;
+  int i = 0;
+  while (!intersection_events.empty()) {
+    auto event_it = --intersection_events.end();
+    std::cout << "Event " << i << ": " << event_it->first << " ";
+    print_vector(std::cout, event_it->second.tops, ", ");
+    print_vector(std::cout, event_it->second.bottoms, "\n");
+    i++;
+    auto &event_data = event_it->second;
+    if (!event_data.tops.empty()) {
+      std::cout << "Active: ";
+      print_map(std::cout, active, "\n");
+      auto next = active.lower_bound(event_it->first);
       auto prev = pred(active, next);
-      // we use while, because more than two segments can intersect at the same
-      // point
       if (next != active.end()) {
-        // to not lost some intersection, but exclude edges, that share endpoint
-        for (auto index : next->second) {
-          if (!_share_endpoint(segments[event.index], segments[index])) {
-            if (event.index < index) {
-              intersections.emplace(event.index, index);
-            } else {
-              intersections.emplace(index, event.index);
+        std::cout << "Next: " << next->first << " ";
+        print_set(std::cout, next->second, "\n");
+        for (auto event_index : event_data.tops) {
+          for (auto index : next->second) {
+            if (_do_intersect(segments[event_index], segments[index]) &&
+                !_share_endpoint(segments[event_index], segments[index])) {
+              if (event_index < index) {
+                intersections.emplace(event_index, index);
+              } else {
+                intersections.emplace(index, event_index);
+              }
             }
           }
         }
       }
-      // we use while, because more than two segments can intersect at the same
-      // point
       if (prev != active.end()) {
-        for (auto index : prev->second) {
-          if (!_share_endpoint(segments[event.index], segments[index])) {
-            if (event.index < index) {
-              intersections.emplace(event.index, index);
-            } else {
-              intersections.emplace(index, event.index);
+        std::cout << "Prev: " << prev->first << " ";
+        print_set(std::cout, prev->second, "\n");
+        for (auto event_index : event_data.tops) {
+          for (auto index : prev->second) {
+            if (_do_intersect(segments[event_index], segments[index]) &&
+                !_share_endpoint(segments[event_index], segments[index])) {
+              if (event_index < index) {
+                intersections.emplace(event_index, index);
+              } else {
+                intersections.emplace(index, event_index);
+              }
             }
           }
         }
       }
-      active[event.p].insert(event.index);
-    } else {
-      auto it = active.find(segments[event.index].bottom);
-      auto next = succ(active, it);
-      auto prev = pred(active, it);
-      if (next != active.end() && prev != active.end() &&
-          _do_intersect(segments[next->index], segments[prev->index])) {
-        if (!_share_endpoint(segments[next->index], segments[prev->index])) {
-          if (next->index < prev->index) {
-            intersections.emplace(next->index, prev->index);
-          } else {
-            intersections.emplace(prev->index, next->index);
+      active[event_it->first].insert(event_data.tops.begin(),
+                                     event_data.tops.end());
+    }
+    if (!event_data.bottoms.empty()) {
+      for (auto event_index : event_data.bottoms) {
+        std::cout << "Event index: " << event_index << " " << active.size()
+                  << std::endl;
+        auto it = active.find(segments[event_index].top);
+
+        auto next = succ(active, it);
+        auto prev = pred(active, it);
+        std::cout << "Is next " << (next != active.end()) << std::endl;
+        std::cout << "Is prev " << (prev != active.end()) << std::endl;
+        if (next != active.end() && prev != active.end()) {
+          std::cout << "Next: " << next->first << std::endl;
+          for (auto n_index : next->second) {
+            for (auto p_index : prev->second) {
+              if (_do_intersect(segments[n_index], segments[p_index]) &&
+                  !_share_endpoint(segments[n_index], segments[p_index])) {
+                if (n_index < p_index) {
+                  intersections.emplace(n_index, p_index);
+                } else {
+                  intersections.emplace(p_index, n_index);
+                }
+              }
+            }
           }
         }
+        it->second.erase(event_index);
+        if (it->second.empty()) {
+          active.erase(it);
+        }
       }
-      active.erase(it);
     }
+    intersection_events.erase(event_it);
   }
+
   return intersections;
 }
 

@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.21)
 project(${SKBUILD_PROJECT_NAME} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 
 # Define compiler directive
 add_definitions(-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION)

@@ -109,6 +109,7 @@ python_add_library(
         src/PartSegCore_compiled_backend/triangulation/triangulate.hpp
         src/PartSegCore_compiled_backend/triangulation/intersection.hpp
         src/PartSegCore_compiled_backend/triangulation/point.hpp
+        src/PartSegCore_compiled_backend/triangulation/debug_util.hpp
         WITH_SOABI)
 target_include_directories(triangulate PRIVATE "${NUMPY_INCLUDE_DIR}")
 target_include_directories(triangulate PRIVATE src/PartSegCore_compiled_backend/)

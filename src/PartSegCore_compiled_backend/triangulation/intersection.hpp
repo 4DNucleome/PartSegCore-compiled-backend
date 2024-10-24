@@ -91,43 +91,6 @@ namespace intersection {
 
 typedef std::map<point::Point, EventData> IntersectionEvents;
 
-template <typename T>
-void print_set(std::ostream &o, const T &s, const std::string &end = "\n") {
-  o << "{";
-  for (const auto &el : s) {
-    if (el != *s.begin()) {
-      o << ", ";
-    }
-    o << el;
-  }
-  o << "}" << end;
-}
-
-template <typename T>
-void print_vector(std::ostream &o, const T &s, const std::string &end = "\n") {
-  o << "[";
-  for (const auto &el : s) {
-    if (el != *s.begin()) {
-      o << ", ";
-    }
-    o << el;
-  }
-  o << "]" << end;
-}
-
-template <typename T>
-void print_map(std::ostream &o, const T &s, const std::string &end = "\n") {
-  o << "{";
-  for (const auto &el : s) {
-    if (el != *s.begin()) {
-      o << ", ";
-    }
-    o << el.first << ": ";
-    print_set(o, el.second, "");
-  }
-  o << "}" << end;
-}
-
 /**
  * Checks whether point q lies on the line segment defined by points p and r.
  *
@@ -255,6 +218,9 @@ std::unordered_set<OrderedPair> _find_intersections(
     //    std::cout << "Active: ";
     //    print_map(std::cout, active, "\n");
     if (!event_data.tops.empty()) {
+      // Current implementation is not optimal, but it is was
+      // faster to use this to have initial working version.
+      // TODO based on commented code fix edge cases.
       for (const auto &active_el : active) {
         for (auto event_index : event_data.tops) {
           for (auto index : active_el.second) {

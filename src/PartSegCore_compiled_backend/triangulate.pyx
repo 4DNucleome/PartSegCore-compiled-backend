@@ -63,10 +63,26 @@ cdef extern from "triangulation/triangulate.hpp" namespace "partsegcore::triangu
         Triangle()
         Triangle(int x, int y, int z)
 
+    cdef cppclass MonotonePolygon:
+        Point top
+        Point bottom
+        vector[Point] left
+        vector[Point] right
+        MonotonePolygon()
+        MonotonePolygon(Point top, Point bottom, vector[Point] left, vector[Point] right)
+
+
+    cdef cppclass PointTriangle:
+        Point p1
+        Point p2
+        Point p3
+
+
     bool _is_convex(const vector[Point]& polygon)
     vector[Triangle] _triangle_convex_polygon(const vector[Point]& polygon)
     bool left_to_right(const Segment& s1, const Segment& s2)
     vector[Point] find_intersection_points(const vector[Point]& segments)
+    vector[PointTriangle] triangulate_monotone_polygon(const MonotonePolygon& polygon)
 
 
 
@@ -285,3 +301,25 @@ def find_intersection_points_py(polygon: Sequence[Sequence[float]]) -> Sequence[
 
     result = find_intersection_points(polygon_vector)
     return [(point.x, point.y) for point in result]
+
+
+def triangulate_monotone_polygon_py(top: Sequence[float], bottom: Sequence[float], left: Sequence[Sequence[float]], right: Sequence[Sequence[float]]) -> Sequence[Sequence[Sequence[float]]]:
+    """ Triangulate monotone polygon"""
+    cdef vector[Point] left_vector, right_vector
+    cdef vector[PointTriangle] result
+    cdef MonotonePolygon mono_polygon
+
+    left_vector.reserve(len(left))
+    for point in left:
+        left_vector.push_back(Point(point[0], point[1]))
+
+    right_vector.reserve(len(right))
+    for point in right:
+        right_vector.push_back(Point(point[0], point[1]))
+
+    mono_polygon = MonotonePolygon(Point(top[0], top[1]), Point(bottom[0], bottom[1]), left_vector, right_vector)
+    result = triangulate_monotone_polygon(mono_polygon)
+    return [
+        [(triangle.p1.x, triangle.p1.y), (triangle.p2.x, triangle.p2.y), (triangle.p3.x, triangle.p3.y)]
+        for triangle in result
+    ]

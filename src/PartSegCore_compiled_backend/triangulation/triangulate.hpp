@@ -4,10 +4,12 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#include <stack>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
+#include "debug_util.hpp"
 #include "intersection.hpp"
 #include "point.hpp"
 
@@ -70,11 +72,20 @@ struct SegmentLeftRightComparator {
   }
 };
 
-struct OrderedPolygon {
-  point::Point top;
-  point::Point bottom;
+struct MonotonePolygon {
+  point::Point top{};
+  point::Point bottom{};
   std::vector<point::Point> left;
   std::vector<point::Point> right;
+
+  MonotonePolygon() = default;
+  MonotonePolygon(point::Point top, point::Point bottom,
+                  std::vector<point::Point> left,
+                  std::vector<point::Point> right)
+      : top(top),
+        bottom(bottom),
+        left(std::move(left)),
+        right(std::move(right)) {}
 };
 
 struct Triangle {
@@ -83,6 +94,15 @@ struct Triangle {
   std::size_t z;
   Triangle(std::size_t x, std::size_t y, std::size_t z) : x(x), y(y), z(z) {};
   Triangle() = default;
+};
+
+struct PointTriangle {
+  point::Point p1;
+  point::Point p2;
+  point::Point p3;
+  PointTriangle(point::Point p1, point::Point p2, point::Point p3)
+      : p1(p1), p2(p2), p3(p3) {};
+  PointTriangle() = default;
 };
 
 typedef std::size_t EdgeIndex;
@@ -158,6 +178,160 @@ std::vector<Triangle> _triangle_convex_polygon(
   return result;
 }
 
+/**
+ * Construct triangles using the current point and edges opposite to it.
+ *
+ * This function takes a current point and a stack of points, then builds
+ * triangles by connecting the current point to adjoining points in the stack.
+ * Each triangle is added to the result vector as a `PointTriangle` object.
+ *
+ * Steps performed:
+ * 1. Iterate over the stack to form triangles with the current point.
+ * 2. Replace the first element of the stack with the last element.
+ * 3. Set the second element of the stack to the current point.
+ * 4. Remove all elements from the stack except the first two.
+ *
+ * @param stack A vector of `point::Point` objects representing the stack of
+ * points.
+ * @param result A vector to store the resultant `PointTriangle` objects.
+ * @param current_point The current `point::Point` used to form triangles with
+ * points in the stack.
+ */
+void _build_triangles_opposite_edge(std::vector<point::Point> &stack,
+                                    std::vector<PointTriangle> &result,
+                                    point::Point current_point) {
+  for (std::size_t i = 0; i < stack.size() - 1; i++) {
+    result.emplace_back(current_point, stack[i], stack[i + 1]);
+  }
+  stack[0] = stack.back();
+  stack[1] = current_point;
+  // remove all elements except two first
+  stack.erase(stack.begin() + 2, stack.end());
+}
+
+/**
+ * Constructs triangles from the current edge of the y-monotone and updates the
+ * stack and result vectors.
+ *
+ * This function processes a stack of points and an incoming point to form
+ * triangles that are part of the processed area. The triangles are determined
+ * based on the expected orientation and are added to the result vector. The
+ * stack is then updated to reflect the current status of the processed area.
+ *
+ * @param point_stack A reference to a std::vector of point::Point representing
+ * the current state of the stack.
+ * @param triangles A reference to a std::vector of PointTriangle where the
+ * generated triangles will be stored.
+ * @param incoming_point The incoming point::Point to be considered for new
+ * triangles and updating the stack.
+ * @param expected_orientation The expected orientation (clockwise or
+ * counterclockwise) that will guide the triangle formation.
+ */
+void _build_triangles_current_edge(std::vector<point::Point> &stack,
+                                   std::vector<PointTriangle> &result,
+                                   point::Point current_point,
+                                   int expected_orientation) {
+  auto it1 = stack.rbegin();
+  auto it2 = stack.rbegin() + 1;
+  while (it2 != stack.rend() &&
+         intersection::_orientation(*it2, *it1, current_point) ==
+             expected_orientation) {
+    result.emplace_back(current_point, *it1, *it2);
+    it1++;
+    it2++;
+  }
+  stack.erase(it1.base(), stack.end());
+  stack.push_back(current_point);
+}
+
+/**
+ * @enum Side
+ * @brief An enumeration to represent different sides.
+ *
+ * This enumeration defines constants for various sides,
+ * in particular:
+ * - TOP: Represents the top side.
+ * - LEFT: Represents the left side.
+ * - RIGHT: Represents the right side.
+ */
+enum Side {
+  TOP = 0,
+  LEFT = 2,
+  RIGHT = 1,
+};
+
+/**
+ * Triangulates a given monotone polygon.
+ *
+ * The function takes a monotone polygon as input and returns a vector
+ * of triangles that represent the triangulation of the polygon. The
+ * polygon must be y-monotone, meaning that every line segment
+ * parallel to the y-axis intersects the polygon at most twice.
+ *
+ * The algorithm works by sorting points of the polygon, merging the
+ * left and right chains, and then using a stack-based approach to
+ * recursively build triangles.
+ *
+ * @param polygon The monotone polygon to be triangulated.
+ * @return A vector of PointTriangle representing the triangles of the
+ *         triangulated polygon.
+ */
+std::vector<PointTriangle> triangulate_monotone_polygon(
+    const MonotonePolygon &polygon) {
+  std::vector<PointTriangle> result;
+  std::size_t left_index = 0;
+  std::size_t right_index = 0;
+  std::vector<point::Point> stack;
+  std::vector<std::pair<point::Point, Side>> points;
+
+  points.reserve(polygon.left.size() + polygon.right.size() + 2);
+  points.emplace_back(polygon.top, Side::TOP);
+  while (left_index < polygon.left.size() &&
+         right_index < polygon.right.size()) {
+    if (polygon.left[left_index] < polygon.right[right_index]) {
+      points.emplace_back(polygon.right[right_index], Side::RIGHT);
+      right_index++;
+    } else {
+      points.emplace_back(polygon.left[left_index], Side::LEFT);
+      left_index++;
+    }
+  }
+  while (left_index < polygon.left.size()) {
+    points.emplace_back(polygon.left[left_index], Side::LEFT);
+    left_index++;
+  }
+  while (right_index < polygon.right.size()) {
+    points.emplace_back(polygon.right[right_index], Side::RIGHT);
+    right_index++;
+  }
+  points.emplace_back(polygon.bottom, Side::TOP);
+
+  stack.push_back(points[0].first);
+  stack.push_back(points[1].first);
+  Side side = points[1].second;
+
+  for (std::size_t i = 2; i < points.size(); i++) {
+    if (side == points[i].second) {
+      _build_triangles_current_edge(stack, result, points[i].first, side);
+    } else {
+      _build_triangles_opposite_edge(stack, result, points[i].first);
+    }
+    side = points[i].second;
+  }
+  return result;
+}
+
+/**
+ * Calculates the edges of a polygon represented as a sequence of points.
+ *
+ * This function takes a vector of points representing the vertices of a polygon
+ * and returns a vector of segments representing the edges of the polygon.
+ * The edges are created by connecting each point to the next, with the final
+ * point connecting back to the first point to close the polygon.
+ *
+ * @param polygon A vector of points representing the vertices of the polygon.
+ * @return A vector of segments representing the edges of the polygon.
+ */
 std::vector<point::Segment> calc_edges(
     const std::vector<point::Point> &polygon) {
   std::vector<point::Segment> edges;
@@ -169,6 +343,17 @@ std::vector<point::Segment> calc_edges(
   return edges;
 }
 
+/**
+ * @brief Finds intersection points in a polygon and adds mid-points for all
+ * intersections.
+ *
+ * The function takes a vector of points defining a polygon and finds all edge
+ * intersections. It then adds mid-points for all such intersections.
+ *
+ * @param polygon The polygon defined by a vector of Point objects.
+ * @return A new vector of Point objects representing the polygon with added
+ * intersection points.
+ */
 std::vector<point::Point> find_intersection_points(
     const std::vector<point::Point> &polygon) {
   /* find all edge intersections and add mid-points for all such intersection
@@ -219,14 +404,23 @@ std::vector<point::Point> find_intersection_points(
   return new_polygon;
 }
 
-/*
-    Calculate point type.
-    If there is more than two edges adjusted to point, it is intersection point.
-    If there are two adjusted edges, it could be one of split, merge and normal
-    point. If both adjusted edges have opposite end before given point p, this
-   is merge point. If both adjusted edges have opposite end after given point p,
-   split point. Otherwise it is normal point.
-    */
+/**
+ * Determines the type of a given point based on its adjacent edges.
+ *
+ * If the point has more than two edges connected to it, it is considered an
+ * intersection point. If it has exactly two edges, further checks categorize
+ * it as one of split, merge, or normal points.
+ *
+ * - If both adjacent edges have their opposite ends before the given point `p`,
+ *   the point is classified as a merge point.
+ * - If both adjacent edges have their opposite ends after the given point `p`,
+ *   the point is classified as a split point.
+ * - Otherwise, it is categorized as a normal point.
+ *
+ * @param p The point to classify.
+ * @param point_to_edges A mapping from points to their adjacent edges.
+ * @return The type of the point as determined by its adjacent edges.
+ */
 PointType get_point_type(point::Point p, PointToEdges &point_to_edges) {
   if (point_to_edges.at(p).size() != 2) return PointType::INTERSECTION;
   const auto &edges = point_to_edges.at(p);
@@ -237,10 +431,14 @@ PointType get_point_type(point::Point p, PointToEdges &point_to_edges) {
   return PointType::NORMAL;
 }
 
-/*
-    Get map from point to list of edges which contains this point.
-    Also sort each list by point order.
-    */
+/**
+ * Get a mapping from points to the list of edges that contain those points.
+ * Each list of edges is sorted by the point order within the edges.
+ *
+ * @param edges A vector of Segment objects representing the edges of a polygon.
+ * @return A PointToEdges map where each key is a point and the corresponding
+ * value is a vector of edges containing that point.
+ */
 PointToEdges get_points_edges(std::vector<point::Segment> &edges) {
   PointToEdges point_to_edges;
   for (std::size_t i = 0; i < edges.size(); i++) {
@@ -306,9 +504,9 @@ void _process_merge_point(
 // }
 
 /*
-    This is implementation of sweeping line triangulation of polygon
+    This is an implementation of sweeping line triangulation of polygon
     Its assumes that there is no edge intersections, but may be a point with
-   more than 2 edges. described on this lecture:
+    more than 2 edges. described on this lecture:
     https://www.youtube.com/playlist?list=PLtTatrCwXHzEqzJMaTUFgqoCNllgwk4DH
     */
 std::pair<std::vector<Triangle>, std::vector<point::Point>>
@@ -321,7 +519,7 @@ sweeping_line_triangulation(const std::vector<point::Point> &polygon) {
   std::vector<point::Point> sorted_points = polygon;
   // copy to avoid modification of original vector
   std::sort(sorted_points.begin(), sorted_points.end());
-  std::vector<OrderedPolygon> ordered_polygon_li;
+  std::vector<MonotonePolygon> ordered_polygon_li;
   std::map<point::Segment, Interval *> segment_to_line;
   std::vector<Interval> intervals;
   ordered_polygon_li.emplace_back();

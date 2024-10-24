@@ -65,7 +65,13 @@ target_include_directories(calc_bounds PRIVATE "${NUMPY_INCLUDE_DIR}")
 
 
 cython_transpile(src/PartSegCore_compiled_backend/multiscale_opening/mso_bind.pyx LANGUAGE CXX OUTPUT_VARIABLE mso_bind_cython_cxx)
-python_add_library(mso_bind MODULE "${mso_bind_cython_cxx}" WITH_SOABI)
+python_add_library(
+    mso_bind MODULE
+    "${mso_bind_cython_cxx}"
+    src/PartSegCore_compiled_backend/multiscale_opening/mso.cpp
+    src/PartSegCore_compiled_backend/multiscale_opening/mso.h
+    src/PartSegCore_compiled_backend/multiscale_opening/my_queue.h
+    WITH_SOABI)
 target_include_directories(mso_bind PRIVATE src/PartSegCore_compiled_backend/multiscale_opening/)
 target_include_directories(mso_bind PRIVATE "${NUMPY_INCLUDE_DIR}")
 

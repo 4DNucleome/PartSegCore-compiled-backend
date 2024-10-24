@@ -496,6 +496,7 @@ class MSO {
             components_arr[neigh_position] = components_arr[position];
           } else {
             components_arr[neigh_position] = std::numeric_limits<T>::max();
+            continue;
           }
           if (!coord_in_queue[neigh_position]) {
             coord_in_queue[neigh_position] = true;

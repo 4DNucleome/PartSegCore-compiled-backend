@@ -16,7 +16,7 @@
 namespace partsegcore {
 namespace triangulation {
 
-enum PointType { NORMAL, SPLIT, MERGE, INTERSECTION };
+enum PointType { NORMAL, SPLIT, MERGE, INTERSECTION, START, END };
 
 struct Interval {
   point::Point last_seen;
@@ -250,12 +250,12 @@ void _build_triangles_current_edge(std::vector<point::Point> &stack,
  *
  * This enumeration defines constants for various sides,
  * in particular:
- * - TOP: Represents the top side.
+ * - TOP_OR_BOTTOM: Represents the top side.
  * - LEFT: Represents the left side.
  * - RIGHT: Represents the right side.
  */
 enum Side {
-  TOP = 0,
+  TOP_OR_BOTTOM = 0,
   LEFT = 2,
   RIGHT = 1,
 };
@@ -285,7 +285,7 @@ std::vector<PointTriangle> triangulate_monotone_polygon(
   std::vector<std::pair<point::Point, Side>> points;
 
   points.reserve(polygon.left.size() + polygon.right.size() + 2);
-  points.emplace_back(polygon.top, Side::TOP);
+  points.emplace_back(polygon.top, Side::TOP_OR_BOTTOM);
   while (left_index < polygon.left.size() &&
          right_index < polygon.right.size()) {
     if (polygon.left[left_index] < polygon.right[right_index]) {
@@ -304,7 +304,7 @@ std::vector<PointTriangle> triangulate_monotone_polygon(
     points.emplace_back(polygon.right[right_index], Side::RIGHT);
     right_index++;
   }
-  points.emplace_back(polygon.bottom, Side::TOP);
+  points.emplace_back(polygon.bottom, Side::TOP_OR_BOTTOM);
 
   stack.push_back(points[0].first);
   stack.push_back(points[1].first);
@@ -421,7 +421,9 @@ std::vector<point::Point> find_intersection_points(
  * @param point_to_edges A mapping from points to their adjacent edges.
  * @return The type of the point as determined by its adjacent edges.
  */
-PointType get_point_type(point::Point p, PointToEdges &point_to_edges) {
+PointType get_point_type(
+    point::Point p, PointToEdges &point_to_edges,
+    std::map<point::Segment, Interval *> &segment_to_line) {
   if (point_to_edges.at(p).size() != 2) return PointType::INTERSECTION;
   const auto &edges = point_to_edges.at(p);
   if (edges[0].opposite_point < p && edges[1].opposite_point < p)
@@ -527,6 +529,14 @@ sweeping_line_triangulation(const std::vector<point::Point> &polygon) {
   for (auto &sorted_point : sorted_points) {
     auto point_type = get_point_type(sorted_point, point_to_edges);
     switch (point_type) {
+      case PointType::START:
+        // start new line
+        break;
+
+      case PointType::END:
+        // end line
+        break;
+
       case PointType::NORMAL:
         // change edge adjusted to current sweeping line
         _process_normal_point(sorted_point, edges, point_to_edges,
@@ -546,7 +556,7 @@ sweeping_line_triangulation(const std::vector<point::Point> &polygon) {
                              segment_to_line);
         break;
       case PointType::INTERSECTION:
-        // this is merge and split point at same time
+        // this is a merge and split point at the same time
         // this is not described in original algorithm
         // but we need it to handle self intersecting polygons
         // Remember about more than 4 edges case

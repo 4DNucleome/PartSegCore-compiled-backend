@@ -68,7 +68,7 @@ cython_transpile(src/PartSegCore_compiled_backend/multiscale_opening/mso_bind.py
 python_add_library(
     mso_bind MODULE
     "${mso_bind_cython_cxx}"
-    src/PartSegCore_compiled_backend/multiscale_opening/mso.cpp
+    # src/PartSegCore_compiled_backend/multiscale_opening/mso.cpp
     src/PartSegCore_compiled_backend/multiscale_opening/mso.h
     src/PartSegCore_compiled_backend/multiscale_opening/my_queue.h
     WITH_SOABI)

@@ -9,7 +9,7 @@ For benchmark please see https://github.com/4DNucleome/PartSegCore-compiled-back
 
 import numpy as np
 
-from ._fast_unique import unique1d, unique2d, unique3d
+from PartSegCore_compiled_backend._fast_unique import unique1d, unique2d, unique3d
 
 
 def label_unique(array, numpy_fallback=False) -> np.ndarray:

@@ -1,4 +1,3 @@
-import typing
 from enum import Enum
 
 import numpy as np
@@ -13,7 +12,7 @@ def calculate_mu(
     lower_bound: float,
     upper_bound: float,
     type_: MuType,
-    mask: typing.Optional[np.ndarray] = None,
+    mask: np.ndarray | None = None,
     lower_mid_bound: float = 0,
     upper_mid_bound: float = 0,
 ): ...
@@ -26,12 +25,12 @@ class PyMSO:
         lower_bound: float,
         upper_bound: float,
         type_: MuType,
-        mask: typing.Optional[np.ndarray] = None,
+        mask: np.ndarray | None = None,
         lower_mid_bound: float = 0,
         upper_mid_bound: float = 0,
     ): ...
     def set_mu_array(self, mu: np.ndarray): ...
-    def set_components(self, components: np.ndarray, component_num: typing.Optional[int] = None): ...
+    def set_components(self, components: np.ndarray, component_num: int | None = None): ...
     def set_neighbourhood(self, neighbourhood: np.ndarray, distances: np.ndarray): ...
     def calculate_FDT(self) -> np.ndarray: ...
     def optimum_erosion_calculate(

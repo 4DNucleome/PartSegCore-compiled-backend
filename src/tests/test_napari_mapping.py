@@ -1,11 +1,12 @@
 import numpy as np
 import numpy.testing as npt
 import pytest
+
 from PartSegCore_compiled_backend.napari_mapping import (
-    zero_preserving_modulo_parallel,
-    zero_preserving_modulo_sequential,
     map_array_parallel,
     map_array_sequential,
+    zero_preserving_modulo_parallel,
+    zero_preserving_modulo_sequential,
 )
 
 
@@ -59,7 +60,7 @@ def test_map_array(func, data):
     npt.assert_array_equal(out, _map_array(data, map_dkt, np.uint8))
 
 
-@pytest.mark.parametrize('num,dtype', [(40, np.uint8), (1000, np.uint16)])
+@pytest.mark.parametrize(('num', 'dtype'), [(40, np.uint8), (1000, np.uint16)])
 @pytest.mark.parametrize('func', [zero_preserving_modulo_parallel, zero_preserving_modulo_sequential])
 def test_cast_labels_to_minimum_type_auto(num: int, dtype, monkeypatch, func):
     data = np.zeros(3, dtype=np.uint32)

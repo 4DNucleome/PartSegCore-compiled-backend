@@ -1,7 +1,13 @@
-from typing import Optional
+from __future__ import annotations
+
 import numpy as np
 
-from ._napari_mapping import _zero_preserving_modulo_par, _zero_preserving_modulo_seq, _map_array_par, _map_array_seq
+from PartSegCore_compiled_backend._napari_mapping import (
+    _map_array_par,
+    _map_array_seq,
+    _zero_preserving_modulo_par,
+    _zero_preserving_modulo_seq,
+)
 
 
 def _allocate_output(data: np.ndarray, num_values: int) -> np.ndarray:
@@ -15,7 +21,7 @@ def _allocate_output(data: np.ndarray, num_values: int) -> np.ndarray:
 
 
 def zero_preserving_modulo_sequential(
-    data: np.ndarray, modulo_factor: int, to_zero: int, out: Optional[np.ndarray] = None
+    data: np.ndarray, modulo_factor: int, to_zero: int, out: np.ndarray | None = None
 ) -> np.ndarray:
     """
     Modulo plus one operation performed on values different than to_zero.
@@ -43,7 +49,7 @@ def zero_preserving_modulo_sequential(
 
 
 def zero_preserving_modulo_parallel(
-    data: np.ndarray, modulo_factor: int, to_zero: int, out: Optional[np.ndarray] = None
+    data: np.ndarray, modulo_factor: int, to_zero: int, out: np.ndarray | None = None
 ) -> np.ndarray:
     """
     Modulo plus one operation performed on values different than to_zero.
@@ -71,7 +77,7 @@ def zero_preserving_modulo_parallel(
 
 
 def map_array_sequential(
-    data: np.ndarray, mapping: dict, default: int = 0, out: Optional[np.ndarray] = None
+    data: np.ndarray, mapping: dict, default: int = 0, out: np.ndarray | None = None
 ) -> np.ndarray:
     """
     Map values from data to values from mapping.
@@ -96,9 +102,7 @@ def map_array_sequential(
     return out.reshape(original_shape)
 
 
-def map_array_parallel(
-    data: np.ndarray, mapping: dict, default: int = 0, out: Optional[np.ndarray] = None
-) -> np.ndarray:
+def map_array_parallel(data: np.ndarray, mapping: dict, default: int = 0, out: np.ndarray | None = None) -> np.ndarray:
     """
     Map values from data to values from mapping.
 

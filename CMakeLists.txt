@@ -43,9 +43,9 @@ target_include_directories(path_sprawl_cython PRIVATE "${NUMPY_INCLUDE_DIR}")
 target_include_directories(path_sprawl_cython PRIVATE src/PartSegCore_compiled_backend/sprawl_utils/)
 
 cython_transpile(src/PartSegCore_compiled_backend/sprawl_utils/sprawl_utils.pyx LANGUAGE CXX OUTPUT_VARIABLE sprawl_utils_cython_cxx)
-python_add_library(sprawl_utils_cython MODULE "${sprawl_utils_cython_cxx}" WITH_SOABI)
-target_include_directories(sprawl_utils_cython PRIVATE "${NUMPY_INCLUDE_DIR}")
-target_include_directories(sprawl_utils_cython PRIVATE src/PartSegCore_compiled_backend/sprawl_utils/)
+python_add_library(sprawl_utils MODULE "${sprawl_utils_cython_cxx}" WITH_SOABI)
+target_include_directories(sprawl_utils PRIVATE "${NUMPY_INCLUDE_DIR}")
+target_include_directories(sprawl_utils PRIVATE src/PartSegCore_compiled_backend/sprawl_utils/)
 
 
 cython_transpile(src/PartSegCore_compiled_backend/sprawl_utils/fuzzy_distance.pyx LANGUAGE CXX OUTPUT_VARIABLE fuzzy_distance_cython_cxx)

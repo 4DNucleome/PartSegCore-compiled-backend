@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.21)
 project(${SKBUILD_PROJECT_NAME} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 
 # Define compiler directive
 add_definitions(-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION)
@@ -52,23 +51,23 @@ target_include_directories(path_sprawl_cython PRIVATE "${NUMPY_INCLUDE_DIR}")
 target_include_directories(path_sprawl_cython PRIVATE src/PartSegCore_compiled_backend/sprawl_utils/)
 
 cython_transpile(src/PartSegCore_compiled_backend/sprawl_utils/sprawl_utils.pyx LANGUAGE CXX OUTPUT_VARIABLE sprawl_utils_cython_cxx)
-python_add_library(sprawl_utils_cython MODULE
+python_add_library(sprawl_utils MODULE
         "${sprawl_utils_cython_cxx}"
         src/PartSegCore_compiled_backend/sprawl_utils/my_queue.h
         src/PartSegCore_compiled_backend/sprawl_utils/global_consts.h
         WITH_SOABI)
-target_include_directories(sprawl_utils_cython PRIVATE "${NUMPY_INCLUDE_DIR}")
-target_include_directories(sprawl_utils_cython PRIVATE src/PartSegCore_compiled_backend/sprawl_utils/)
+target_include_directories(sprawl_utils PRIVATE "${NUMPY_INCLUDE_DIR}")
+target_include_directories(sprawl_utils PRIVATE src/PartSegCore_compiled_backend/sprawl_utils/)
 
 
 cython_transpile(src/PartSegCore_compiled_backend/sprawl_utils/fuzzy_distance.pyx LANGUAGE CXX OUTPUT_VARIABLE fuzzy_distance_cython_cxx)
-python_add_library(fuzzy_distance_cython MODULE
+python_add_library(fuzzy_distance MODULE
         "${fuzzy_distance_cython_cxx}"
         src/PartSegCore_compiled_backend/sprawl_utils/my_queue.h
         src/PartSegCore_compiled_backend/sprawl_utils/global_consts.h
         WITH_SOABI)
-target_include_directories(fuzzy_distance_cython PRIVATE "${NUMPY_INCLUDE_DIR}")
-target_include_directories(fuzzy_distance_cython PRIVATE src/PartSegCore_compiled_backend/sprawl_utils/)
+target_include_directories(fuzzy_distance PRIVATE "${NUMPY_INCLUDE_DIR}")
+target_include_directories(fuzzy_distance PRIVATE src/PartSegCore_compiled_backend/sprawl_utils/)
 
 
 cython_transpile(src/PartSegCore_compiled_backend/color_image_cython.pyx LANGUAGE CXX OUTPUT_VARIABLE color_image_cython_cxx)
@@ -82,11 +81,13 @@ target_include_directories(calc_bounds PRIVATE "${NUMPY_INCLUDE_DIR}")
 
 
 cython_transpile(src/PartSegCore_compiled_backend/multiscale_opening/mso_bind.pyx LANGUAGE CXX OUTPUT_VARIABLE mso_bind_cython_cxx)
-python_add_library(mso_bind MODULE
-        "${mso_bind_cython_cxx}"
-        src/PartSegCore_compiled_backend/multiscale_opening/mso.h
-        src/PartSegCore_compiled_backend/multiscale_opening/my_queue.h
-        WITH_SOABI)
+python_add_library(
+    mso_bind MODULE
+    "${mso_bind_cython_cxx}"
+    # src/PartSegCore_compiled_backend/multiscale_opening/mso.cpp
+    src/PartSegCore_compiled_backend/multiscale_opening/mso.h
+    src/PartSegCore_compiled_backend/multiscale_opening/my_queue.h
+    WITH_SOABI)
 target_include_directories(mso_bind PRIVATE src/PartSegCore_compiled_backend/multiscale_opening/)
 target_include_directories(mso_bind PRIVATE "${NUMPY_INCLUDE_DIR}")
 
@@ -117,8 +118,8 @@ target_include_directories(triangulate PRIVATE src/PartSegCore_compiled_backend/
 
 install(TARGETS euclidean_cython DESTINATION PartSegCore_compiled_backend/sprawl_utils)
 install(TARGETS path_sprawl_cython DESTINATION PartSegCore_compiled_backend/sprawl_utils)
-install(TARGETS sprawl_utils_cython DESTINATION PartSegCore_compiled_backend/sprawl_utils)
-install(TARGETS fuzzy_distance_cython DESTINATION PartSegCore_compiled_backend/sprawl_utils)
+install(TARGETS sprawl_utils DESTINATION PartSegCore_compiled_backend/sprawl_utils)
+install(TARGETS fuzzy_distance DESTINATION PartSegCore_compiled_backend/sprawl_utils)
 install(TARGETS color_image_cython DESTINATION PartSegCore_compiled_backend)
 install(TARGETS calc_bounds DESTINATION PartSegCore_compiled_backend)
 install(TARGETS mso_bind DESTINATION PartSegCore_compiled_backend/multiscale_opening)

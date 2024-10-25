@@ -133,6 +133,7 @@ before-all = [
 
 [tool.ruff]
 line-length = 120
+fix=true
 
 [tool.ruff.format]
 quote-style = "single"
@@ -140,6 +141,63 @@ indent-style = "space"
 docstring-code-format = true
 line-ending = "lf"
 skip-magic-trailing-comma = true
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W", #flake8
+    "UP", # pyupgrade
+    "I", # isort
+    "YTT", #flake8-2020
+    "TCH", # flake8-type-checing
+    "BLE", # flake8-blind-exception
+    "B", # flake8-bugbear
+    "A", # flake8-builtins
+    "C4", # flake8-comprehensions
+    "ISC", # flake8-implicit-str-concat
+    "G", # flake8-logging-format
+    "PIE", # flake8-pie
+    "COM", # flake8-commas
+    "SIM", # flake8-simplify
+    "INP", # flake8-no-pep420
+    "PYI", # flake8-pyi
+    "Q", # flake8-quotes
+    "RSE", # flake8-raise
+    "RET", # flake8-return
+    "TID",  # flake8-tidy-imports # replace absolutify import
+    "TRY", # tryceratops
+    "ICN", # flake8-import-conventions
+    "RUF", # ruff specyfic rules
+    "NPY201", # checks compatibility with numpy version 2.0
+    "ASYNC", # flake8-async
+    "EXE", # flake8-executable
+    "FA", # flake8-future-annotations
+    "LOG", # flake8-logging
+    "SLOT", # flake8-slots
+    "PT", # flake8-pytest-style
+    "T20", # flake8-print
+]
+ignore = [
+    "E501", # line lenngth is handled by formatter
+    "COM812", # flake8-commas - we don't like adding comma on single line of arguments
+    "COM819", # conflicts with ruff-format
+    "TRY003", # require implement multiple exception class
+    "RUF005", # problem with numpy compatybility, see https://github.com/charliermarsh/ruff/issues/2142#issuecomment-1451038741
+    "W191", "Q000", "Q001", "Q002", "Q003", "ISC001", # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+]
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+inline-quotes = "single"
+multiline-quotes = "double"
+
+[tool.ruff.lint.per-file-ignores]
+"src/tests/**.py" = ["B011", "INP001", "TRY301", "B018", "RUF012"]
+"notebooks/**" = ["FA100", "INP001", "A001"]
+"docs/conf.py" = ["INP001", "A001"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+# Disallow all relative imports.
+ban-relative-imports = "all"
 
 [tool.codespell]
 skip = "notebooks/*"

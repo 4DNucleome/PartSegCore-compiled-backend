@@ -90,7 +90,7 @@ target_link_libraries(_napari_mapping PRIVATE OpenMP::OpenMP_CXX)
 
 install(TARGETS euclidean_cython DESTINATION PartSegCore_compiled_backend/sprawl_utils)
 install(TARGETS path_sprawl_cython DESTINATION PartSegCore_compiled_backend/sprawl_utils)
-install(TARGETS sprawl_utils_cython DESTINATION PartSegCore_compiled_backend/sprawl_utils)
+install(TARGETS sprawl_utils DESTINATION PartSegCore_compiled_backend/sprawl_utils)
 install(TARGETS fuzzy_distance DESTINATION PartSegCore_compiled_backend/sprawl_utils)
 install(TARGETS color_image_cython DESTINATION PartSegCore_compiled_backend)
 install(TARGETS calc_bounds DESTINATION PartSegCore_compiled_backend)

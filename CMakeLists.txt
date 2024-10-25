@@ -43,15 +43,15 @@ target_include_directories(path_sprawl_cython PRIVATE "${NUMPY_INCLUDE_DIR}")
 target_include_directories(path_sprawl_cython PRIVATE src/PartSegCore_compiled_backend/sprawl_utils/)
 
 cython_transpile(src/PartSegCore_compiled_backend/sprawl_utils/sprawl_utils.pyx LANGUAGE CXX OUTPUT_VARIABLE sprawl_utils_cython_cxx)
-python_add_library(sprawl_utils_cython MODULE "${sprawl_utils_cython_cxx}" WITH_SOABI)
-target_include_directories(sprawl_utils_cython PRIVATE "${NUMPY_INCLUDE_DIR}")
-target_include_directories(sprawl_utils_cython PRIVATE src/PartSegCore_compiled_backend/sprawl_utils/)
+python_add_library(sprawl_utils MODULE "${sprawl_utils_cython_cxx}" WITH_SOABI)
+target_include_directories(sprawl_utils PRIVATE "${NUMPY_INCLUDE_DIR}")
+target_include_directories(sprawl_utils PRIVATE src/PartSegCore_compiled_backend/sprawl_utils/)
 
 
 cython_transpile(src/PartSegCore_compiled_backend/sprawl_utils/fuzzy_distance.pyx LANGUAGE CXX OUTPUT_VARIABLE fuzzy_distance_cython_cxx)
-python_add_library(fuzzy_distance_cython MODULE "${fuzzy_distance_cython_cxx}" WITH_SOABI)
-target_include_directories(fuzzy_distance_cython PRIVATE "${NUMPY_INCLUDE_DIR}")
-target_include_directories(fuzzy_distance_cython PRIVATE src/PartSegCore_compiled_backend/sprawl_utils/)
+python_add_library(fuzzy_distance MODULE "${fuzzy_distance_cython_cxx}" WITH_SOABI)
+target_include_directories(fuzzy_distance PRIVATE "${NUMPY_INCLUDE_DIR}")
+target_include_directories(fuzzy_distance PRIVATE src/PartSegCore_compiled_backend/sprawl_utils/)
 
 
 cython_transpile(src/PartSegCore_compiled_backend/color_image_cython.pyx LANGUAGE CXX OUTPUT_VARIABLE color_image_cython_cxx)
@@ -65,7 +65,13 @@ target_include_directories(calc_bounds PRIVATE "${NUMPY_INCLUDE_DIR}")
 
 
 cython_transpile(src/PartSegCore_compiled_backend/multiscale_opening/mso_bind.pyx LANGUAGE CXX OUTPUT_VARIABLE mso_bind_cython_cxx)
-python_add_library(mso_bind MODULE "${mso_bind_cython_cxx}" WITH_SOABI)
+python_add_library(
+    mso_bind MODULE
+    "${mso_bind_cython_cxx}"
+    # src/PartSegCore_compiled_backend/multiscale_opening/mso.cpp
+    src/PartSegCore_compiled_backend/multiscale_opening/mso.h
+    src/PartSegCore_compiled_backend/multiscale_opening/my_queue.h
+    WITH_SOABI)
 target_include_directories(mso_bind PRIVATE src/PartSegCore_compiled_backend/multiscale_opening/)
 target_include_directories(mso_bind PRIVATE "${NUMPY_INCLUDE_DIR}")
 
@@ -84,8 +90,8 @@ target_link_libraries(_napari_mapping PRIVATE OpenMP::OpenMP_CXX)
 
 install(TARGETS euclidean_cython DESTINATION PartSegCore_compiled_backend/sprawl_utils)
 install(TARGETS path_sprawl_cython DESTINATION PartSegCore_compiled_backend/sprawl_utils)
-install(TARGETS sprawl_utils_cython DESTINATION PartSegCore_compiled_backend/sprawl_utils)
-install(TARGETS fuzzy_distance_cython DESTINATION PartSegCore_compiled_backend/sprawl_utils)
+install(TARGETS sprawl_utils DESTINATION PartSegCore_compiled_backend/sprawl_utils)
+install(TARGETS fuzzy_distance DESTINATION PartSegCore_compiled_backend/sprawl_utils)
 install(TARGETS color_image_cython DESTINATION PartSegCore_compiled_backend)
 install(TARGETS calc_bounds DESTINATION PartSegCore_compiled_backend)
 install(TARGETS mso_bind DESTINATION PartSegCore_compiled_backend/multiscale_opening)

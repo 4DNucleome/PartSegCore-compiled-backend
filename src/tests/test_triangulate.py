@@ -1,17 +1,17 @@
 import pytest
 
 from PartSegCore_compiled_backend.triangulate import (
-    on_segment,
-    orientation,
     do_intersect,
-    find_intersections,
     find_intersection_point,
     find_intersection_points_py,
+    find_intersections,
     is_convex,
-    triangulate_polygon,
-    triangle_convex_polygon,
+    on_segment,
+    orientation,
     segment_left_to_right_comparator,
+    triangle_convex_polygon,
     triangulate_monotone_polygon_py,
+    triangulate_polygon,
 )
 
 

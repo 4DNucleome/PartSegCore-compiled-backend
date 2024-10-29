@@ -83,6 +83,7 @@ cdef extern from "triangulation/triangulate.hpp" namespace "partsegcore::triangu
     bool left_to_right(const Segment& s1, const Segment& s2)
     vector[Point] find_intersection_points(const vector[Point]& segments)
     vector[PointTriangle] triangulate_monotone_polygon(const MonotonePolygon& polygon)
+    pair[vector[Triangle], vector[Point]] triangulate_polygon(const vector[Point]& polygon)
 
 
 
@@ -204,6 +205,7 @@ def is_convex(polygon: Sequence[Sequence[float]]) -> bool:
 def triangle_convex_polygon(polygon: Sequence[Sequence[float]])  -> list[tuple[int, int, int]]:
     cdef vector[Point] polygon_vector
     cdef vector[Triangle] result
+    cdef Point p1, p2
 
     polygon_vector.reserve(len(polygon))
     polygon_vector.push_back(Point(polygon[0][0], polygon[0][1]))
@@ -217,57 +219,13 @@ def triangle_convex_polygon(polygon: Sequence[Sequence[float]])  -> list[tuple[i
     result = _triangle_convex_polygon(polygon_vector)
     return [(triangle.x, triangle.y, triangle.z) for triangle in result]
 
-cdef vector[Triangle] _triangulate_polygon(vector[Point] polygon):
-    cdef vector[Segment] edges, edges_with_intersections
-    cdef Py_ssize_t i, j, edges_count
-    cdef unordered_set[OrderedPair] intersections
-    cdef unordered_map[int, vector[Point]] intersections_points
-    cdef pair[int, vector[Point]] p_it
-    cdef vector[Triangle] triangles
-    cdef vector[Point] intersections_points_vector
-    cdef Point p_int
-    cdef OrderedPair p
-
-    if _is_convex(polygon):
-        return _triangle_convex_polygon(polygon)
-
-    edges.reserve(polygon.size())
-    for i in range(polygon.size() - 1):
-        edges.push_back(Segment(polygon[i], polygon[i+1]))
-
-    intersections = _find_intersections(edges)
-    intersections_points.reserve(intersections.size())
-    for p in intersections:
-        p_int = _find_intersection(edges[p.first], edges[p.second])
-        intersections_points[p.first].push_back(p_int)
-        intersections_points[p.second].push_back(p_int)
-
-    edges_count = edges.size()
-    for p_it in intersections_points:
-        edges_count += p_it.second.size() - 1
-
-    edges_with_intersections.reserve(edges_count)
-
-    for i in range(edges.size()):
-        if not intersections_points.count(i):
-            edges_with_intersections.push_back(edges[i])
-        else:
-            intersections_points_vector = intersections_points.at(i)
-            intersections_points_vector.push_back(edges[i].bottom)
-            intersections_points_vector.push_back(edges[i].top)
-            sort(intersections_points_vector.begin(), intersections_points_vector.end())
-            for j in range(intersections_points_vector.size() - 1):
-                edges_with_intersections.push_back(Segment(intersections_points_vector[j], intersections_points_vector[j+1]))
-
-    return triangles
 
 
-def triangulate_polygon(polygon: Sequence[Sequence[float]]) -> list[tuple[int, int, int]]:
+def triangulate_polygon_py(polygon: Sequence[Sequence[float]]) -> tuple[list[tuple[int, int, int]], list[tuple[float, float]]]:
     """ Triangulate polygon"""
     cdef vector[Point] polygon_vector
     cdef Point p1, p2
-    cdef vector[Triangle] result
-
+    cdef pair[vector[Triangle], vector[Point]] result
 
     polygon_vector.reserve(len(polygon))
     polygon_vector.push_back(Point(polygon[0][0], polygon[0][1]))
@@ -278,8 +236,8 @@ def triangulate_polygon(polygon: Sequence[Sequence[float]]) -> list[tuple[int, i
             # prevent from adding polygon edge of width 0
             polygon_vector.push_back(p2)
 
-    result = _triangulate_polygon(polygon_vector)
-    return [(triangle.x, triangle.y, triangle.z) for triangle in result]
+    result = triangulate_polygon(polygon_vector)
+    return [(triangle.x, triangle.y, triangle.z) for triangle in result.first], [(point.x, point.y) for point in result.second]
 
 
 def segment_left_to_right_comparator(s1: Sequence[Sequence[float]], s2: Sequence[Sequence[float]]) -> bool:

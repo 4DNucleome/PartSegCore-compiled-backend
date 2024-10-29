@@ -710,6 +710,7 @@ std::vector<std::vector<point::Point>> find_intersection_points(
   for (const auto &polygon : polygon_list) {
     std::vector<point::Point> new_polygon;
     new_polygon.reserve(polygon.size() * 2);
+    new_polygon.push_back(polygon[0]);
     for (std::size_t i = 0; i < polygon.size(); i++) {
       auto point = polygon[i];
       if (new_polygon[new_polygon.size() - 1] != point)

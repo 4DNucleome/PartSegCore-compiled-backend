@@ -75,12 +75,54 @@ struct Segment {
 
   bool operator!=(const Segment &s) const { return !(*this == s); }
 
-  // Overload the << operator for Segment
+  /**
+   * Computes the x-coordinate of a point on the line segment at a given
+   * y-coordinate. This function assumes that the line segment is defined
+   * between the `bottom` and `top` points.
+   *
+   * If the line segment is horizontal (`bottom.y == top.y`), it returns the
+   * x-coordinate of `bottom`. Otherwise, it computes the x-coordinate using
+   * linear interpolation.
+   *
+   * @param y The y-coordinate at which to find the corresponding x-coordinate
+   * on the line segment.
+   * @return The x-coordinate of the point on the line segment at the specified
+   * y-coordinate.
+   */
+  float point_on_line(float y) const {
+    if (bottom.y == top.y) {
+      return bottom.x;
+    }
+    return bottom.x +
+           (y - bottom.y) * ((top.x - bottom.x) / (top.y - bottom.y));
+  }
+
+  /**
+   * Overloads the << operator for the Segment structure, enabling
+   * segments to be directly inserted into output streams.
+   *
+   * This operator outputs a Segment in the format:
+   * [bottom=<bottom_point>, top=<top_point>]
+   *
+   * @param os The output stream to which the Segment is inserted.
+   * @param segment The Segment instance to be inserted into the stream.
+   * @return The output stream after the Segment has been inserted.
+   */
   friend std::ostream &operator<<(std::ostream &os, const Segment &segment) {
     os << "[bottom=" << segment.bottom << ", top=" << segment.top << "]";
     return os;
   }
 
+  /**
+   * A hash functor for the Segment structure.
+   *
+   * This functor computes a hash value for a given Segment instance.
+   * The hash is determined by combining the hash values of the bottom
+   * and top points of the segment.
+   *
+   * It is required for the Segment structure to be used as a key in
+   * unordered containers, such as unordered_map and unordered_set.
+   */
   struct SegmentHash {
     std::size_t operator()(const Segment &segment) const {
       std::size_t h1 = Point::PointHash()(segment.bottom);

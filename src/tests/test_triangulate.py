@@ -149,10 +149,16 @@ def test_triangulate_polygon_py_convex(polygon, expected):
     assert triangulate_polygon_py(polygon)[0] == expected
 
 
-@pytest.mark.parametrize(('polygon', 'expected'), [([(0, 0), (1, 1), (0, 2), (2, 1)], [(0, 1, 2), (0, 3, 2)])])
-@pytest.mark.xfail(reason='Not implemented')
+def _renumerate_triangles(polygon, points, triangles):
+    point_num = {point: i for i, point in enumerate(polygon)}
+    return [tuple(point_num[points[point]] for point in triangle) for triangle in triangles]
+
+
+@pytest.mark.parametrize(('polygon', 'expected'), [([(0, 0), (1, 1), (0, 2), (2, 1)], [(3, 2, 1), (0, 3, 1)])])
 def test_triangulate_polygon_py_non_convex(polygon, expected):
-    assert triangulate_polygon_py(polygon)[0] == expected
+    triangles, points = triangulate_polygon_py(polygon)
+    triangles_ = _renumerate_triangles(polygon, points, triangles)
+    assert triangles_ == expected
 
 
 @pytest.mark.parametrize(

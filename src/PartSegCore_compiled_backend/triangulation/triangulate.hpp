@@ -18,14 +18,38 @@ namespace triangulation {
 
 enum PointType { NORMAL, SPLIT, MERGE, INTERSECTION };
 
+struct MonotonePolygon {
+  point::Point top{};
+  point::Point bottom{};
+  std::vector<point::Point> left;
+  std::vector<point::Point> right;
+
+  MonotonePolygon() = default;
+  explicit MonotonePolygon(point::Point top) : top(top) {}
+  MonotonePolygon(point::Point top, point::Point bottom,
+                  std::vector<point::Point> left,
+                  std::vector<point::Point> right)
+      : top(top),
+        bottom(bottom),
+        left(std::move(left)),
+        right(std::move(right)) {}
+};
+
 struct Interval {
   point::Point last_seen{};
   point::Segment left_segment;
   point::Segment right_segment;
+  std::vector<MonotonePolygon *> polygons_list{};
   Interval() = default;
   explicit Interval(const point::Point &p, const point::Segment &left,
                     const point::Segment &right)
       : last_seen(p), left_segment(left), right_segment(right) {};
+  explicit Interval(const point::Point &p, const point::Segment &left,
+                    const point::Segment &right, MonotonePolygon *polygon)
+      : last_seen(p),
+        left_segment(left),
+        right_segment(right),
+        polygons_list({polygon}) {};
 
   void replace_segment(const point::Segment &old_segment,
                        const point::Segment &new_segment) {
@@ -86,23 +110,6 @@ struct SegmentLeftRightComparator {
   bool operator()(const point::Segment &s1, const point::Segment &s2) const {
     return left_to_right(s1, s2);
   }
-};
-
-struct MonotonePolygon {
-  point::Point top{};
-  point::Point bottom{};
-  std::vector<point::Point> left;
-  std::vector<point::Point> right;
-
-  MonotonePolygon() = default;
-  explicit MonotonePolygon(point::Point top) : top(top) {}
-  MonotonePolygon(point::Point top, point::Point bottom,
-                  std::vector<point::Point> left,
-                  std::vector<point::Point> right)
-      : top(top),
-        bottom(bottom),
-        left(std::move(left)),
-        right(std::move(right)) {}
 };
 
 struct PointMonotonePolygon {
@@ -199,6 +206,7 @@ PointToEdges get_points_edges(const std::vector<point::Segment> &edges) {
  */
 PointType get_point_type(point::Point p, PointToEdges &point_to_edges) {
   if (point_to_edges.at(p).size() != 2) return PointType::INTERSECTION;
+
   const auto &edges = point_to_edges.at(p);
   if (edges[0].opposite_point < p && edges[1].opposite_point < p)
     return PointType::SPLIT;
@@ -212,8 +220,6 @@ struct MonotonePolygonBuilder {
   std::vector<point::Segment> edges{};
   PointToEdges point_to_edges{};
   std::vector<MonotonePolygon> monotone_polygons{};
-  std::unordered_map<point::Point, PointMonotonePolygon>
-      point_to_monotone_polygon{};
 
   MonotonePolygonBuilder() = default;
   explicit MonotonePolygonBuilder(const std::vector<point::Segment> &edges)
@@ -242,47 +248,13 @@ struct MonotonePolygonBuilder {
         edges[point_to_edges.at(p).at(1).edge_index];
 
     Interval *interval = segment_to_line.at(edge_left);
-    auto &left_monotone_polygon_info =
-        point_to_monotone_polygon.at(edge_left.top);
-    auto &right_monotone_polygon_info =
-        point_to_monotone_polygon.at(edge_right.top);
 
-    // the point is
-    if (left_monotone_polygon_info.right_polygon ==
-        right_monotone_polygon_info.left_polygon) {
-      // This is the end point of the monotone polygon
-      MonotonePolygon *polygon = left_monotone_polygon_info.right_polygon;
+    for (auto &polygon : interval->polygons_list) {
       polygon->bottom = p;
       monotone_polygons.push_back(*polygon);
       delete polygon;
-      left_monotone_polygon_info.right_polygon = nullptr;
-      right_monotone_polygon_info.left_polygon = nullptr;
-    } else {
-      // This is the end point of two monotone polygons
-      MonotonePolygon *left_polygon = left_monotone_polygon_info.right_polygon;
-      MonotonePolygon *right_polygon = right_monotone_polygon_info.left_polygon;
-
-      left_polygon->bottom = p;
-      monotone_polygons.push_back(*left_polygon);
-      delete left_polygon;
-      left_monotone_polygon_info.right_polygon = nullptr;
-
-      right_polygon->bottom = p;
-      monotone_polygons.push_back(*right_polygon);
-      delete right_polygon;
-      right_monotone_polygon_info.left_polygon = nullptr;
     }
 
-    if (left_monotone_polygon_info.left_polygon == nullptr) {
-      // point edge_left.top is not in any monotone polygon
-      // remove the entry from the map
-      point_to_monotone_polygon.erase(edge_left.top);
-    }
-    if (right_monotone_polygon_info.right_polygon == nullptr) {
-      // point edge_right.top is not in any monotone polygon
-      // remove the entry from the map
-      point_to_monotone_polygon.erase(edge_right.top);
-    }
     segment_to_line.erase(edge_left);
     segment_to_line.erase(edge_right);
     delete interval;
@@ -302,11 +274,10 @@ struct MonotonePolygonBuilder {
       left_interval->right_segment = right_interval->right_segment;
       segment_to_line[right_interval->right_segment] = left_interval;
       left_interval->last_seen = p;
+      for (auto &polygon : right_interval->polygons_list) {
+        left_interval->polygons_list.push_back(polygon);
+      }
       delete right_interval;
-      point_to_monotone_polygon.at(edge_left.top)
-          .right_polygon->left.push_back(p);
-      point_to_monotone_polygon.at(edge_right.top)
-          .left_polygon->right.push_back(p);
     } else {
       // This is the end point
       this->process_end_point(p);
@@ -336,36 +307,31 @@ struct MonotonePolygonBuilder {
     }
     Interval *interval = segment_to_line.at(edge_top);
 
-    auto left_polygon = point_to_monotone_polygon.at(edge_top.top).left_polygon;
-    auto right_polygon =
-        point_to_monotone_polygon.at(edge_top.top).right_polygon;
+    if (interval->polygons_list.size() > 1) {
+      // end all the polygons, except 1
+      if (edge_top == interval->right_segment) {
+        for (auto i = 1; i < interval->polygons_list.size(); i++) {
+          interval->polygons_list[i]->bottom = p;
+          monotone_polygons.push_back(*interval->polygons_list[i]);
+          delete interval->polygons_list[i];
+        }
 
-    if (get_point_type(interval->last_seen, point_to_edges) ==
-        PointType::MERGE) {
-      // if the last seen point is merge point, we need to end the monotone
-      // polygon
-      if (left_polygon != nullptr &&
-          left_polygon->right.back() == interval->last_seen) {
-        left_polygon->bottom = p;
-        monotone_polygons.push_back(*left_polygon);
-        delete left_polygon;
-        left_polygon = new MonotonePolygon();
-        left_polygon->top = interval->last_seen;
-        left_polygon->right.push_back(p);
-        point_to_monotone_polygon.at(interval->last_seen).right_polygon =
-            left_polygon;
-        point_to_monotone_polygon.at(edge_top.top).left_polygon = left_polygon;
+      } else {
+        for (auto i = 0; i < interval->polygons_list.size() - 1; i++) {
+          interval->polygons_list[i]->bottom = p;
+          monotone_polygons.push_back(*interval->polygons_list[i]);
+          delete interval->polygons_list[i];
+        }
+        interval->polygons_list[0] = interval->polygons_list.back();
       }
+      interval->polygons_list.erase(interval->polygons_list.begin() + 1,
+                                    interval->polygons_list.end());
     }
 
-    point_to_monotone_polygon[p] =
-        PointMonotonePolygon(left_polygon, right_polygon);
-
-    if (left_polygon != nullptr) {
-      left_polygon->right.push_back(p);
-    }
-    if (right_polygon != nullptr) {
-      right_polygon->left.push_back(p);
+    if (edge_top == interval->right_segment) {
+      interval->polygons_list[0]->right.push_back(p);
+    } else {
+      interval->polygons_list[0]->left.push_back(p);
     }
 
     segment_to_line[edge_bottom] = interval;
@@ -380,13 +346,10 @@ struct MonotonePolygonBuilder {
     const point::Segment &edge_right =
         edges[point_to_edges.at(p).at(1).edge_index];
 
-    auto *interval = new Interval(p, edge_left, edge_right);
+    auto *new_polygon = new MonotonePolygon(p);
+    auto *interval = new Interval(p, edge_left, edge_right, new_polygon);
     segment_to_line[edge_left] = interval;
     segment_to_line[edge_right] = interval;
-
-    auto *new_polygon = new MonotonePolygon(p);
-    point_to_monotone_polygon[edge_left.top].right_polygon = new_polygon;
-    point_to_monotone_polygon[edge_right.top].left_polygon = new_polygon;
   }
 
   void process_split_point(const point::Point &p) {
@@ -411,17 +374,6 @@ struct MonotonePolygonBuilder {
           interval->right_segment.point_on_line(p.y) > p.x) {
         // the point is inside the interval
 
-        // update the monotone polygon
-        auto polygon_pair = point_to_monotone_polygon.at(interval->last_seen);
-        if (polygon_pair.left_polygon != nullptr) {
-          polygon_pair.left_polygon->right.push_back(p);
-        }
-        if (polygon_pair.right_polygon != nullptr) {
-          polygon_pair.right_polygon->left.push_back(p);
-        }
-        point_to_monotone_polygon[p] = polygon_pair;
-        point_to_monotone_polygon.erase(interval->last_seen);
-
         // update the sweep line
         auto right_segment = interval->right_segment;
         interval->right_segment = edge_left;
@@ -432,6 +384,27 @@ struct MonotonePolygonBuilder {
         segment_to_line[edge_right] = new_interval;
         segment_to_line[right_segment] = new_interval;
 
+        if (interval->polygons_list.size() == 1) {
+          auto *new_polygon =
+              new MonotonePolygon(interval->polygons_list[0]->right.back());
+          new_polygon->left.push_back(p);
+          new_interval->polygons_list.push_back(new_polygon);
+          interval->polygons_list[0]->right.push_back(p);
+        }
+
+        if (interval->polygons_list.size() >= 2) {
+          interval->polygons_list[0]->right.push_back(p);
+          interval->polygons_list[interval->polygons_list.size() - 1]
+              ->left.push_back(p);
+          for (auto i = 1; i < interval->polygons_list.size() - 1; i++) {
+            interval->polygons_list[i]->bottom = p;
+            monotone_polygons.push_back(*interval->polygons_list[i]);
+            delete interval->polygons_list[i];
+          }
+          new_interval->polygons_list.push_back(interval->polygons_list.back());
+          interval->polygons_list.erase(interval->polygons_list.begin() + 1,
+                                        interval->polygons_list.end());
+        }
         return;
       }
     }
@@ -440,7 +413,7 @@ struct MonotonePolygonBuilder {
   };
 
   void process_intersection_point(const point::Point &p) {
-
+    throw std::runtime_error("Intersection points are not supported");
   };
 };
 

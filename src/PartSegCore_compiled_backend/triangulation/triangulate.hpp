@@ -108,6 +108,10 @@ struct MonotonePolygon {
 struct PointMonotonePolygon {
   MonotonePolygon *left_polygon = nullptr;
   MonotonePolygon *right_polygon = nullptr;
+  PointMonotonePolygon() = default;
+  explicit PointMonotonePolygon(MonotonePolygon *left_polygon,
+                                MonotonePolygon *right_polygon)
+      : left_polygon(left_polygon), right_polygon(right_polygon) {};
 };
 
 struct Triangle {
@@ -168,7 +172,10 @@ PointToEdges get_points_edges(const std::vector<point::Segment> &edges) {
     point_to_edges[edges[i].top].emplace_back(i, edges[i].bottom);
   }
   for (auto &point_to_edge : point_to_edges) {
-    std::sort(point_to_edge.second.begin(), point_to_edge.second.end());
+    std::sort(point_to_edge.second.begin(), point_to_edge.second.end(),
+              [](const PointEdges &a, const PointEdges &b) {
+                return b.opposite_point < a.opposite_point;
+              });
   }
   return point_to_edges;
 }
@@ -324,11 +331,14 @@ struct MonotonePolygonBuilder {
         edges[point_to_edges.at(p).at(0).edge_index];
     const point::Segment &edge_bottom =
         edges[point_to_edges.at(p).at(1).edge_index];
+    if (segment_to_line.count(edge_top) == 0) {
+      throw std::runtime_error("Segment not found in the map");
+    }
     Interval *interval = segment_to_line.at(edge_top);
 
     auto left_polygon = point_to_monotone_polygon.at(edge_top.top).left_polygon;
     auto right_polygon =
-        point_to_monotone_polygon.at(edge_bottom.top).right_polygon;
+        point_to_monotone_polygon.at(edge_top.top).right_polygon;
 
     if (get_point_type(interval->last_seen, point_to_edges) ==
         PointType::MERGE) {
@@ -348,12 +358,16 @@ struct MonotonePolygonBuilder {
       }
     }
 
+    point_to_monotone_polygon[p] =
+        PointMonotonePolygon(left_polygon, right_polygon);
+
     if (left_polygon != nullptr) {
       left_polygon->right.push_back(p);
     }
     if (right_polygon != nullptr) {
       right_polygon->left.push_back(p);
     }
+
     segment_to_line[edge_bottom] = interval;
     interval->last_seen = p;
     interval->replace_segment(edge_top, edge_bottom);
@@ -754,7 +768,9 @@ std::vector<point::Point> _sorted_polygons_points(
       }
     }
   }
-  std::sort(result.begin(), result.end());
+  std::sort(
+      result.begin(), result.end(),
+      [](const point::Point &p1, const point::Point &p2) { return p2 < p1; });
   return result;
 }
 

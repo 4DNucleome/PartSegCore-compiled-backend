@@ -137,10 +137,22 @@ def test_triangle_convex_polygon():
     assert triangle_convex_polygon([(0, 0), (0, 0.5), (0, 1), (1, 1), (1, 0)]) == [(0, 2, 3), (0, 3, 4)]
 
 
-def test_triangulate_polygon_py():
-    assert triangulate_polygon_py([(0, 0), (0, 1), (1, 1), (1, 0)])[0] == [(0, 1, 2), (0, 3, 2)]
-    assert triangulate_polygon_py([(0, 0), (0, 10), (1, 10), (1, 0)])[0] == [(0, 1, 2), (0, 3, 2)]
-    assert triangulate_polygon_py([(0, 0), (0, 0.5), (0, 1), (1, 1), (1, 0)])[0] == [(0, 2, 3), (0, 3, 4)]
+@pytest.mark.parametrize(
+    ('polygon', 'expected'),
+    [
+        ([(0, 0), (0, 1), (1, 1), (1, 0)], [(0, 1, 2), (0, 3, 2)]),
+        ([(0, 0), (0, 10), (1, 10), (1, 0)], [(0, 1, 2), (0, 3, 2)]),
+        ([(0, 0), (0, 0.5), (0, 1), (1, 1), (1, 0)], [(0, 2, 3), (0, 3, 4)]),
+    ],
+)
+def test_triangulate_polygon_py_convex(polygon, expected):
+    assert triangulate_polygon_py(polygon)[0] == expected
+
+
+@pytest.mark.parametrize(('polygon', 'expected'), [([(0, 0), (1, 1), (0, 2), (2, 1)], [(0, 1, 2), (0, 3, 2)])])
+@pytest.mark.xfail(reason='Not implemented')
+def test_triangulate_polygon_py_non_convex(polygon, expected):
+    assert triangulate_polygon_py(polygon)[0] == expected
 
 
 @pytest.mark.parametrize(

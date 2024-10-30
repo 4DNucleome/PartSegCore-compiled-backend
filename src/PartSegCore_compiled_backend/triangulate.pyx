@@ -57,9 +57,9 @@ cdef extern from "triangulation/intersection.hpp" namespace "partsegcore::inters
 cdef extern from "triangulation/triangulate.hpp" namespace "partsegcore::triangulation":
 
     cdef cppclass Triangle:
-        int x
-        int y
-        int z
+        size_t x
+        size_t y
+        size_t z
         Triangle()
         Triangle(int x, int y, int z)
 
@@ -84,6 +84,7 @@ cdef extern from "triangulation/triangulate.hpp" namespace "partsegcore::triangu
     vector[Point] find_intersection_points(const vector[Point]& segments)
     vector[PointTriangle] triangulate_monotone_polygon(const MonotonePolygon& polygon)
     pair[vector[Triangle], vector[Point]] triangulate_polygon(const vector[Point]& polygon)
+    pair[vector[Triangle], vector[Point]] triangulate_polygon(const vector[vector[Point]]& polygon_list)
 
 
 
@@ -239,6 +240,56 @@ def triangulate_polygon_py(polygon: Sequence[Sequence[float]]) -> tuple[list[tup
     result = triangulate_polygon(polygon_vector)
     return [(triangle.x, triangle.y, triangle.z) for triangle in result.first], [(point.x, point.y) for point in result.second]
 
+
+def triangulate_polygon_numpy(polygon: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """ Triangulate polygon"""
+    cdef vector[Point] polygon_vector
+    cdef Point p1, p2
+    cdef pair[vector[Triangle], vector[Point]] result
+
+    polygon_vector.reserve(polygon.shape[0])
+    polygon_vector.push_back(Point(polygon[0, 0], polygon[0, 1]))
+    for point in polygon[1:]:
+        p1 = polygon_vector[polygon_vector.size() - 1]
+        p2 = Point(point[0], point[1])
+        if p1 != p2:
+            # prevent from adding polygon edge of width 0
+            polygon_vector.push_back(p2)
+
+    result = triangulate_polygon(polygon_vector)
+    return (
+        np.array([(triangle.x, triangle.y, triangle.z) for triangle in result.first], dtype=np.uintp),
+        np.array([(point.x, point.y) for point in result.second], dtype=np.float32)
+    )
+
+
+def triangulate_polygon_numpy_li(polygon_li: list[np.ndarray]) -> tuple[np.ndarray, np.ndarray]:
+    """ Triangulate polygon"""
+    cdef vector[Point] polygon_vector
+    cdef vector[vector[Point]] polygon_vector_list
+    cdef Point p1, p2
+    cdef pair[vector[Triangle], vector[Point]] result
+
+    polygon_vector_list.reserve(len(polygon_li))
+    for polygon in polygon_li:
+        polygon_vector.clear()
+
+        polygon_vector.reserve(polygon.shape[0])
+        polygon_vector.push_back(Point(polygon[0, 0], polygon[0, 1]))
+
+        for point in polygon[1:]:
+            p1 = polygon_vector[polygon_vector.size() - 1]
+            p2 = Point(point[0], point[1])
+            if p1 != p2:
+                # prevent from adding polygon edge of width 0
+                polygon_vector.push_back(p2)
+        polygon_vector_list.push_back(polygon_vector)
+
+    result = triangulate_polygon(polygon_vector_list)
+    return (
+        np.array([(triangle.x, triangle.y, triangle.z) for triangle in result.first], dtype=np.uintp),
+        np.array([(point.x, point.y) for point in result.second], dtype=np.float32)
+    )
 
 def segment_left_to_right_comparator(s1: Sequence[Sequence[float]], s2: Sequence[Sequence[float]]) -> bool:
     """ Compare segments by bottom point"""

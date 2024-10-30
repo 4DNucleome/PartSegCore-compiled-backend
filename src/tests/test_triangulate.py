@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from PartSegCore_compiled_backend.triangulate import (
@@ -11,6 +12,8 @@ from PartSegCore_compiled_backend.triangulate import (
     segment_left_to_right_comparator,
     triangle_convex_polygon,
     triangulate_monotone_polygon_py,
+    triangulate_polygon_numpy,
+    triangulate_polygon_numpy_li,
     triangulate_polygon_py,
 )
 
@@ -99,10 +102,6 @@ def test_find_intersections_param(segments, expected):
     assert set(find_intersections(segments)) == set(expected)
 
 
-# def test_find_intersection_point():
-#     assert find_intersection_point(((0, 0), (2, 2)), ((0, 2), (2, 0))) == (1, 1)
-
-
 @pytest.mark.parametrize(
     ('segment1', 'segment2', 'expected'),
     [
@@ -151,14 +150,50 @@ def test_triangulate_polygon_py_convex(polygon, expected):
 
 def _renumerate_triangles(polygon, points, triangles):
     point_num = {point: i for i, point in enumerate(polygon)}
-    return [tuple(point_num[points[point]] for point in triangle) for triangle in triangles]
+    return [tuple(point_num[tuple(points[point])] for point in triangle) for triangle in triangles]
 
 
-@pytest.mark.parametrize(('polygon', 'expected'), [([(0, 0), (1, 1), (0, 2), (2, 1)], [(3, 2, 1), (0, 3, 1)])])
+TEST_POLYGONS = [
+    ([(0, 0), (1, 1), (0, 2), (2, 1)], [(3, 2, 1), (0, 3, 1)]),
+    ([(0, 0), (0, 1), (1, 2), (2, 1), (2, 0), (1, 0.5)], [(4, 3, 5), (3, 2, 1), (5, 3, 1), (5, 1, 0)]),
+    ([(0, 1), (0, 2), (1, 1.5), (2, 2), (2, 1), (1, 0.5)], [(4, 3, 2), (2, 1, 0), (4, 2, 0), (5, 4, 0)]),
+    ([(0, 1), (0, 2), (1, 0.5), (2, 2), (2, 1), (1, -0.5)], [(2, 1, 0), (2, 0, 5), (4, 3, 2), (5, 4, 2)]),
+    ([(0, 0), (1, 2), (2, 0), (1, 1)], [(2, 1, 3), (3, 1, 0)]),
+]
+
+
+@pytest.mark.parametrize(('polygon', 'expected'), TEST_POLYGONS)
 def test_triangulate_polygon_py_non_convex(polygon, expected):
     triangles, points = triangulate_polygon_py(polygon)
+    assert len(triangles) == len(polygon) - 2
     triangles_ = _renumerate_triangles(polygon, points, triangles)
     assert triangles_ == expected
+
+
+@pytest.mark.parametrize(('polygon', 'expected'), TEST_POLYGONS)
+def test_triangulate_polygon_numpy_non_convex(polygon, expected):
+    triangles, points = triangulate_polygon_numpy(np.array(polygon))
+    assert len(triangles) == len(polygon) - 2
+    triangles_ = _renumerate_triangles(polygon, points, triangles)
+    assert triangles_ == expected
+
+
+@pytest.mark.parametrize(('polygon', 'expected'), TEST_POLYGONS)
+def test_triangulate_polygon_numpy_li_non_convex(polygon, expected):
+    triangles, points = triangulate_polygon_numpy_li([np.array(polygon)])
+    assert len(triangles) == len(polygon) - 2
+    triangles_ = _renumerate_triangles(polygon, points, triangles)
+    assert triangles_ == expected
+
+
+def test_triangulate_polygon_in_polygon_numpy():
+    polygons = [
+        np.array([(0, 0), (10, 0), (10, 10), (0, 10)]),
+        np.array([(4, 4), (6, 4), (6, 6), (4, 6)]),
+    ]
+    triangles, points = triangulate_polygon_numpy_li(polygons)
+    assert len(triangles) == 8
+    assert len(points) == 8
 
 
 @pytest.mark.parametrize(

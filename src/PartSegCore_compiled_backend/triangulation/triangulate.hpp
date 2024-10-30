@@ -16,7 +16,7 @@
 namespace partsegcore {
 namespace triangulation {
 
-enum PointType { NORMAL, SPLIT, MERGE, INTERSECTION };
+enum PointType { NORMAL, SPLIT, MERGE, INTERSECTION, EMPTY };
 
 struct MonotonePolygon {
   point::Point top{};
@@ -205,6 +205,7 @@ PointToEdges get_points_edges(const std::vector<point::Segment> &edges) {
  * @return The type of the point as determined by its adjacent edges.
  */
 PointType get_point_type(point::Point p, PointToEdges &point_to_edges) {
+  if (point_to_edges.at(p).empty()) return PointType::EMPTY;
   if (point_to_edges.at(p).size() != 2) return PointType::INTERSECTION;
 
   const auto &edges = point_to_edges.at(p);
@@ -227,6 +228,25 @@ struct MonotonePolygonBuilder {
     this->point_to_edges = get_points_edges(edges);
   }
 
+  std::pair<const point::Segment &, const point::Segment &>
+  get_left_right_edges(const point::Point &p) {
+    auto point_info = point_to_edges.at(p);
+    auto fst_idx = point_info[0].edge_index;
+    auto snd_idx = point_info[1].edge_index;
+    if (edges[fst_idx].top == edges[snd_idx].top) {
+      if (intersection::_orientation(edges[fst_idx].bottom, edges[fst_idx].top,
+                                     edges[snd_idx].bottom) == 2) {
+        return {edges[snd_idx], edges[fst_idx]};
+      }
+    }
+    if (intersection::_orientation(edges[fst_idx].top, edges[fst_idx].bottom,
+                                   edges[snd_idx].top) == 1) {
+      return {edges[snd_idx], edges[fst_idx]};
+    }
+
+    return {edges[fst_idx], edges[snd_idx]};
+  }
+
   /**
    * Processes the end point of a segment within a monotone polygon.
    *
@@ -241,11 +261,9 @@ struct MonotonePolygonBuilder {
    * It also handles the cleanup of relevant mappings and data structures
    * when processing is complete.
    */
+
   void process_end_point(const point::Point &p) {
-    const point::Segment &edge_left =
-        edges[point_to_edges.at(p).at(0).edge_index];
-    const point::Segment &edge_right =
-        edges[point_to_edges.at(p).at(1).edge_index];
+    auto [edge_left, edge_right] = get_left_right_edges(p);
 
     Interval *interval = segment_to_line.at(edge_left);
 
@@ -261,19 +279,18 @@ struct MonotonePolygonBuilder {
   }
 
   void process_merge_point(const point::Point &p) {
-    const point::Segment &edge_left =
-        edges[point_to_edges.at(p).at(0).edge_index];
-    const point::Segment &edge_right =
-        edges[point_to_edges.at(p).at(1).edge_index];
+    auto [edge_left, edge_right] = get_left_right_edges(p);
+
     if (segment_to_line.at(edge_left) != segment_to_line.at(edge_right)) {
       // merge two intervals into one
       Interval *left_interval = segment_to_line.at(edge_left);
       Interval *right_interval = segment_to_line.at(edge_right);
-      segment_to_line.erase(edge_left);
       segment_to_line.erase(edge_right);
       left_interval->right_segment = right_interval->right_segment;
       segment_to_line[right_interval->right_segment] = left_interval;
       left_interval->last_seen = p;
+      left_interval->polygons_list.back()->right.push_back(p);
+      right_interval->polygons_list.front()->left.push_back(p);
       for (auto &polygon : right_interval->polygons_list) {
         left_interval->polygons_list.push_back(polygon);
       }
@@ -341,10 +358,7 @@ struct MonotonePolygonBuilder {
   };
 
   void process_start_point(const point::Point &p) {
-    const point::Segment &edge_left =
-        edges[point_to_edges.at(p).at(0).edge_index];
-    const point::Segment &edge_right =
-        edges[point_to_edges.at(p).at(1).edge_index];
+    auto [edge_left, edge_right] = get_left_right_edges(p);
 
     auto *new_polygon = new MonotonePolygon(p);
     auto *interval = new Interval(p, edge_left, edge_right, new_polygon);
@@ -353,10 +367,7 @@ struct MonotonePolygonBuilder {
   }
 
   void process_split_point(const point::Point &p) {
-    const point::Segment &edge_left =
-        edges[point_to_edges.at(p).at(0).edge_index];
-    const point::Segment &edge_right =
-        edges[point_to_edges.at(p).at(1).edge_index];
+    auto [edge_left, edge_right] = get_left_right_edges(p);
 
     // We need to find to which interval the point belongs.
     // If the point does not belong to any interval, we treat
@@ -385,8 +396,13 @@ struct MonotonePolygonBuilder {
         segment_to_line[right_segment] = new_interval;
 
         if (interval->polygons_list.size() == 1) {
-          auto *new_polygon =
-              new MonotonePolygon(interval->polygons_list[0]->right.back());
+          MonotonePolygon *new_polygon = nullptr;
+          if (interval->polygons_list[0]->right.empty()) {
+            new_polygon = new MonotonePolygon(interval->polygons_list[0]->top);
+          } else {
+            new_polygon =
+                new MonotonePolygon(interval->polygons_list[0]->right.back());
+          }
           new_polygon->left.push_back(p);
           new_interval->polygons_list.push_back(new_polygon);
           interval->polygons_list[0]->right.push_back(p);
@@ -580,6 +596,8 @@ std::vector<PointTriangle> triangulate_monotone_polygon(
   std::vector<point::Point> stack;
   std::vector<std::pair<point::Point, Side>> points;
 
+  result.reserve(polygon.left.size() + polygon.right.size());
+
   points.reserve(polygon.left.size() + polygon.right.size() + 2);
   points.emplace_back(polygon.top, Side::TOP_OR_BOTTOM);
   while (left_index < polygon.left.size() &&
@@ -639,6 +657,22 @@ std::vector<point::Segment> calc_edges(
   return edges;
 }
 
+/**
+ * Calculates the edges of polygons from a list of polygons, provided as
+ * a list of points for each polygon.
+ *
+ * Each polygon is represented by a vector of points, where each point is
+ * defined as an instance of `point::Point`. The function iterates through
+ * each point in each polygon and creates edges (segments) between
+ * consecutive points as well as between the last point and the first point
+ * of each polygon.
+ *
+ * @param polygon_list A vector of polygons, with each polygon represented
+ *                     as a vector of `point::Point` instances.
+ *
+ * @return A vector of `point::Segment` instances representing the edges of
+ *         all polygons in the input list.
+ */
 std::vector<point::Segment> calc_edges(
     const std::vector<std::vector<point::Point>> &polygon_list) {
   std::vector<point::Segment> edges;
@@ -654,6 +688,45 @@ std::vector<point::Segment> calc_edges(
     edges.emplace_back(polygon[polygon.size() - 1], polygon[0]);
   }
   return edges;
+}
+
+/**
+ * Calculates and returns a list of unique (deduplicated) edges from a list of
+ * polygons.
+ *
+ * This function receives a list of polygons, where each polygon is defined by a
+ * series of points. It identifies the edges of the polygons and returns those
+ * edges that are unique (i.e., edges that appear an odd number of times across
+ * all polygons). Any edge that appears an even number of times is considered to
+ * be a duplicate and is removed.
+ *
+ * @param polygon_list A reference to a vector containing vectors of points,
+ * where each inner vector represents a polygon.
+ * @return A vector of unique edges (of type point::Segment) that are not
+ * duplicated across the polygons.
+ */
+std::vector<point::Segment> calc_dedup_edges(
+    const std::vector<std::vector<point::Point>> &polygon_list) {
+  std::set<point::Segment> edges_set;
+  point::Segment edge;
+
+  for (const auto &polygon : polygon_list) {
+    for (std::size_t i = 0; i < polygon.size() - 1; i++) {
+      edge = point::Segment(polygon[i], polygon[i + 1]);
+      if (edges_set.count(edge) == 0) {
+        edges_set.insert(edge);
+      } else {
+        edges_set.erase(edge);
+      }
+    }
+    edge = point::Segment(polygon[polygon.size() - 1], polygon[0]);
+    if (edges_set.count(edge) == 0) {
+      edges_set.insert(edge);
+    } else {
+      edges_set.erase(edge);
+    }
+  }
+  return {edges_set.begin(), edges_set.end()};
 }
 
 /**
@@ -703,16 +776,15 @@ std::vector<std::vector<point::Point>> find_intersection_points(
       if (new_polygon[new_polygon.size() - 1] != point)
         new_polygon.push_back(point);
       if (intersections_points.count(i)) {
-        auto new_points = intersections_points[i];
+        auto &new_points = intersections_points[i];
         if (new_points[0] == point) {
-          for (std::size_t j = 1; j < new_points.size() - 1; j++) {
-            if (new_polygon[new_polygon.size() - 1] != new_points[j])
-              new_polygon.push_back(new_points[j]);
+          for (auto it = new_points.begin() + 1; it != new_points.end(); it++) {
+            if (new_polygon.back() != *it) new_polygon.push_back(*it);
           }
         } else {
-          for (std::size_t j = new_points.size() - 2; j > 0; j++) {
-            if (new_polygon[new_polygon.size() - 1] != new_points[j])
-              new_polygon.push_back(new_points[j]);
+          for (auto it = new_points.rbegin() + 1; it != new_points.rend();
+               it++) {
+            if (new_polygon.back() != *it) new_polygon.push_back(*it);
           }
         }
       }
@@ -757,13 +829,15 @@ std::pair<std::vector<Triangle>, std::vector<point::Point>>
 sweeping_line_triangulation(
     const std::vector<std::vector<point::Point>> &polygon_list) {
   std::vector<Triangle> result;
-  auto edges = calc_edges(polygon_list);
+  auto edges = calc_dedup_edges(polygon_list);
   MonotonePolygonBuilder builder(edges);
 
   PointToEdges point_to_edges = get_points_edges(edges);
 
   std::vector<point::Point> sorted_points =
       _sorted_polygons_points(polygon_list);
+
+  result.reserve(sorted_points.size() - 2);
 
   for (auto &sorted_point : sorted_points) {
     auto point_type = get_point_type(sorted_point, point_to_edges);
@@ -792,9 +866,13 @@ sweeping_line_triangulation(
         // Remember about more than 4 edges case
         builder.process_intersection_point(sorted_point);
         break;
+      case PointType::EMPTY:
+        // this is a point without edges (removed by deduplication)
+        break;
     }
   }
-  std::map<point::Point, std::size_t> point_to_index;
+  std::unordered_map<point::Point, std::size_t> point_to_index;
+  point_to_index.reserve(sorted_points.size());
   for (std::size_t i = 0; i < sorted_points.size(); i++) {
     point_to_index[sorted_points[i]] = i;
   }

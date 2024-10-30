@@ -46,8 +46,8 @@ struct Point {
 
 /*Struct to represent edge of polygon with points ordered*/
 struct Segment {
-  Point bottom{};
   Point top{};
+  Point bottom{};
   Segment(Point p1, Point p2) {
     if (p1 < p2) {
       bottom = p1;

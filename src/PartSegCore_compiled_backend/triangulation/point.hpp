@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <iostream>
 #include <set>
+#include <sstream>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -50,7 +51,10 @@ struct Segment {
   Point bottom{};
   Segment(Point p1, Point p2) {
     if (p1 == p2) {
-      throw std::invalid_argument("Segment cannot have two identical points");
+      throw std::invalid_argument(
+          (std::ostringstream()
+           << "Segment cannot have two identical points: " << p1)
+              .str());
     }
     if (p1 < p2) {
       bottom = p1;

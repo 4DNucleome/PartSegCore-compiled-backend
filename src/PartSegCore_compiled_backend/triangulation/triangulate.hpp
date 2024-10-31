@@ -226,6 +226,7 @@ PointToEdges get_points_edges(const std::vector<point::Segment> &edges) {
  * @return The type of the point as determined by its adjacent edges.
  */
 PointType get_point_type(point::Point p, PointToEdges &point_to_edges) {
+  if (point_to_edges.count(p) == 0) return PointType::EMPTY;
   if (point_to_edges.at(p).empty()) return PointType::EMPTY;
   if (point_to_edges.at(p).size() != 2) return PointType::INTERSECTION;
 
@@ -789,7 +790,8 @@ std::vector<point::Segment> calc_edges(
     for (std::size_t i = 0; i < polygon.size() - 1; i++) {
       edges.emplace_back(polygon[i], polygon[i + 1]);
     }
-    edges.emplace_back(polygon[polygon.size() - 1], polygon[0]);
+    if (polygon.back() != polygon.front())
+      edges.emplace_back(polygon.back(), polygon.front());
   }
   return edges;
 }
@@ -823,7 +825,8 @@ std::vector<point::Segment> calc_dedup_edges(
         edges_set.erase(edge);
       }
     }
-    edge = point::Segment(polygon[polygon.size() - 1], polygon[0]);
+    if (polygon.back() == polygon.front()) continue;
+    edge = point::Segment(polygon.back(), polygon.front());
     if (edges_set.count(edge) == 0) {
       edges_set.insert(edge);
     } else {
@@ -1030,18 +1033,22 @@ std::pair<std::vector<Triangle>, std::vector<point::Point>> triangulate_polygon(
 }
 
 std::pair<std::vector<Triangle>, std::vector<point::Point>> triangulate_polygon(
-    const std::vector<point::Point> &polygon_list) {
-  //  try{
-  return triangulate_polygon(
-      std::vector<std::vector<point::Point>>({polygon_list}));
-  //    } catch (const std::exception &e) {
-  //    std::cerr << "Polygon: [";
-  //    for (const auto &point : polygon_list) {
-  //      std::cerr << "(" << point.x << ", " << point.y  << "), ";
-  //    }
-  //    std::cerr << "]" << std::endl;
-  //    throw e;
-  //  }
+    const std::vector<point::Point> &polygon) {
+  // #if DDEBUG
+  //     try{
+  // #endif
+  return triangulate_polygon(std::vector<std::vector<point::Point>>({polygon}));
+  // #if DDEBUG
+  //       } catch (const std::exception &e) {
+  //       std::cerr << "Polygon: [";
+  //       for (const auto &point : polygon) {
+  //         std::cerr << "(" << point.x << ", " << point.y  << "), ";
+  //       }
+  //       std::cerr << "]" << std::endl;
+  //       std::cerr << "Error: " << e.what() << std::endl;
+  //       throw e;
+  //     }
+  // #endif
 }
 
 }  // namespace triangulation

@@ -49,6 +49,9 @@ struct Segment {
   Point top{};
   Point bottom{};
   Segment(Point p1, Point p2) {
+    if (p1 == p2) {
+      throw std::invalid_argument("Segment cannot have two identical points");
+    }
     if (p1 < p2) {
       bottom = p1;
       top = p2;

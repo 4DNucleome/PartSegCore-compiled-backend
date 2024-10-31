@@ -159,13 +159,14 @@ TEST_POLYGONS = [
     ([(0, 1), (0, 2), (1, 1.5), (2, 2), (2, 1), (1, 0.5)], [(4, 3, 2), (2, 1, 0), (4, 2, 0), (5, 4, 0)]),
     ([(0, 1), (0, 2), (1, 0.5), (2, 2), (2, 1), (1, -0.5)], [(2, 1, 0), (2, 0, 5), (4, 3, 2), (5, 4, 2)]),
     ([(0, 0), (1, 2), (2, 0), (1, 1)], [(2, 1, 3), (3, 1, 0)]),
+    ([(0, 0), (0, 1), (0.5, 0.5), (1, 0), (1, 1)], [(3, 4, 2), (2, 1, 0)]),
+    ([(0, 0), (1, 0), (0.5, 0.5), (0, 1), (1, 1)], [(2, 4, 3), (1, 2, 0)]),
 ]
 
 
 @pytest.mark.parametrize(('polygon', 'expected'), TEST_POLYGONS)
 def test_triangulate_polygon_py_non_convex(polygon, expected):
     triangles, points = triangulate_polygon_py(polygon)
-    assert len(triangles) == len(polygon) - 2
     triangles_ = _renumerate_triangles(polygon, points, triangles)
     assert triangles_ == expected
 
@@ -173,7 +174,6 @@ def test_triangulate_polygon_py_non_convex(polygon, expected):
 @pytest.mark.parametrize(('polygon', 'expected'), TEST_POLYGONS)
 def test_triangulate_polygon_numpy_non_convex(polygon, expected):
     triangles, points = triangulate_polygon_numpy(np.array(polygon))
-    assert len(triangles) == len(polygon) - 2
     triangles_ = _renumerate_triangles(polygon, points, triangles)
     assert triangles_ == expected
 
@@ -181,7 +181,6 @@ def test_triangulate_polygon_numpy_non_convex(polygon, expected):
 @pytest.mark.parametrize(('polygon', 'expected'), TEST_POLYGONS)
 def test_triangulate_polygon_numpy_li_non_convex(polygon, expected):
     triangles, points = triangulate_polygon_numpy_li([np.array(polygon)])
-    assert len(triangles) == len(polygon) - 2
     triangles_ = _renumerate_triangles(polygon, points, triangles)
     assert triangles_ == expected
 

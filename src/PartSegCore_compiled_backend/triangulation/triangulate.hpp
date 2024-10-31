@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#include <sstream>
 #include <stack>
 #include <unordered_map>
 #include <unordered_set>
@@ -62,6 +63,16 @@ struct Interval {
     }
     throw std::runtime_error("Segment not found in interval");
   };
+  [[nodiscard]] point::Segment opposite_segment(
+      const point::Segment &segment) const {
+    if (segment == left_segment) {
+      return right_segment;
+    }
+    if (segment == right_segment) {
+      return left_segment;
+    }
+    throw std::runtime_error("Segment not found in interval");
+  };
 };
 
 /**
@@ -103,6 +114,15 @@ bool left_to_right(const point::Segment &s1, const point::Segment &s2) {
   if (s1.top == s2.top) {
     return intersection::_orientation(s1.top, s1.bottom, s2.bottom) == 2;
   }
+  return intersection::_orientation(s1.top, s1.bottom, s2.top) == 2;
+}
+
+bool left_right_share_top(const point::Segment &s1, const point::Segment &s2) {
+  return intersection::_orientation(s1.bottom, s1.top, s2.bottom) == 1;
+}
+
+bool left_right_share_bottom(const point::Segment &s1,
+                             const point::Segment &s2) {
   return intersection::_orientation(s1.top, s1.bottom, s2.top) == 2;
 }
 
@@ -150,17 +170,18 @@ struct PointTriangle {
 
 typedef std::size_t EdgeIndex;
 
-struct PointEdges {
+struct PointEdgeInfo {
   EdgeIndex edge_index;
   point::Point opposite_point;
-  PointEdges(EdgeIndex edge_index, point::Point opposite_point)
+  PointEdgeInfo(EdgeIndex edge_index, point::Point opposite_point)
       : edge_index(edge_index), opposite_point(opposite_point) {}
-  bool operator<(const PointEdges &e) const {
+  bool operator<(const PointEdgeInfo &e) const {
     return opposite_point < e.opposite_point;
   }
 };
 
-typedef std::unordered_map<point::Point, std::vector<PointEdges>> PointToEdges;
+typedef std::unordered_map<point::Point, std::vector<PointEdgeInfo>>
+    PointToEdges;
 typedef std::map<point::Segment, Interval *, SegmentLeftRightComparator>
     SegmentToLine;
 
@@ -180,7 +201,7 @@ PointToEdges get_points_edges(const std::vector<point::Segment> &edges) {
   }
   for (auto &point_to_edge : point_to_edges) {
     std::sort(point_to_edge.second.begin(), point_to_edge.second.end(),
-              [](const PointEdges &a, const PointEdges &b) {
+              [](const PointEdgeInfo &a, const PointEdgeInfo &b) {
                 return b.opposite_point < a.opposite_point;
               });
   }
@@ -262,9 +283,8 @@ struct MonotonePolygonBuilder {
    * when processing is complete.
    */
 
-  void process_end_point(const point::Point &p) {
-    auto [edge_left, edge_right] = get_left_right_edges(p);
-
+  void process_end_point(const point::Point &p, const point::Segment &edge_left,
+                         const point::Segment &edge_right) {
     Interval *interval = segment_to_line.at(edge_left);
 
     for (auto &polygon : interval->polygons_list) {
@@ -297,28 +317,33 @@ struct MonotonePolygonBuilder {
       delete right_interval;
     } else {
       // This is the end point
-      this->process_end_point(p);
+      this->process_end_point(p, edge_left, edge_right);
     }
   };
 
   /**
    * Processes a normal point within a monotone polygon.
    *
-   * @param p The normal point to be processed.
+   * @param p The point to be processed.
+   * @param edge_top The top edge segment associated with the point.
+   * @param edge_bottom The bottom edge segment associated with the point.
    *
-   * The function identifies two edges associated with the given point and
-   * retrieves the corresponding segments. It then finds the interval and
-   * associated monotone polygons based on the edges. If the last seen point in
-   * the interval is a merge point, it updates and stores the completed monotone
-   * polygon. The function also updates the right and left polygons and handles
-   * segment replacements along with interval mappings, ensuring the data
-   * structures are correctly updated.
+   * This function updates the monotone polygon interval associated with
+   * `edge_top` to include the new point `p`. If the interval contains
+   * multiple polygons, it closes all but one of them by setting their
+   * bottom to `p` and moving them to the list of completed monotone polygons.
+   *
+   * Depending on whether `edge_top` represents the right segment of the
+   * interval, the function then adds the point `p` to the appropriate (left
+   * or right) list of points in the remaining polygon and replaces `edge_top`
+   * with `edge_bottom` in the segment-to-line map.
+   *
+   * The function throws a `std::runtime_error` if `edge_top` is not found in
+   * the `segment_to_line` map.
    */
-  void process_normal_point(const point::Point &p) {
-    const point::Segment &edge_top =
-        edges[point_to_edges.at(p).at(0).edge_index];
-    const point::Segment &edge_bottom =
-        edges[point_to_edges.at(p).at(1).edge_index];
+  void _process_normal_point(const point::Point &p,
+                             const point::Segment &edge_top,
+                             const point::Segment &edge_bottom) {
     if (segment_to_line.count(edge_top) == 0) {
       throw std::runtime_error("Segment not found in the map");
     }
@@ -357,9 +382,28 @@ struct MonotonePolygonBuilder {
     segment_to_line.erase(edge_top);
   };
 
-  void process_start_point(const point::Point &p) {
-    auto [edge_left, edge_right] = get_left_right_edges(p);
+  /**
+   * Processes a normal point within a monotone polygon.
+   *
+   * @param p The point to be processed.
+   *
+   * This function identifies the two segments (top and bottom edges)
+   * associated with the point `p` using its index in the `point_to_edges` map.
+   * It then calls the helper method `_process_normal_point`
+   * with the identified segments to handle the actual processing logic.
+   */
+  void process_normal_point(const point::Point &p) {
+    const point::Segment &edge_top =
+        edges[point_to_edges.at(p).at(0).edge_index];
+    const point::Segment &edge_bottom =
+        edges[point_to_edges.at(p).at(1).edge_index];
 
+    _process_normal_point(p, edge_top, edge_bottom);
+  }
+
+  void process_start_point(const point::Point &p,
+                           const point::Segment &edge_left,
+                           const point::Segment &edge_right) {
     auto *new_polygon = new MonotonePolygon(p);
     auto *interval = new Interval(p, edge_left, edge_right, new_polygon);
     segment_to_line[edge_left] = interval;
@@ -425,11 +469,71 @@ struct MonotonePolygonBuilder {
       }
     }
     // the point is not inside any interval
-    this->process_start_point(p);
+    this->process_start_point(p, edge_left, edge_right);
   };
 
   void process_intersection_point(const point::Point &p) {
-    throw std::runtime_error("Intersection points are not supported");
+    auto point_info = point_to_edges.at(p);
+    std::set<point::Segment> processed_segments;
+    std::vector<point::Segment> segments_to_normal_process;
+    std::vector<point::Segment>
+        top_segments;  // segments above the intersection point
+    std::vector<point::Segment>
+        bottom_segments;  // segments below the intersection point
+
+    for (auto &edge_info : point_info) {
+      auto &edge = edges[edge_info.edge_index];
+      if (processed_segments.count(edge) > 0) {
+        continue;
+      }
+      if (segment_to_line.count(edge) > 0) {
+        Interval *interval = segment_to_line.at(edge);
+        auto opposite_edge = interval->opposite_segment(edge);
+        if (edge.bottom == p && opposite_edge.bottom == p) {
+          process_end_point(p, edge, opposite_edge);
+          processed_segments.insert(edge);
+          processed_segments.insert(opposite_edge);
+          continue;
+        }
+      }
+      if (edge.top == p) {
+        bottom_segments.push_back(edge);
+      } else {
+        top_segments.push_back(edge);
+      }
+      segments_to_normal_process.push_back(edge);
+    }
+
+    // after this loop we should have at most 4 segments
+
+    if (bottom_segments.empty() && top_segments.empty()) {
+      // all segments were processed
+      return;
+    }
+
+    std::sort(top_segments.begin(), top_segments.end(),
+              left_right_share_bottom);
+    std::sort(bottom_segments.begin(), bottom_segments.end(),
+              left_right_share_top);
+
+    auto bottom_begin = bottom_segments.begin();
+    auto bottom_end = bottom_segments.end();
+    if (!top_segments.empty()) {
+      if (top_segments.front() ==
+          segment_to_line.at(top_segments.front())->right_segment) {
+        bottom_begin++;
+        _process_normal_point(p, top_segments.front(), bottom_segments.front());
+      }
+      if (top_segments.back() ==
+          segment_to_line.at(top_segments.back())->left_segment) {
+        bottom_end--;
+        _process_normal_point(p, top_segments.back(), bottom_segments.back());
+      }
+    }
+
+    for (auto it = bottom_begin; it < bottom_end; it += 2) {
+      process_start_point(p, *it, *(it + 1));
+    }
   };
 };
 
@@ -789,6 +893,8 @@ std::vector<std::vector<point::Point>> find_intersection_points(
         }
       }
     }
+    if (new_polygon.size() > 1 && new_polygon.front() == new_polygon.back())
+      new_polygon.pop_back();
     new_polygons_list.push_back(new_polygon);
   }
   return new_polygons_list;
@@ -925,8 +1031,17 @@ std::pair<std::vector<Triangle>, std::vector<point::Point>> triangulate_polygon(
 
 std::pair<std::vector<Triangle>, std::vector<point::Point>> triangulate_polygon(
     const std::vector<point::Point> &polygon_list) {
+  //  try{
   return triangulate_polygon(
       std::vector<std::vector<point::Point>>({polygon_list}));
+  //    } catch (const std::exception &e) {
+  //    std::cerr << "Polygon: [";
+  //    for (const auto &point : polygon_list) {
+  //      std::cerr << "(" << point.x << ", " << point.y  << "), ";
+  //    }
+  //    std::cerr << "]" << std::endl;
+  //    throw e;
+  //  }
 }
 
 }  // namespace triangulation

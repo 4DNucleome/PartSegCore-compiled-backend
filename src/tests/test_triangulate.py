@@ -120,7 +120,38 @@ def test_find_intersections_param(segments, expected):
     ],
 )
 def test_find_intersection_point(segment1, segment2, expected):
-    assert find_intersection_point(segment1, segment2) == expected
+    assert len(find_intersection_point(segment1, segment2)) == 1
+    assert find_intersection_point(segment1, segment2)[0] == expected
+
+
+@pytest.mark.parametrize(
+    ('segment1', 'segment2', 'expected'),
+    [
+        (((0, 0), (2, 0)), ((1, 0), (3, 0)), [(1, 0), (2, 0)]),  # Horizontal segments
+        (((1, 0), (3, 0)), ((0, 0), (2, 0)), [(1, 0), (2, 0)]),  # Horizontal segments
+        (((0, 0), (0, 2)), ((0, 1), (0, 3)), [(0, 1), (0, 2)]),  # Vertical segments
+        (((0, 1), (0, 3)), ((0, 0), (0, 2)), [(0, 1), (0, 2)]),  # Vertical segments
+        (((0, 0), (2, 2)), ((1, 1), (3, 3)), [(1, 1), (2, 2)]),  # Diagonal segments
+        (((1, 1), (3, 3)), ((0, 0), (2, 2)), [(1, 1), (2, 2)]),  # Diagonal segments
+    ],
+)
+def test_find_intersection_points_colinear_overlap(segment1, segment2, expected):
+    assert sorted(find_intersection_point(segment1, segment2)) == expected
+
+
+@pytest.mark.parametrize(
+    ('segment1', 'segment2', 'expected'),
+    [
+        (((0, 0), (3, 0)), ((1, 0), (2, 0)), [(1, 0), (2, 0)]),  # Horizontal segments
+        (((1, 0), (2, 0)), ((0, 0), (3, 0)), [(1, 0), (2, 0)]),  # Horizontal segments
+        (((0, 0), (0, 3)), ((0, 1), (0, 2)), [(0, 1), (0, 2)]),  # Vertical segments
+        (((0, 1), (0, 2)), ((0, 0), (0, 3)), [(0, 1), (0, 2)]),  # Vertical segments
+        (((0, 0), (3, 3)), ((1, 1), (2, 2)), [(1, 1), (2, 2)]),  # Diagonal segments
+        (((1, 1), (2, 2)), ((0, 0), (3, 3)), [(1, 1), (2, 2)]),  # Diagonal segments
+    ],
+)
+def test_find_intersection_point_colinear_inside(segment1, segment2, expected):
+    assert sorted(find_intersection_point(segment1, segment2)) == expected
 
 
 def test_is_convex():
@@ -222,6 +253,36 @@ def test_triangulate_polygon_segfault1():
         (208.462509, 1492.8125),
         (208.037506, 1491.5376),
         (205.912506, 1489.83752),
+    ]
+    triangles, points = triangulate_polygon_py(polygon)
+
+
+def test_triangulate_polygon_segfault2():
+    polygon = [
+        [1388.6875, 2744.4375],
+        [1388.4751, 2744.6501],
+        [1386.5625, 2744.6501],
+        [1385.925, 2744.8625],
+        [1385.5, 2745.2876],
+        [1385.2876, 2747.625],
+        [1385.7125, 2748.2627],
+        [1385.7125, 2749.1125],
+        [1386.1376, 2749.75],
+        [1389.9625, 2753.7876],
+        [1390.3876, 2754.6377],
+        [1391.025, 2754.6377],
+        [1392.0875, 2753.1501],
+        [1392.3, 2753.3625],
+        [1392.3, 2754.6377],
+        [1392.5126, 2754.2126],
+        [1392.3, 2754.0],
+        [1392.3, 2751.4502],
+        [1392.7251, 2750.3877],
+        [1391.6626, 2748.9001],
+        [1391.6626, 2747.4126],
+        [1390.8125, 2745.5],
+        [1390.175, 2745.2876],
+        [1389.3251, 2744.4375],
     ]
     triangles, points = triangulate_polygon_py(polygon)
 

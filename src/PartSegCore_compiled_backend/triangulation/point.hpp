@@ -65,7 +65,8 @@ struct Segment {
     }
   }
 
-  bool is_horizontal() const { return bottom.y == top.y; }
+  [[nodiscard]] bool is_horizontal() const { return bottom.y == top.y; }
+  [[nodiscard]] bool is_vertical() const { return bottom.x == top.x; }
 
   Segment() = default;
 
@@ -96,12 +97,23 @@ struct Segment {
    * @return The x-coordinate of the point on the line segment at the specified
    * y-coordinate.
    */
-  float point_on_line(float y) const {
+  [[nodiscard]] float point_on_line_x(float y) const {
     if (bottom.y == top.y) {
       return bottom.x;
     }
     return bottom.x +
            (y - bottom.y) * ((top.x - bottom.x) / (top.y - bottom.y));
+  }
+
+  [[nodiscard]] bool point_on_line(Point p) const {
+    if (this->is_horizontal()) {
+      return (this->bottom.x < p.x && p.x < this->top.x);
+    }
+    if (this->is_vertical()) {
+      return (this->bottom.y < p.y && p.y < this->top.y);
+    }
+    auto x_cord = this->point_on_line_x(p.y);
+    return (this->bottom.x < x_cord && x_cord < this->top.x);
   }
 
   /**

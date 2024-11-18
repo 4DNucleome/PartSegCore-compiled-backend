@@ -51,7 +51,7 @@ cdef extern from "triangulation/intersection.hpp" namespace "partsegcore::inters
     int _orientation(const Point& p, const Point& q, const Point& r)
     bool _do_intersect(const Segment& s1, const Segment& s2)
     unordered_set[OrderedPair] _find_intersections(const vector[Segment]& segments)
-    Point _find_intersection(const Segment& s1, const Segment& s2)
+    vector[Point] _find_intersection(const Segment& s1, const Segment& s2)
 
 
 cdef extern from "triangulation/triangulate.hpp" namespace "partsegcore::triangulation":
@@ -83,8 +83,8 @@ cdef extern from "triangulation/triangulate.hpp" namespace "partsegcore::triangu
     bool left_to_right(const Segment& s1, const Segment& s2)
     vector[Point] find_intersection_points(const vector[Point]& segments)
     vector[PointTriangle] triangulate_monotone_polygon(const MonotonePolygon& polygon)
-    pair[vector[Triangle], vector[Point]] triangulate_polygon(const vector[Point]& polygon) except +
-    pair[vector[Triangle], vector[Point]] triangulate_polygon(const vector[vector[Point]]& polygon_list) except +
+    pair[vector[Triangle], vector[Point]] triangulate_polygon(const vector[Point]& polygon) # except +
+    pair[vector[Triangle], vector[Point]] triangulate_polygon(const vector[vector[Point]]& polygon_list) # except +
 
 
 
@@ -170,7 +170,7 @@ def find_intersections(segments: Sequence[Sequence[Sequence[float]]]) -> list[tu
     return [(p.first, p.second) for p  in intersections]
 
 
-def find_intersection_point(s1: Sequence[Sequence[float]], s2: Sequence[Sequence[float]]) -> tuple[float, float]:
+def find_intersection_point(s1: Sequence[Sequence[float]], s2: Sequence[Sequence[float]]) -> list[tuple[float, float]]:
     """ Find intersection between two segments
 
     Parameters
@@ -185,11 +185,11 @@ def find_intersection_point(s1: Sequence[Sequence[float]], s2: Sequence[Sequence
     sequence of 2 floats:
         intersection point
     """
-    cdef Point p = _find_intersection(
+    cdef vector[Point] p_li = _find_intersection(
         Segment(Point(s1[0][0], s1[0][1]), Point(s1[1][0], s1[1][1])),
         Segment(Point(s2[0][0], s2[0][1]), Point(s2[1][0], s2[1][1]))
         )
-    return (p.x, p.y)
+    return [(p.x, p.y) for p in p_li]
 
 
 def is_convex(polygon: Sequence[Sequence[float]]) -> bool:

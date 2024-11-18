@@ -316,8 +316,8 @@ std::unordered_set<OrderedPair> _find_intersections(
  * @return The intersection point of the two segments, or (0, 0) if they do not
  * intersect.
  */
-point::Point _find_intersection(const point::Segment &s1,
-                                const point::Segment &s2) {
+inline std::vector<point::Point> _find_intersection(const point::Segment &s1,
+                                                    const point::Segment &s2) {
   float a1, b1, c1, a2, b2, c2, det, x, y;
   a1 = s1.top.y - s1.bottom.y;
   b1 = s1.bottom.x - s1.top.x;
@@ -326,10 +326,18 @@ point::Point _find_intersection(const point::Segment &s1,
   b2 = s2.bottom.x - s2.top.x;
   c2 = a2 * s2.bottom.x + b2 * s2.bottom.y;
   det = a1 * b2 - a2 * b1;
-  if (det == 0) return {0, 0};
+  if (det == 0) {
+    // collinear case
+    std::vector<point::Point> res;
+    if (s1.point_on_line(s2.bottom)) res.push_back(s2.bottom);
+    if (s1.point_on_line(s2.top)) res.push_back(s2.top);
+    if (s2.point_on_line(s1.bottom)) res.push_back(s1.bottom);
+    if (s2.point_on_line(s1.top)) res.push_back(s1.top);
+    return res;
+  }
   x = (b2 * c1 - b1 * c2) / det;
   y = (a1 * c2 - a2 * c1) / det;
-  return {x, y};
+  return {{x, y}};
 }
 }  // namespace intersection
 }  // namespace partsegcore

@@ -311,7 +311,7 @@ struct MonotonePolygonBuilder {
       left_interval->right_segment = right_interval->right_segment;
 #ifdef DEBUG
       if (segment_to_line.count(right_interval->right_segment) == 0) {
-        throw std::runtime_error("Segment not found in the map");
+        throw std::runtime_error("Segment not found in the map2");
       }
 #endif
       segment_to_line[right_interval->right_segment] = left_interval;
@@ -352,7 +352,7 @@ struct MonotonePolygonBuilder {
                              const point::Segment &edge_top,
                              const point::Segment &edge_bottom) {
     if (segment_to_line.count(edge_top) == 0) {
-      throw std::runtime_error("Segment not found in the map");
+      throw std::runtime_error("Segment not found in the map1");
     }
     Interval *interval = segment_to_line.at(edge_top);
 
@@ -440,8 +440,8 @@ struct MonotonePolygonBuilder {
       // check if the current point is inside the quadrangle defined by edges of
       // the interval
       Interval *interval = segment_interval.second;
-      if (interval->left_segment.point_on_line(p.y) < p.x &&
-          interval->right_segment.point_on_line(p.y) > p.x) {
+      if (interval->left_segment.point_on_line_x(p.y) < p.x &&
+          interval->right_segment.point_on_line_x(p.y) > p.x) {
         // the point is inside the interval
 
         // update the sweep line
@@ -872,10 +872,12 @@ std::vector<std::vector<point::Point>> find_intersection_points(
   std::unordered_map<std::size_t, std::vector<point::Point>>
       intersections_points;
   for (const auto &intersection : intersections) {
-    auto inter_point = intersection::_find_intersection(
+    auto inter_points = intersection::_find_intersection(
         edges[intersection.first], edges[intersection.second]);
-    intersections_points[intersection.first].push_back(inter_point);
-    intersections_points[intersection.second].push_back(inter_point);
+    for (auto inter_point : inter_points) {
+      intersections_points[intersection.first].push_back(inter_point);
+      intersections_points[intersection.second].push_back(inter_point);
+    }
   };
   for (auto &intersections_point : intersections_points) {
     //    points_count += intersections_point.second.size() - 1;

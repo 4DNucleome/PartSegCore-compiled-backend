@@ -126,9 +126,12 @@ bool _on_segment(const point::Point &p, const point::Point &q,
  */
 int _orientation(const point::Point &p, const point::Point &q,
                  const point::Point &r) {
-  float val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
-  if (val == 0) return 0;
-  return (val > 0) ? 1 : 2;
+  double val1 = ((q.y - p.y) * (r.x - q.x));
+  double val2 = ((r.y - q.y) * (q.x - p.x));
+  // Instead of using classical equation, we need to use two variables
+  // to handle problem with strange behaviour on macOs.
+  if (val1 == val2) return 0;
+  return (val1 > val2) ? 1 : 2;
 }
 
 /**

@@ -260,6 +260,7 @@ struct MonotonePolygonBuilder {
                                      edges[snd_idx].bottom) == 2) {
         return {edges[snd_idx], edges[fst_idx]};
       }
+      return {edges[fst_idx], edges[snd_idx]};
     }
     if (intersection::_orientation(edges[fst_idx].top, edges[fst_idx].bottom,
                                    edges[snd_idx].top) == 1) {
@@ -287,7 +288,6 @@ struct MonotonePolygonBuilder {
   void process_end_point(const point::Point &p, const point::Segment &edge_left,
                          const point::Segment &edge_right) {
     Interval *interval = segment_to_line.at(edge_left);
-
     for (auto &polygon : interval->polygons_list) {
       polygon->bottom = p;
       monotone_polygons.push_back(*polygon);
@@ -307,7 +307,13 @@ struct MonotonePolygonBuilder {
       Interval *left_interval = segment_to_line.at(edge_left);
       Interval *right_interval = segment_to_line.at(edge_right);
       segment_to_line.erase(edge_right);
+      segment_to_line.erase(edge_left);
       left_interval->right_segment = right_interval->right_segment;
+#ifdef DEBUG
+      if (segment_to_line.count(right_interval->right_segment) == 0) {
+        throw std::runtime_error("Segment not found in the map");
+      }
+#endif
       segment_to_line[right_interval->right_segment] = left_interval;
       left_interval->last_seen = p;
       left_interval->polygons_list.back()->right.push_back(p);
@@ -381,6 +387,14 @@ struct MonotonePolygonBuilder {
     interval->last_seen = p;
     interval->replace_segment(edge_top, edge_bottom);
     segment_to_line.erase(edge_top);
+    // #ifdef DEBUG
+    if (segment_to_line.count(interval->left_segment) == 0) {
+      throw std::runtime_error("Left segment not found in the map");
+    }
+    if (segment_to_line.count(interval->right_segment) == 0) {
+      throw std::runtime_error("Right segment not found in the map");
+    }
+    // #endif
   };
 
   /**
@@ -947,9 +961,10 @@ sweeping_line_triangulation(
       _sorted_polygons_points(polygon_list);
 
   result.reserve(sorted_points.size() - 2);
-
+  int idx = 0;
   for (auto &sorted_point : sorted_points) {
     auto point_type = get_point_type(sorted_point, point_to_edges);
+    idx += 1;
     switch (point_type) {
       case PointType::NORMAL:
         // Change edge adjusted to the current sweeping line.

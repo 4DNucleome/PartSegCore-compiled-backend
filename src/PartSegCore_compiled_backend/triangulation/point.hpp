@@ -51,10 +51,9 @@ struct Segment {
   Point bottom{};
   Segment(Point p1, Point p2) {
     if (p1 == p2) {
-      throw std::invalid_argument(
-          (std::ostringstream()
-           << "Segment cannot have two identical points: " << p1)
-              .str());
+      std::ostringstream oss;
+      oss << "Segment cannot have two identical points: " << p1;
+      throw std::invalid_argument(oss.str());
     }
     if (p1 < p2) {
       bottom = p1;

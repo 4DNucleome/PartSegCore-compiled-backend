@@ -217,7 +217,7 @@ inline PointToEdges get_points_edges(const std::vector<point::Segment> &edges) {
 }
 
 /**
- * Determines the type of a given point based on its adjacent edges.
+ * Determines the type of given point based on its adjacent edges.
  *
  * If the point has more than two edges connected to it, it is considered an
  * intersection point. If it has exactly two edges, further checks categorize
@@ -404,14 +404,14 @@ struct MonotonePolygonBuilder {
     interval->last_seen = p;
     interval->replace_segment(edge_top, edge_bottom);
     segment_to_line.erase(edge_top);
-    // #ifdef DEBUG
+#ifdef DEBUG
     if (segment_to_line.count(interval->left_segment) == 0) {
       throw std::runtime_error("Left segment not found in the map");
     }
     if (segment_to_line.count(interval->right_segment) == 0) {
       throw std::runtime_error("Right segment not found in the map");
     }
-    // #endif
+#endif
   };
 
   /**
@@ -724,7 +724,7 @@ enum Side {
  * @return A vector of PointTriangle representing the triangles of the
  *         triangulated polygon.
  */
-std::vector<PointTriangle> triangulate_monotone_polygon(
+inline std::vector<PointTriangle> triangulate_monotone_polygon(
     const MonotonePolygon &polygon) {
   std::vector<PointTriangle> result;
   std::size_t left_index = 0;
@@ -782,7 +782,7 @@ std::vector<PointTriangle> triangulate_monotone_polygon(
  * @param polygon A vector of points representing the vertices of the polygon.
  * @return A vector of segments representing the edges of the polygon.
  */
-std::vector<point::Segment> calc_edges(
+inline std::vector<point::Segment> calc_edges(
     const std::vector<point::Point> &polygon) {
   std::vector<point::Segment> edges;
   edges.reserve(polygon.size());
@@ -809,7 +809,7 @@ std::vector<point::Segment> calc_edges(
  * @return A vector of `point::Segment` instances representing the edges of
  *         all polygons in the input list.
  */
-std::vector<point::Segment> calc_edges(
+inline std::vector<point::Segment> calc_edges(
     const std::vector<std::vector<point::Point>> &polygon_list) {
   std::vector<point::Segment> edges;
   std::size_t points_count = 0;
@@ -842,7 +842,7 @@ std::vector<point::Segment> calc_edges(
  * @return A vector of unique edges (of type point::Segment) that are not
  * duplicated across the polygons.
  */
-std::vector<point::Segment> calc_dedup_edges(
+inline std::vector<point::Segment> calc_dedup_edges(
     const std::vector<std::vector<point::Point>> &polygon_list) {
   std::set<point::Segment> edges_set;
   point::Segment edge;
@@ -874,11 +874,12 @@ std::vector<point::Segment> calc_dedup_edges(
  * The function takes a vector of points defining a polygon and finds all edge
  * intersections. It then adds mid-points for all such intersections.
  *
- * @param polygon The polygon defined by a vector of Point objects.
+ * @param polygon_list The list of polygons defined by a vector of ov vector of
+ * Point objects.
  * @return A new vector of Point objects representing the polygon with added
  * intersection points.
  */
-std::vector<std::vector<point::Point>> find_intersection_points(
+inline std::vector<std::vector<point::Point>> find_intersection_points(
     const std::vector<std::vector<point::Point>> &polygon_list) {
   /* find all edge intersections and add mid-points for all such intersection
    * places*/
@@ -935,14 +936,14 @@ std::vector<std::vector<point::Point>> find_intersection_points(
   return new_polygons_list;
 }
 
-std::vector<point::Point> find_intersection_points(
+inline std::vector<point::Point> find_intersection_points(
     const std::vector<point::Point> &polygon) {
   auto new_polygon = find_intersection_points(
       std::vector<std::vector<point::Point>>({polygon}));
   return new_polygon[0];
 }
 
-std::vector<point::Point> _sorted_polygons_points(
+inline std::vector<point::Point> _sorted_polygons_points(
     const std::vector<std::vector<point::Point>> &polygon_list) {
   std::vector<point::Point> result;
   std::unordered_set<point::Point> visited;
@@ -966,7 +967,7 @@ std::vector<point::Point> _sorted_polygons_points(
     more than 2 edges. described on this lecture:
     https://www.youtube.com/playlist?list=PLtTatrCwXHzEqzJMaTUFgqoCNllgwk4DH
     */
-std::pair<std::vector<Triangle>, std::vector<point::Point>>
+inline std::pair<std::vector<Triangle>, std::vector<point::Point>>
 sweeping_line_triangulation(
     const std::vector<std::vector<point::Point>> &polygon_list) {
   std::vector<Triangle> result;
@@ -1002,7 +1003,7 @@ sweeping_line_triangulation(
         break;
       case PointType::INTERSECTION:
         // this is a merge and split point at the same time
-        // this is not described in original algorithm
+        // this is not described in original algorithm,
         // but we need it to handle self intersecting polygons
         // Remember about more than 4 edges case
         builder.process_intersection_point(sorted_point);
@@ -1031,7 +1032,8 @@ sweeping_line_triangulation(
 
 // calculate the triangulation of a symmetric difference of list of polygons
 
-std::pair<std::vector<Triangle>, std::vector<point::Point>> triangulate_polygon(
+inline std::pair<std::vector<Triangle>, std::vector<point::Point>>
+triangulate_polygon(
     const std::vector<std::vector<point::Point>> &polygon_list) {
   if (polygon_list.empty())
     // empty list
@@ -1065,8 +1067,8 @@ std::pair<std::vector<Triangle>, std::vector<point::Point>> triangulate_polygon(
   return sweeping_line_triangulation(find_intersection_points(polygon_list));
 }
 
-std::pair<std::vector<Triangle>, std::vector<point::Point>> triangulate_polygon(
-    const std::vector<point::Point> &polygon) {
+inline std::pair<std::vector<Triangle>, std::vector<point::Point>>
+triangulate_polygon(const std::vector<point::Point> &polygon) {
   // #if DDEBUG
   //     try{
   // #endif

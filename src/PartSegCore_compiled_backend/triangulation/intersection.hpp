@@ -15,25 +15,21 @@
 #define PARTSEGCORE_INTERSECTION_H
 
 #include <algorithm>
-#include <iostream>
 #include <map>
-#include <queue>
-#include <set>
-#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
 #include "point.hpp"
 
-namespace partsegcore {
-namespace intersection {
+namespace partsegcore::intersection {
 
 struct Event {
   point::Point p;
   int index;
   bool is_top;
 
-  Event(float x, float y, int index, bool is_left)
+  Event(point::Point::coordinate_t x, point::Point::coordinate_t y, int index,
+        bool is_left)
       : p(x, y), index(index), is_top(is_left) {}
   Event(const point::Point &p, int index, bool is_left)
       : p(p), index(index), is_top(is_left) {}
@@ -72,22 +68,18 @@ struct OrderedPair {
     return first == pair.first && second == pair.second;
   }
 };
-}  // namespace intersection
-}  // namespace partsegcore
-namespace std {
+}  // namespace partsegcore::intersection
 
 template <>
-struct hash<partsegcore::intersection::OrderedPair> {
+struct std::hash<partsegcore::intersection::OrderedPair> {
   std::size_t operator()(
-      const partsegcore::intersection::OrderedPair &pair) const {
+      const partsegcore::intersection::OrderedPair &pair) const noexcept {
     return std::hash<std::size_t>()(pair.first) ^
            std::hash<std::size_t>()(pair.second);
   }
-};
-}  // namespace std
+};  // namespace std
 
-namespace partsegcore {
-namespace intersection {
+namespace partsegcore::intersection {
 
 typedef std::map<point::Point, EventData> IntersectionEvents;
 
@@ -105,8 +97,8 @@ typedef std::map<point::Point, EventData> IntersectionEvents;
  * @param r The second endpoint of the line segment.
  * @return True if point q lies on the segment pr, false otherwise.
  */
-bool _on_segment(const point::Point &p, const point::Point &q,
-                 const point::Point &r) {
+inline bool _on_segment(const point::Point &p, const point::Point &q,
+                        const point::Point &r) {
   if (q.x <= std::max(p.x, r.x) && q.x >= std::min(p.x, r.x) &&
       q.y <= std::max(p.y, r.y) && q.y >= std::min(p.y, r.y))
     return true;
@@ -124,12 +116,12 @@ bool _on_segment(const point::Point &p, const point::Point &q,
  *         1 if the triplet (p, q, r) is in a clockwise orientation.
  *         2 if the triplet (p, q, r) is in a counterclockwise orientation.
  */
-int _orientation(const point::Point &p, const point::Point &q,
-                 const point::Point &r) {
+inline int _orientation(const point::Point &p, const point::Point &q,
+                        const point::Point &r) {
   double val1 = ((q.y - p.y) * (r.x - q.x));
   double val2 = ((r.y - q.y) * (q.x - p.x));
   // Instead of using classical equation, we need to use two variables
-  // to handle problem with strange behaviour on macOs.
+  // to handle problem with strange behaviour on macOS.
   if (val1 == val2) return 0;
   return (val1 > val2) ? 1 : 2;
 }
@@ -145,7 +137,7 @@ int _orientation(const point::Point &p, const point::Point &q,
  * @param s2 The second line segment, represented by two endpoints.
  * @return True if the segments intersect, false otherwise.
  */
-bool _do_intersect(const point::Segment &s1, const point::Segment &s2) {
+inline bool _do_intersect(const point::Segment &s1, const point::Segment &s2) {
   const point::Point &p1 = s1.bottom;
   const point::Point &q1 = s1.top;
   const point::Point &p2 = s2.bottom;
@@ -197,7 +189,7 @@ typename T::iterator succ(T &s, typename T::iterator it) {
   return ++it;
 }
 
-std::unordered_set<OrderedPair> _find_intersections(
+inline std::unordered_set<OrderedPair> _find_intersections(
     const std::vector<point::Segment> &segments) {
   std::unordered_set<OrderedPair> intersections;
   IntersectionEvents intersection_events;
@@ -210,7 +202,6 @@ std::unordered_set<OrderedPair> _find_intersections(
   }
   //  std::cout << "Segments ";
   //  print_vector(std::cout, segments, "\n");
-  int i = 0;
   while (!intersection_events.empty()) {
     auto event_it = --intersection_events.end();
     //    std::cout << "Event " << i << ": " << event_it->first << " tops: ";
@@ -318,7 +309,8 @@ std::unordered_set<OrderedPair> _find_intersections(
  */
 inline std::vector<point::Point> _find_intersection(const point::Segment &s1,
                                                     const point::Segment &s2) {
-  float a1, b1, c1, a2, b2, c2, det, x, y;
+  // ReSharper disable CppJoinDeclarationAndAssignment
+  point::Point::coordinate_t a1, b1, c1, a2, b2, c2, det, x, y;
   a1 = s1.top.y - s1.bottom.y;
   b1 = s1.bottom.x - s1.top.x;
   c1 = a1 * s1.bottom.x + b1 * s1.bottom.y;
@@ -339,7 +331,6 @@ inline std::vector<point::Point> _find_intersection(const point::Segment &s1,
   y = (a1 * c2 - a2 * c1) / det;
   return {{x, y}};
 }
-}  // namespace intersection
-}  // namespace partsegcore
+}  // namespace partsegcore::intersection
 
 #endif  // PARTSEGCORE_INTERSECTION_H

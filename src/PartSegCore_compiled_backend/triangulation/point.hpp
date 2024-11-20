@@ -6,23 +6,20 @@
 #define PARTSEGCORE_POINT_H
 
 #include <algorithm>
-#include <iostream>
-#include <set>
 #include <sstream>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
-namespace partsegcore {
-namespace point {
+namespace partsegcore::point {
 
 /* Point class with x and y coordinates */
 struct Point {
-  float x;
-  float y;
+  typedef float coordinate_t;
+
+  coordinate_t x;
+  coordinate_t y;
   bool operator==(const Point &p) const { return x == p.x && y == p.y; }
   bool operator!=(const Point &p) const { return !(*this == p); }
-  Point(float x, float y) : x(x), y(y) {}
+  Point(coordinate_t x, coordinate_t y) : x(x), y(y) {}
   Point() = default;
 
   bool operator<(const Point &p) const {
@@ -96,7 +93,8 @@ struct Segment {
    * @return The x-coordinate of the point on the line segment at the specified
    * y-coordinate.
    */
-  [[nodiscard]] float point_on_line_x(float y) const {
+  [[nodiscard]] Point::coordinate_t point_on_line_x(
+      Point::coordinate_t y) const {
     if (bottom.y == top.y) {
       return bottom.x;
     }
@@ -149,22 +147,21 @@ struct Segment {
     }
   };
 };
-}  // namespace point
-}  // namespace partsegcore
+}  // namespace partsegcore::point
 
 // overload of hash function for
 // unordered map and set
 namespace std {
 template <>
 struct hash<partsegcore::point::Point> {
-  size_t operator()(const partsegcore::point::Point &point) const {
+  size_t operator()(const partsegcore::point::Point &point) const noexcept {
     return partsegcore::point::Point::PointHash()(point);
   }
 };
 
 template <>
 struct hash<partsegcore::point::Segment> {
-  size_t operator()(const partsegcore::point::Segment &segment) const {
+  size_t operator()(const partsegcore::point::Segment &segment) const noexcept {
     return partsegcore::point::Segment::SegmentHash()(segment);
   }
 };

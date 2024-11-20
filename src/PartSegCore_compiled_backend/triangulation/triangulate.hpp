@@ -5,7 +5,6 @@
 #include <map>
 #include <set>
 #include <sstream>
-#include <stack>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -14,8 +13,7 @@
 #include "intersection.hpp"
 #include "point.hpp"
 
-namespace partsegcore {
-namespace triangulation {
+namespace partsegcore::triangulation {
 
 enum PointType { NORMAL, SPLIT, MERGE, INTERSECTION, EMPTY };
 
@@ -73,6 +71,15 @@ struct Interval {
     }
     throw std::runtime_error("Segment not found in interval");
   };
+
+  // ostream operator for Interval
+  friend std::ostream &operator<<(std::ostream &os, const Interval &interval) {
+    os << "Last Seen: " << interval.last_seen
+       << ", Left Segment: " << interval.left_segment
+       << ", Right Segment: " << interval.right_segment
+       << ", Polygons count: " << interval.polygons_list.size();
+    return os;
+  }
 };
 
 /**
@@ -90,7 +97,7 @@ struct Interval {
  *
  * @return `true` if `s1` is to the left and below `s2`, `false` otherwise.
  */
-bool left_to_right(const point::Segment &s1, const point::Segment &s2) {
+inline bool left_to_right(const point::Segment &s1, const point::Segment &s2) {
   if (s1.is_horizontal() && s2.is_horizontal()) {
     return s1.bottom.x < s2.bottom.x;
   }
@@ -117,12 +124,13 @@ bool left_to_right(const point::Segment &s1, const point::Segment &s2) {
   return intersection::_orientation(s1.top, s1.bottom, s2.top) == 2;
 }
 
-bool left_right_share_top(const point::Segment &s1, const point::Segment &s2) {
+inline bool left_right_share_top(const point::Segment &s1,
+                                 const point::Segment &s2) {
   return intersection::_orientation(s1.bottom, s1.top, s2.bottom) == 1;
 }
 
-bool left_right_share_bottom(const point::Segment &s1,
-                             const point::Segment &s2) {
+inline bool left_right_share_bottom(const point::Segment &s1,
+                                    const point::Segment &s2) {
   return intersection::_orientation(s1.top, s1.bottom, s2.top) == 2;
 }
 
@@ -193,7 +201,7 @@ typedef std::map<point::Segment, Interval *, SegmentLeftRightComparator>
  * @return A PointToEdges map where each key is a point and the corresponding
  * value is a vector of edges containing that point.
  */
-PointToEdges get_points_edges(const std::vector<point::Segment> &edges) {
+inline PointToEdges get_points_edges(const std::vector<point::Segment> &edges) {
   PointToEdges point_to_edges;
   for (std::size_t i = 0; i < edges.size(); i++) {
     point_to_edges[edges[i].bottom].emplace_back(i, edges[i].top);
@@ -225,7 +233,7 @@ PointToEdges get_points_edges(const std::vector<point::Segment> &edges) {
  * @param point_to_edges A mapping from points to their adjacent edges.
  * @return The type of the point as determined by its adjacent edges.
  */
-PointType get_point_type(point::Point p, PointToEdges &point_to_edges) {
+inline PointType get_point_type(point::Point p, PointToEdges &point_to_edges) {
   if (point_to_edges.count(p) == 0) return PointType::EMPTY;
   if (point_to_edges.at(p).empty()) return PointType::EMPTY;
   if (point_to_edges.at(p).size() != 2) return PointType::INTERSECTION;
@@ -306,6 +314,15 @@ struct MonotonePolygonBuilder {
       // merge two intervals into one
       Interval *left_interval = segment_to_line.at(edge_left);
       Interval *right_interval = segment_to_line.at(edge_right);
+#ifdef DEBUG
+      if (right_interval->right_segment == edge_right) {
+        std::ostringstream oss;
+        oss << "The right edge of merge point should be the left edge of the "
+               "right interval.\nGot interval: "
+            << *right_interval << " and edge: " << edge_right;
+        throw std::runtime_error(oss.str());
+      }
+#endif
       segment_to_line.erase(edge_right);
       segment_to_line.erase(edge_left);
       left_interval->right_segment = right_interval->right_segment;
@@ -536,12 +553,12 @@ struct MonotonePolygonBuilder {
     if (!top_segments.empty()) {
       if (top_segments.front() ==
           segment_to_line.at(top_segments.front())->right_segment) {
-        bottom_begin++;
+        ++bottom_begin;
         _process_normal_point(p, top_segments.front(), bottom_segments.front());
       }
       if (top_segments.back() ==
           segment_to_line.at(top_segments.back())->left_segment) {
-        bottom_end--;
+        --bottom_end;
         _process_normal_point(p, top_segments.back(), bottom_segments.back());
       }
     }
@@ -564,7 +581,7 @@ struct MonotonePolygonBuilder {
  * order.
  * @return True if the polygon is convex, false otherwise.
  */
-bool _is_convex(const std::vector<point::Point> &polygon) {
+inline bool _is_convex(const std::vector<point::Point> &polygon) {
   int orientation = 0;
   int triangle_orientation;
   for (std::size_t i = 0; i < polygon.size() - 2; i++) {
@@ -597,7 +614,7 @@ bool _is_convex(const std::vector<point::Point> &polygon) {
  * @return A vector of Triangle objects where each triangle is defined by
  * indices corresponding to the vertices in the input polygon.
  */
-std::vector<Triangle> _triangle_convex_polygon(
+inline std::vector<Triangle> _triangle_convex_polygon(
     const std::vector<point::Point> &polygon) {
   std::vector<Triangle> result;
   for (std::size_t i = 1; i < polygon.size() - 1; i++) {
@@ -628,9 +645,9 @@ std::vector<Triangle> _triangle_convex_polygon(
  * @param current_point The current `point::Point` used to form triangles with
  * points in the stack.
  */
-void _build_triangles_opposite_edge(std::vector<point::Point> &stack,
-                                    std::vector<PointTriangle> &result,
-                                    point::Point current_point) {
+inline void _build_triangles_opposite_edge(std::vector<point::Point> &stack,
+                                           std::vector<PointTriangle> &result,
+                                           point::Point current_point) {
   for (std::size_t i = 0; i < stack.size() - 1; i++) {
     result.emplace_back(current_point, stack[i], stack[i + 1]);
   }
@@ -649,27 +666,27 @@ void _build_triangles_opposite_edge(std::vector<point::Point> &stack,
  * based on the expected orientation and are added to the result vector. The
  * stack is then updated to reflect the current status of the processed area.
  *
- * @param point_stack A reference to a std::vector of point::Point representing
+ * @param stack A reference to a std::vector of point::Point representing
  * the current state of the stack.
- * @param triangles A reference to a std::vector of PointTriangle where the
+ * @param result A reference to a std::vector of PointTriangle where the
  * generated triangles will be stored.
- * @param incoming_point The incoming point::Point to be considered for new
+ * @param current_point The incoming point::Point to be considered for new
  * triangles and updating the stack.
  * @param expected_orientation The expected orientation (clockwise or
  * counterclockwise) that will guide the triangle formation.
  */
-void _build_triangles_current_edge(std::vector<point::Point> &stack,
-                                   std::vector<PointTriangle> &result,
-                                   point::Point current_point,
-                                   int expected_orientation) {
+inline void _build_triangles_current_edge(std::vector<point::Point> &stack,
+                                          std::vector<PointTriangle> &result,
+                                          point::Point current_point,
+                                          int expected_orientation) {
   auto it1 = stack.rbegin();
   auto it2 = stack.rbegin() + 1;
   while (it2 != stack.rend() &&
          intersection::_orientation(*it2, *it1, current_point) ==
              expected_orientation) {
     result.emplace_back(current_point, *it1, *it2);
-    it1++;
-    it2++;
+    ++it1;
+    ++it2;
   }
   stack.erase(it1.base(), stack.end());
   stack.push_back(current_point);
@@ -896,17 +913,16 @@ std::vector<std::vector<point::Point>> find_intersection_points(
     new_polygon.push_back(polygon[0]);
     for (std::size_t i = 0; i < polygon.size(); i++) {
       auto point = polygon[i];
-      if (new_polygon[new_polygon.size() - 1] != point)
-        new_polygon.push_back(point);
+      if (new_polygon.back() != point) new_polygon.push_back(point);
       if (intersections_points.count(i)) {
         auto &new_points = intersections_points[i];
         if (new_points[0] == point) {
-          for (auto it = new_points.begin() + 1; it != new_points.end(); it++) {
+          for (auto it = new_points.begin() + 1; it != new_points.end(); ++it) {
             if (new_polygon.back() != *it) new_polygon.push_back(*it);
           }
         } else {
           for (auto it = new_points.rbegin() + 1; it != new_points.rend();
-               it++) {
+               ++it) {
             if (new_polygon.back() != *it) new_polygon.push_back(*it);
           }
         }
@@ -966,7 +982,6 @@ sweeping_line_triangulation(
   int idx = 0;
   for (auto &sorted_point : sorted_points) {
     auto point_type = get_point_type(sorted_point, point_to_edges);
-    idx += 1;
     switch (point_type) {
       case PointType::NORMAL:
         // Change edge adjusted to the current sweeping line.
@@ -996,6 +1011,7 @@ sweeping_line_triangulation(
         // this is a point without edges (removed by deduplication)
         break;
     }
+    ++idx;
   }
   std::unordered_map<point::Point, std::size_t> point_to_index;
   point_to_index.reserve(sorted_points.size());
@@ -1068,7 +1084,6 @@ std::pair<std::vector<Triangle>, std::vector<point::Point>> triangulate_polygon(
   // #endif
 }
 
-}  // namespace triangulation
-}  // namespace partsegcore
+}  // namespace partsegcore::triangulation
 
 #endif  // PARTSEGCORE_TRIANGULATE_H

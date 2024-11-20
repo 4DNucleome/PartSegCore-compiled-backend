@@ -5,17 +5,9 @@
 #ifndef PARTSEGCORE_TRIANGULATION_DEBUG_UTIL_
 #define PARTSEGCORE_TRIANGULATION_DEBUG_UTIL_
 
-#include <algorithm>
 #include <iostream>
-#include <map>
 #include <queue>
-#include <set>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
 #include <vector>
-
-#include "point.hpp"
 
 namespace partsegcore {
 

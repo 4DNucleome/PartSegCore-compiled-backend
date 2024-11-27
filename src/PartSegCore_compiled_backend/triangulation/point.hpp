@@ -102,6 +102,17 @@ struct Segment {
            (y - bottom.y) * ((top.x - bottom.x) / (top.y - bottom.y));
   }
 
+  /**
+   * t = \frac{(x_1 - x_2)(x_3 - x_2) + (y_1 - y_2)(y_3 - y_2)}{(x_3 - x_2)^2 +
+   *(y_3 - y_2)^2}
+   **/
+  [[nodiscard]] double point_projection_factor(Point p) const {
+    return ((p.x - this->top.x) * (this->bottom.x - this->top.x) +
+            (p.y - this->top.y) * (this->bottom.y - this->top.y)) /
+           ((this->top.x - this->bottom.x) * (this->top.x - this->bottom.x) +
+            (this->top.y - this->bottom.y) * (this->top.y - this->bottom.y));
+  }
+
   [[nodiscard]] bool point_on_line(Point p) const {
     if (this->is_horizontal()) {
       return (this->bottom.x < p.x && p.x < this->top.x);

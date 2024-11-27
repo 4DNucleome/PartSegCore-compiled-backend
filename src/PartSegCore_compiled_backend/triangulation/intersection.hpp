@@ -105,6 +105,12 @@ inline bool _on_segment(const point::Point &p, const point::Point &q,
   return false;
 }
 
+inline int64_t double_as_hex(double d) {
+  int64_t result;
+  std::memcpy(&result, &d, sizeof(result));
+  return result;
+}
+
 /**
  * Determines the orientation of the triplet (p, q, r).
  *
@@ -120,6 +126,19 @@ inline int _orientation(const point::Point &p, const point::Point &q,
                         const point::Point &r) {
   double val1 = ((q.y - p.y) * (r.x - q.x));
   double val2 = ((r.y - q.y) * (q.x - p.x));
+  // This commented code if for debugging purposes of differences between macOS
+  // and linux double val = ((q.y - p.y) * (r.x - q.x)) - ((r.y - q.y) * (q.x -
+  // p.x)); if (val!= 0 && val1 == val2) {
+  //   std::ostringstream oss;
+  //   // print coordinates and its hex representation
+  //   oss << "val " << val << " val1 " << val1 << " val2 " << val2 << "\n";
+  //   oss << "p " << p << " p_hex (x=" <<  std::hex << double_as_hex(p.x) << ",
+  //   y=" << double_as_hex(p.y) << ")\n"; oss << "q " << q << " q_hex (x=" <<
+  //   std::hex << double_as_hex(q.x) << ", y=" << double_as_hex(q.y) << ")\n";
+  //   oss << "r " << r << " r_hex (x=" <<  std::hex << double_as_hex(r.x) << ",
+  //   y=" << double_as_hex(r.y) << ")\n"; throw std::runtime_error("Orientation
+  //   is not defined for this case. " + oss.str());
+  // }
   // Instead of using classical equation, we need to use two variables
   // to handle problem with strange behaviour on macOS.
   if (val1 == val2) return 0;

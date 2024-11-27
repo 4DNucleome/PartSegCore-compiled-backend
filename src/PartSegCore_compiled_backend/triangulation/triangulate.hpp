@@ -233,7 +233,8 @@ inline PointToEdges get_points_edges(const std::vector<point::Segment> &edges) {
  * @param point_to_edges A mapping from points to their adjacent edges.
  * @return The type of the point as determined by its adjacent edges.
  */
-inline PointType get_point_type(point::Point p, PointToEdges &point_to_edges) {
+inline PointType get_point_type(point::Point p,
+                                const PointToEdges &point_to_edges) {
   if (point_to_edges.count(p) == 0) return PointType::EMPTY;
   if (point_to_edges.at(p).empty()) return PointType::EMPTY;
   if (point_to_edges.at(p).size() != 2) return PointType::INTERSECTION;
@@ -550,14 +551,17 @@ struct MonotonePolygonBuilder {
 
     auto bottom_begin = bottom_segments.begin();
     auto bottom_end = bottom_segments.end();
+    auto top_begin = top_segments.begin();
     if (!top_segments.empty()) {
       if (top_segments.front() ==
           segment_to_line.at(top_segments.front())->right_segment) {
         ++bottom_begin;
+        ++top_begin;
         _process_normal_point(p, top_segments.front(), bottom_segments.front());
       }
-      if (top_segments.back() ==
-          segment_to_line.at(top_segments.back())->left_segment) {
+      if (top_begin != top_segments.end() &&
+          top_segments.back() ==
+              segment_to_line.at(top_segments.back())->left_segment) {
         --bottom_end;
         _process_normal_point(p, top_segments.back(), bottom_segments.back());
       }
@@ -887,21 +891,25 @@ inline std::vector<std::vector<point::Point>> find_intersection_points(
 
   auto intersections = intersection::_find_intersections(edges);
   if (intersections.empty()) return polygon_list;
-  std::unordered_map<std::size_t, std::vector<point::Point>>
+  std::unordered_map<std::size_t, std::vector<std::pair<double, point::Point>>>
       intersections_points;
   for (const auto &intersection : intersections) {
     auto inter_points = intersection::_find_intersection(
         edges[intersection.first], edges[intersection.second]);
     for (auto inter_point : inter_points) {
-      intersections_points[intersection.first].push_back(inter_point);
-      intersections_points[intersection.second].push_back(inter_point);
+      intersections_points[intersection.first].emplace_back(
+          edges[intersection.first].point_projection_factor(inter_point),
+          inter_point);
+      intersections_points[intersection.second].emplace_back(
+          edges[intersection.second].point_projection_factor(inter_point),
+          inter_point);
     }
   };
   for (auto &intersections_point : intersections_points) {
     //    points_count += intersections_point.second.size() - 1;
-    intersections_point.second.push_back(edges[intersections_point.first].top);
-    intersections_point.second.push_back(
-        edges[intersections_point.first].bottom);
+    auto edge = edges[intersections_point.first];
+    intersections_point.second.emplace_back(-1, edge.top);
+    intersections_point.second.emplace_back(2, edge.bottom);
     std::sort(intersections_point.second.begin(),
               intersections_point.second.end());
   }
@@ -917,14 +925,16 @@ inline std::vector<std::vector<point::Point>> find_intersection_points(
       if (new_polygon.back() != point) new_polygon.push_back(point);
       if (intersections_points.count(i)) {
         auto &new_points = intersections_points[i];
-        if (new_points[0] == point) {
+        if (new_points[0].second == point) {
           for (auto it = new_points.begin() + 1; it != new_points.end(); ++it) {
-            if (new_polygon.back() != *it) new_polygon.push_back(*it);
+            if (new_polygon.back() != it->second)
+              new_polygon.push_back(it->second);
           }
         } else {
           for (auto it = new_points.rbegin() + 1; it != new_points.rend();
                ++it) {
-            if (new_polygon.back() != *it) new_polygon.push_back(*it);
+            if (new_polygon.back() != it->second)
+              new_polygon.push_back(it->second);
           }
         }
       }

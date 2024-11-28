@@ -12,6 +12,7 @@ from PartSegCore_compiled_backend.triangulate import (
     segment_left_to_right_comparator,
     triangle_convex_polygon,
     triangulate_monotone_polygon_py,
+    triangulate_path_edge_py,
     triangulate_polygon_numpy,
     triangulate_polygon_numpy_li,
     triangulate_polygon_py,
@@ -555,3 +556,27 @@ def test_find_intersection_points_py_cross_intersect_in_point():
 )
 def test_triangulate_monotone_polygon_py(polygon, expected):
     assert triangulate_monotone_polygon_py(*polygon) == expected
+
+
+@pytest.mark.parametrize(
+    ('path', 'closed', 'bevel', 'expected'),
+    [
+        # ([[0, 0], [0, 10], [10, 10], [10, 0]], True, False, 10),
+        # ([[0, 0], [0, 10], [10, 10], [10, 0]], False, False, 8),
+        # ([[0, 0], [0, 10], [10, 10], [10, 0]], True, True, 14),
+        # ([[0, 0], [0, 10], [10, 10], [10, 0]], False, True, 10),
+        ([[2, 10], [0, -5], [-2, 10], [-2, -10], [2, -10]], True, False, 15),
+        ([[0, 0], [0, 10]], False, False, 4),
+        ([[0, 0], [0, 10], [0, 20]], False, False, 6),
+        ([[0, 0], [0, 2], [10, 1]], True, False, 9),
+        ([[0, 0], [10, 1], [9, 1.1]], False, False, 7),
+        ([[9, 0.9], [10, 1], [0, 2]], False, False, 7),
+        ([[0, 0], [-10, 1], [-9, 1.1]], False, False, 7),
+        ([[-9, 0.9], [-10, 1], [0, 2]], False, False, 7),
+    ],
+)
+def test_triangulate_path_edge_py(path, closed, bevel, expected):
+    triangles, centers, offsets = triangulate_path_edge_py(np.array(path, dtype='float32'), closed=closed, bevel=bevel)
+    assert centers.shape == offsets.shape
+    assert centers.shape[0] == expected
+    assert triangles.shape[0] == expected - 2

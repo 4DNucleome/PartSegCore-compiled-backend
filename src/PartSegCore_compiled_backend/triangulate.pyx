@@ -25,6 +25,10 @@ cdef extern from "triangulation/point.hpp" namespace "partsegcore::point":
         bool operator==(const Point& other) const
         bool operator!=(const Point& other) const
 
+    cdef cppclass Vector:
+        float x;
+        float y;
+
     cdef cppclass Segment:
         Point bottom
         Point top
@@ -77,6 +81,11 @@ cdef extern from "triangulation/triangulate.hpp" namespace "partsegcore::triangu
         Point p2
         Point p3
 
+    cdef cppclass PathTriangulation:
+        vector[Triangle] triangles
+        vector[Point] centers
+        vector[Vector] offsets
+
 
     bool _is_convex(const vector[Point]& polygon)
     vector[Triangle] _triangle_convex_polygon(const vector[Point]& polygon)
@@ -85,6 +94,7 @@ cdef extern from "triangulation/triangulate.hpp" namespace "partsegcore::triangu
     vector[PointTriangle] triangulate_monotone_polygon(const MonotonePolygon& polygon)
     pair[vector[Triangle], vector[Point]] triangulate_polygon_face(const vector[Point]& polygon)  except +
     pair[vector[Triangle], vector[Point]] triangulate_polygon_face(const vector[vector[Point]]& polygon_list) except +
+    PathTriangulation triangulate_path_edge(const vector[Point]& path, bool closed, float limit, bool bevel) except +
 
 
 
@@ -332,3 +342,21 @@ def triangulate_monotone_polygon_py(top: Sequence[float], bottom: Sequence[float
         [(triangle.p1.x, triangle.p1.y), (triangle.p2.x, triangle.p2.y), (triangle.p3.x, triangle.p3.y)]
         for triangle in result
     ]
+
+
+def triangulate_path_edge_py(path: Sequence[Sequence[float]], closed: bool=False, limit: float=3.0, bevel: bool=False) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """ Triangulate path"""
+    cdef vector[Point] path_vector
+    cdef PathTriangulation result
+    cdef Point p1, p2
+
+    path_vector.reserve(len(path))
+    for point in path:
+        path_vector.push_back(Point(point[0], point[1]))
+
+    result = triangulate_path_edge(path_vector, closed, limit, bevel)
+    return (
+        np.array([(triangle.x, triangle.y, triangle.z) for triangle in result.triangles], dtype=np.uintp),
+        np.array([(point.x, point.y) for point in result.centers], dtype=np.float32),
+        np.array([(offset.x, offset.y) for offset in result.offsets], dtype=np.float32)
+    )

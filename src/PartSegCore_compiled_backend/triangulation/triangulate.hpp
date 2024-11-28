@@ -895,7 +895,7 @@ inline std::vector<std::vector<point::Point>> find_intersection_points(
           edges[intersection.second].point_projection_factor(inter_point),
           inter_point);
     }
-  };
+  }
   for (auto &intersections_point : intersections_points) {
     //    points_count += intersections_point.second.size() - 1;
     auto edge = edges[intersections_point.first];
@@ -1113,24 +1113,24 @@ inline point::Point::coordinate_t add_triangles_for_join(
     PathTriangulation &triangles, point::Point p1, point::Point p2,
     point::Point p3, point::Point::coordinate_t prev_length, double cos_limit,
     bool bevel) {
-  std::size_t idx;
+  std::size_t idx = triangles.offsets.size() + 1;
   point::Point::coordinate_t scale_factor;
   point::Point::coordinate_t estimated_len;
   point::Vector mitter(0, 0);
   point::Point::coordinate_t length = vector_length(p2, p3);
-  point::Vector p2_p1_diff_norm = (p2 - p1) / prev_length;
+  point::Vector p1_p2_diff_norm = (p1 - p2) / prev_length;
   point::Vector p2_p3_diff_norm = (p2 - p3) / length;
 
-  point::Point::coordinate_t cos_angle = p2_p1_diff_norm.x * p2_p3_diff_norm.x +
-                                         p2_p1_diff_norm.y * p2_p3_diff_norm.y;
-  point::Point::coordinate_t sin_angle = p2_p1_diff_norm.x * p2_p3_diff_norm.y -
-                                         p2_p1_diff_norm.y * p2_p3_diff_norm.x;
+  point::Point::coordinate_t cos_angle = p1_p2_diff_norm.x * p2_p3_diff_norm.x +
+                                         p1_p2_diff_norm.y * p2_p3_diff_norm.y;
+  point::Point::coordinate_t sin_angle = p1_p2_diff_norm.x * p2_p3_diff_norm.y -
+                                         p1_p2_diff_norm.y * p2_p3_diff_norm.x;
 
   triangles.centers.push_back(p2);
   triangles.centers.push_back(p2);
 
   if (sin_angle == 0) {
-    mitter = {p2_p1_diff_norm.y / 2, -p2_p1_diff_norm.x / 2};
+    mitter = {p1_p2_diff_norm.y / 2, -p1_p2_diff_norm.x / 2};
   } else {
     scale_factor = 1 / sin_angle;
     if (bevel || cos_angle < cos_limit) {
@@ -1153,23 +1153,22 @@ inline point::Point::coordinate_t add_triangles_for_join(
         }
       }
     }
-    mitter = p2_p1_diff_norm + p2_p3_diff_norm * scale_factor * 0.5;
+    mitter = p1_p2_diff_norm + p2_p3_diff_norm * scale_factor * 0.5;
   };
   if (bevel || cos_angle < cos_limit) {
     triangles.centers.push_back(p2);
-    idx = triangles.offsets.size() + 1;
     triangles.triangles.emplace_back(idx, idx + 1, idx + 2);
     if (sin_angle < 0) {
       triangles.offsets.push_back(mitter);
-      triangles.offsets.emplace_back(-p2_p1_diff_norm.y * 0.5,
-                                     p2_p1_diff_norm.x * 0.5);
+      triangles.offsets.emplace_back(-p1_p2_diff_norm.y * 0.5,
+                                     p1_p2_diff_norm.x * 0.5);
       triangles.offsets.emplace_back(-p2_p3_diff_norm.y * 0.5,
                                      p2_p3_diff_norm.x * 0.5);
       triangles.triangles.emplace_back(idx, idx + 2, idx + 3);
       triangles.triangles.emplace_back(idx + 2, idx + 3, idx + 4);
     } else {
-      triangles.offsets.emplace_back(p2_p1_diff_norm.y * 0.5,
-                                     -p2_p1_diff_norm.x * 0.5);
+      triangles.offsets.emplace_back(p1_p2_diff_norm.y * 0.5,
+                                     -p1_p2_diff_norm.x * 0.5);
       triangles.offsets.push_back(mitter);
       triangles.offsets.emplace_back(p2_p3_diff_norm.y * 0.5,
                                      -p2_p3_diff_norm.x * 0.5);
@@ -1179,6 +1178,8 @@ inline point::Point::coordinate_t add_triangles_for_join(
   } else {
     triangles.offsets.push_back(mitter);
     triangles.offsets.push_back(-mitter);
+    triangles.triangles.emplace_back(idx, idx + 1, idx + 2);
+    triangles.triangles.emplace_back(idx + 1, idx + 2, idx + 3);
   }
 
   return length;
@@ -1194,7 +1195,7 @@ inline PathTriangulation triangulate_path_edge(
   PathTriangulation result;
   point::Vector norm_diff(0, 0);
   result.reserve(path.size() * 3);
-  float cos_limit = 1 / (limit * limit / 2) - 1;
+  float cos_limit = 1.0 / (limit * limit / 2) - 1.0;
   point::Point::coordinate_t prev_length = 1;
 
   if (closed) {
@@ -1230,12 +1231,6 @@ inline PathTriangulation triangulate_path_edge(
     result.centers.push_back(path[path.size() - 1]);
     result.offsets.emplace_back(norm_diff.y * 0.5, -norm_diff.x * 0.5);
     result.offsets.push_back(-result.offsets.back());
-    result.triangles.emplace_back(result.centers.size() - 4,
-                                  result.centers.size() - 3,
-                                  result.centers.size() - 2);
-    result.triangles.emplace_back(result.centers.size() - 3,
-                                  result.centers.size() - 2,
-                                  result.centers.size() - 1);
   }
 
   return result;

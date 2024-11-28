@@ -15,6 +15,7 @@
 #define PARTSEGCORE_INTERSECTION_H
 
 #include <algorithm>
+#include <cstring>
 #include <map>
 #include <unordered_set>
 #include <vector>

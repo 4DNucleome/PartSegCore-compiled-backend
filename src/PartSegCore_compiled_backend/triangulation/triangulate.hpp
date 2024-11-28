@@ -2,6 +2,7 @@
 #define PARTSEGCORE_TRIANGULATE_H
 
 #include <algorithm>
+#include <cmath>
 #include <map>
 #include <set>
 #include <sstream>
@@ -1088,6 +1089,156 @@ triangulate_polygon_face(const std::vector<point::Point> &polygon) {
   //       throw e;
   //     }
   // #endif
+}
+
+inline point::Point::coordinate_t vector_length(point::Point p1,
+                                                point::Point p2) {
+  return std::sqrt((p1.x - p2.x) * (p1.x - p2.x) +
+                   (p1.y - p2.y) * (p1.y - p2.y));
+}
+
+struct PathTriangulation {
+  std::vector<Triangle> triangles;
+  std::vector<point::Point> centers;
+  std::vector<point::Vector> offsets;
+
+  void reserve(std::size_t size) {
+    triangles.reserve(size);
+    centers.reserve(size);
+    offsets.reserve(size);
+  }
+};
+
+inline point::Point::coordinate_t add_triangles_for_join(
+    PathTriangulation &triangles, point::Point p1, point::Point p2,
+    point::Point p3, point::Point::coordinate_t prev_length, double cos_limit,
+    bool bevel) {
+  std::size_t idx;
+  point::Point::coordinate_t scale_factor;
+  point::Point::coordinate_t estimated_len;
+  point::Vector mitter(0, 0);
+  point::Point::coordinate_t length = vector_length(p2, p3);
+  point::Vector p2_p1_diff_norm = (p2 - p1) / prev_length;
+  point::Vector p2_p3_diff_norm = (p2 - p3) / length;
+
+  point::Point::coordinate_t cos_angle = p2_p1_diff_norm.x * p2_p3_diff_norm.x +
+                                         p2_p1_diff_norm.y * p2_p3_diff_norm.y;
+  point::Point::coordinate_t sin_angle = p2_p1_diff_norm.x * p2_p3_diff_norm.y -
+                                         p2_p1_diff_norm.y * p2_p3_diff_norm.x;
+
+  triangles.centers.push_back(p2);
+  triangles.centers.push_back(p2);
+
+  if (sin_angle == 0) {
+    mitter = {p2_p1_diff_norm.y / 2, -p2_p1_diff_norm.x / 2};
+  } else {
+    scale_factor = 1 / sin_angle;
+    if (bevel || cos_angle < cos_limit) {
+      /* Bevel join
+       * There is a need to check if inner vector is not to long
+       * See https://github.com/napari/napari/pull/7268#user-content-bevel-cut
+       */
+      estimated_len = scale_factor;
+      if (prev_length < length) {
+        if (estimated_len > prev_length) {
+          estimated_len = prev_length;
+        } else if (estimated_len < -prev_length) {
+          estimated_len = -prev_length;
+        }
+      } else {
+        if (estimated_len > length) {
+          estimated_len = length;
+        } else if (estimated_len < -length) {
+          estimated_len = -length;
+        }
+      }
+    }
+    mitter = p2_p1_diff_norm + p2_p3_diff_norm * scale_factor * 0.5;
+  };
+  if (bevel || cos_angle < cos_limit) {
+    triangles.centers.push_back(p2);
+    idx = triangles.offsets.size() + 1;
+    triangles.triangles.emplace_back(idx, idx + 1, idx + 2);
+    if (sin_angle < 0) {
+      triangles.offsets.push_back(mitter);
+      triangles.offsets.emplace_back(-p2_p1_diff_norm.y * 0.5,
+                                     p2_p1_diff_norm.x * 0.5);
+      triangles.offsets.emplace_back(-p2_p3_diff_norm.y * 0.5,
+                                     p2_p3_diff_norm.x * 0.5);
+      triangles.triangles.emplace_back(idx, idx + 2, idx + 3);
+      triangles.triangles.emplace_back(idx + 2, idx + 3, idx + 4);
+    } else {
+      triangles.offsets.emplace_back(p2_p1_diff_norm.y * 0.5,
+                                     -p2_p1_diff_norm.x * 0.5);
+      triangles.offsets.push_back(mitter);
+      triangles.offsets.emplace_back(p2_p3_diff_norm.y * 0.5,
+                                     -p2_p3_diff_norm.x * 0.5);
+      triangles.triangles.emplace_back(idx + 1, idx + 2, idx + 3);
+      triangles.triangles.emplace_back(idx + 1, idx + 3, idx + 4);
+    }
+  } else {
+    triangles.offsets.push_back(mitter);
+    triangles.offsets.push_back(-mitter);
+  }
+
+  return length;
+}
+
+inline PathTriangulation triangulate_path_edge(
+    const std::vector<point::Point> &path, bool closed, float limit,
+    bool bevel) {
+  if (path.size() < 2)
+    return {{{0, 1, 3}, {1, 3, 2}},
+            {path[0], path[0], path[0], path[0]},
+            {{0, 0}, {0, 0}, {0, 0}, {0, 0}}};
+  PathTriangulation result;
+  point::Vector norm_diff(0, 0);
+  result.reserve(path.size() * 3);
+  float cos_limit = 1 / (limit * limit / 2) - 1;
+  point::Point::coordinate_t prev_length = 1;
+
+  if (closed) {
+    prev_length = vector_length(path[0], path[path.size() - 1]);
+    prev_length =
+        add_triangles_for_join(result, path[path.size() - 1], path[0], path[1],
+                               prev_length, cos_limit, bevel);
+  } else {
+    prev_length = vector_length(path[0], path[1]);
+    norm_diff = (path[1] - path[0]) / prev_length;
+    result.centers.push_back(path[0]);
+    result.centers.push_back(path[0]);
+    result.offsets.emplace_back(norm_diff.y * 0.5, -norm_diff.x * 0.5);
+    result.offsets.push_back(-result.offsets.back());
+    result.triangles.emplace_back(0, 1, 2);
+    result.triangles.emplace_back(1, 2, 3);
+  }
+  for (std::size_t i = 1; i < path.size() - 1; i++) {
+    prev_length =
+        add_triangles_for_join(result, path[i - 1], path[i], path[i + 1],
+                               prev_length, cos_limit, bevel);
+  }
+  if (closed) {
+    add_triangles_for_join(result, path[path.size() - 2], path[path.size() - 1],
+                           path[0], prev_length, cos_limit, bevel);
+    result.centers.push_back(result.centers[0]);
+    result.centers.push_back(result.centers[0]);
+    result.offsets.push_back(result.offsets[0]);
+    result.offsets.push_back(result.offsets[1]);
+  } else {
+    norm_diff = (path[path.size() - 1] - path[path.size() - 2]) / prev_length;
+    result.centers.push_back(path[path.size() - 1]);
+    result.centers.push_back(path[path.size() - 1]);
+    result.offsets.emplace_back(norm_diff.y * 0.5, -norm_diff.x * 0.5);
+    result.offsets.push_back(-result.offsets.back());
+    result.triangles.emplace_back(result.centers.size() - 4,
+                                  result.centers.size() - 3,
+                                  result.centers.size() - 2);
+    result.triangles.emplace_back(result.centers.size() - 3,
+                                  result.centers.size() - 2,
+                                  result.centers.size() - 1);
+  }
+
+  return result;
 }
 
 }  // namespace partsegcore::triangulation

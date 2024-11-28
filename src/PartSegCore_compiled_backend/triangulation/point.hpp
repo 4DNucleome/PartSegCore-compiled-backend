@@ -11,6 +11,8 @@
 
 namespace partsegcore::point {
 
+struct Vector;
+
 /* Point class with x and y coordinates */
 struct Point {
   typedef float coordinate_t;
@@ -29,6 +31,22 @@ struct Point {
     return this->y < p.y;
   }
 
+  // add operator
+  Vector operator+(const Point &p) const;
+
+  // subtract operator
+  Vector operator-(const Point &p) const;
+
+  Point operator+(const Vector &v) const;
+
+  //  Point operator/(coordinate_t f) const {
+  //      return {this->x / f, this->y / f};
+  //  }
+  //
+  //  Point operator*(coordinate_t f) const {
+  //      return {this->x * f, this->y * f};
+  //  }
+
   // Overload the << operator for Point
   friend std::ostream &operator<<(std::ostream &os, const Point &point) {
     os << "(x=" << point.x << ", y=" << point.y << ")";
@@ -41,6 +59,37 @@ struct Point {
     }
   };
 };
+
+struct Vector {
+  typedef Point::coordinate_t coordinate_t;
+  coordinate_t x;
+  coordinate_t y;
+  Vector(coordinate_t x, coordinate_t y) : x(x), y(y) {}
+  Vector() = default;
+  explicit Vector(const Point &p) : x(p.x), y(p.y) {}
+
+  Vector operator+(const Vector &v) const {
+    return {this->x + v.x, this->y + v.y};
+  }
+  Vector operator-(const Vector &v) const {
+    return {this->x - v.x, this->y - v.y};
+  }
+  Vector operator/(coordinate_t f) const { return {this->x / f, this->y / f}; }
+  Vector operator*(coordinate_t f) const { return {this->x * f, this->y * f}; }
+  Vector operator-() const { return {-this->x, -this->y}; }
+};
+
+Vector Point::operator+(const Point &p) const {
+  return {this->x + p.x, this->y + p.y};
+}
+
+Vector Point::operator-(const Point &p) const {
+  return {this->x - p.x, this->y - p.y};
+}
+
+Point Point::operator+(const Vector &v) const {
+  return {this->x + v.x, this->y + v.y};
+}
 
 /*Struct to represent edge of polygon with points ordered*/
 struct Segment {

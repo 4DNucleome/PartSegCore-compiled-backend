@@ -141,7 +141,7 @@ inline int _orientation(const point::Point &p, const point::Point &q,
   //   is not defined for this case. " + oss.str());
   // }
   // Instead of using classical equation, we need to use two variables
-  // to handle problem with strange behaviour on macOS.
+  // to handle problem with strange behavior on macOS.
   if (val1 == val2) return 0;
   return (val1 > val2) ? 1 : 2;
 }
@@ -330,7 +330,8 @@ inline std::unordered_set<OrderedPair> _find_intersections(
 inline std::vector<point::Point> _find_intersection(const point::Segment &s1,
                                                     const point::Segment &s2) {
   // ReSharper disable CppJoinDeclarationAndAssignment
-  point::Point::coordinate_t a1, b1, c1, a2, b2, c2, det, x, y, t, u;
+  point::Point::coordinate_t a1, b1, a2, b2, det, x, y, t;
+  //  point::Point::coordinate_t c1, c2, u;
   a1 = s1.top.y - s1.bottom.y;
   b1 = s1.bottom.x - s1.top.x;
   // c1 = a1 * s1.bottom.x + b1 * s1.bottom.y;

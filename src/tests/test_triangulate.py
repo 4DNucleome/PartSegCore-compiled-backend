@@ -244,19 +244,6 @@ def test_triangulate_polygon_numpy_li_non_convex(polygon, expected):
     assert triangles_ == expected
 
 
-@pytest.mark.parametrize(
-    ('polygon', 'expected'),
-    [
-        ([(0, 0), (0, 1), (1, 1), (1, 0), (0.5, 0.5)], [(0, 1, 2), (0, 3, 2)]),
-        ([(0, 0), (0, 1), (1, 1), (0.5, 0.5), (1, 0)], [(0, 1, 2), (0, 3, 2)]),
-        ([(0, 0), (0, 1), (0.5, 0.5), (1, 1), (1, 0)], [(0, 1, 2), (0, 3, 2)]),
-        ([(0, 0), (0.5, 0.5), (0, 1), (1, 1), (1, 0)], [(0, 1, 2), (0, 3, 2)]),
-    ],
-)
-def test_merge_points(polygon, expected):
-    triangles, points = triangulate_polygon_py(polygon)
-
-
 def test_triangulate_polygon_in_polygon_numpy():
     polygons = [
         np.array([(0, 0), (10, 0), (10, 10), (0, 10)]),
@@ -295,7 +282,7 @@ def test_triangulate_polygon_segfault1():
         (208.037506, 1491.5376),
         (205.912506, 1489.83752),
     ]
-    triangles, points = triangulate_polygon_py(polygon)
+    triangulate_polygon_py(polygon)
 
 
 def test_triangulate_polygon_segfault2():
@@ -325,7 +312,7 @@ def test_triangulate_polygon_segfault2():
         [1390.175, 2745.2876],
         [1389.3251, 2744.4375],
     ]
-    triangles, points = triangulate_polygon_py(polygon)
+    triangulate_polygon_py(polygon)
 
 
 def test_triangulate_polygon_segfault3():
@@ -355,7 +342,7 @@ def test_triangulate_polygon_segfault3():
         (1066.96252, 1794.77502),
         (1066.75, 1794.3501),
     ]
-    triangles, points = triangulate_polygon_py(polygon)
+    triangulate_polygon_py(polygon)
 
 
 def test_triangulate_polygon_segfault4():
@@ -385,7 +372,7 @@ def test_triangulate_polygon_segfault4():
         [660.45, 2284.1626],
         [657.6875, 2281.1875],
     ]
-    triangles, points = triangulate_polygon_py(polygon)
+    triangulate_polygon_py(polygon)
 
 
 def test_triangulate_polygon_segfault5():
@@ -415,7 +402,7 @@ def test_triangulate_polygon_segfault5():
         [896.11255, 2422.7126],
         [895.9, 2422.5],
     ]
-    triangles, points = triangulate_polygon_py(polygon)
+    triangulate_polygon_py(polygon)
 
 
 @pytest.mark.parametrize(

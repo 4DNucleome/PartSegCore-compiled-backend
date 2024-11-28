@@ -140,15 +140,6 @@ struct SegmentLeftRightComparator {
   }
 };
 
-struct PointMonotonePolygon {
-  MonotonePolygon *left_polygon = nullptr;
-  MonotonePolygon *right_polygon = nullptr;
-  PointMonotonePolygon() = default;
-  explicit PointMonotonePolygon(MonotonePolygon *left_polygon,
-                                MonotonePolygon *right_polygon)
-      : left_polygon(left_polygon), right_polygon(right_polygon) {};
-};
-
 struct Triangle {
   std::size_t x;
   std::size_t y;
@@ -163,6 +154,7 @@ struct PointTriangle {
   point::Point p3{};
 
   PointTriangle(point::Point p1, point::Point p2, point::Point p3) {
+    /* Sort the points in clockwise order */
     if ((p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x) < 0) {
       this->p1 = p3;
       this->p2 = p2;
@@ -190,8 +182,6 @@ struct PointEdgeInfo {
 
 typedef std::unordered_map<point::Point, std::vector<PointEdgeInfo>>
     PointToEdges;
-typedef std::map<point::Segment, Interval *, SegmentLeftRightComparator>
-    SegmentToLine;
 
 /**
  * Get a mapping from points to the list of edges that contain those points.
@@ -972,10 +962,13 @@ inline std::vector<point::Point> _sorted_polygons_points(
 }
 
 /*
-    This is an implementation of sweeping line triangulation of polygon
-    Its assumes that there is no edge intersections, but may be a point with
-    more than 2 edges. described on this lecture:
+    This is an implementation of the polygon with sweeping lines.
+    It assumes that there are no edge intersections but may be a point with
+    more than 2 edges.
+    Described on this lecture:
     https://www.youtube.com/playlist?list=PLtTatrCwXHzEqzJMaTUFgqoCNllgwk4DH
+    and in the book:
+    de Berg,M. et al. (2008) Computational Geometry Springer Berlin Heidelberg.
     */
 inline std::pair<std::vector<Triangle>, std::vector<point::Point>>
 sweeping_line_triangulation(
@@ -1005,7 +998,7 @@ sweeping_line_triangulation(
         builder.process_split_point(sorted_point);
         break;
       case PointType::MERGE:
-        // merge two sweeping lines to one
+        // merge two sweeping lines into one
         // merge two intervals into one
         // It may be the end of the polygon, then finish the
         // monotone polygon
@@ -1013,9 +1006,8 @@ sweeping_line_triangulation(
         break;
       case PointType::INTERSECTION:
         // this is a merge and split point at the same time
-        // this is not described in original algorithm,
-        // but we need it to handle self intersecting polygons
-        // Remember about more than 4 edges case
+        // this is not described in the original algorithm,
+        // but we need it to handle self-intersecting polygons
         builder.process_intersection_point(sorted_point);
         break;
       case PointType::EMPTY:
@@ -1040,7 +1032,8 @@ sweeping_line_triangulation(
   return std::make_pair(result, sorted_points);
 }
 
-// calculate the triangulation of a symmetric difference of list of polygons
+// calculate the triangulation out of a symmetric difference out of a list of
+// polygons
 
 inline std::pair<std::vector<Triangle>, std::vector<point::Point>>
 triangulate_polygon(
@@ -1071,7 +1064,7 @@ triangulate_polygon(
   }
 
   // Implement the sweeping line algorithm for triangulation
-  // described on this lecture:
+  // described in this lecture:
   // https://www.youtube.com/playlist?list=PLtTatrCwXHzEqzJMaTUFgqoCNllgwk4DH
   //
   return sweeping_line_triangulation(find_intersection_points(polygon_list));

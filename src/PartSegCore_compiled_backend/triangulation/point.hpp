@@ -161,7 +161,7 @@ struct Segment {
 }  // namespace partsegcore::point
 
 // overload of hash function for
-// unordered map and set
+// an unordered map and set
 namespace std {
 template <>
 struct hash<partsegcore::point::Point> {

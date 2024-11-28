@@ -353,6 +353,8 @@ inline std::vector<point::Point> _find_intersection(const point::Segment &s1,
       det;
   // u = ((s2.top.x - s1.top.x) * (s1.bottom.y - s1.top.y) -
   //     (s2.top.y - s1.top.y) * (s2.bottom.x - s2.top.x)) / det;
+  if (t < 0) return {s1.top};
+  if (t > 1) return {s1.bottom};
   x = s1.top.x + t * b1;
   y = s1.top.y + t * (-a1);
   return {{x, y}};

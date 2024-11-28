@@ -1036,7 +1036,7 @@ sweeping_line_triangulation(
 // polygons
 
 inline std::pair<std::vector<Triangle>, std::vector<point::Point>>
-triangulate_polygon(
+triangulate_polygon_face(
     const std::vector<std::vector<point::Point>> &polygon_list) {
   if (polygon_list.empty())
     // empty list
@@ -1071,11 +1071,12 @@ triangulate_polygon(
 }
 
 inline std::pair<std::vector<Triangle>, std::vector<point::Point>>
-triangulate_polygon(const std::vector<point::Point> &polygon) {
+triangulate_polygon_face(const std::vector<point::Point> &polygon) {
   // #if DDEBUG
   //     try{
   // #endif
-  return triangulate_polygon(std::vector<std::vector<point::Point>>({polygon}));
+  return triangulate_polygon_face(
+      std::vector<std::vector<point::Point>>({polygon}));
   // #if DDEBUG
   //       } catch (const std::exception &e) {
   //       std::cerr << "Polygon: [";

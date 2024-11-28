@@ -83,8 +83,8 @@ cdef extern from "triangulation/triangulate.hpp" namespace "partsegcore::triangu
     bool left_to_right(const Segment& s1, const Segment& s2)
     vector[Point] find_intersection_points(const vector[Point]& segments)
     vector[PointTriangle] triangulate_monotone_polygon(const MonotonePolygon& polygon)
-    pair[vector[Triangle], vector[Point]] triangulate_polygon(const vector[Point]& polygon)  except +
-    pair[vector[Triangle], vector[Point]] triangulate_polygon(const vector[vector[Point]]& polygon_list) except +
+    pair[vector[Triangle], vector[Point]] triangulate_polygon_face(const vector[Point]& polygon)  except +
+    pair[vector[Triangle], vector[Point]] triangulate_polygon_face(const vector[vector[Point]]& polygon_list) except +
 
 
 
@@ -237,7 +237,7 @@ def triangulate_polygon_py(polygon: Sequence[Sequence[float]]) -> tuple[list[tup
             # prevent from adding polygon edge of width 0
             polygon_vector.push_back(p2)
 
-    result = triangulate_polygon(polygon_vector)
+    result = triangulate_polygon_face(polygon_vector)
     return [(triangle.x, triangle.y, triangle.z) for triangle in result.first], [(point.x, point.y) for point in result.second]
 
 
@@ -256,7 +256,7 @@ def triangulate_polygon_numpy(polygon: np.ndarray) -> tuple[np.ndarray, np.ndarr
             # prevent from adding polygon edge of width 0
             polygon_vector.push_back(p2)
 
-    result = triangulate_polygon(polygon_vector)
+    result = triangulate_polygon_face(polygon_vector)
     return (
         np.array([(triangle.x, triangle.y, triangle.z) for triangle in result.first], dtype=np.uintp),
         np.array([(point.x, point.y) for point in result.second], dtype=np.float32)
@@ -285,7 +285,7 @@ def triangulate_polygon_numpy_li(polygon_li: list[np.ndarray]) -> tuple[np.ndarr
                 polygon_vector.push_back(p2)
         polygon_vector_list.push_back(polygon_vector)
 
-    result = triangulate_polygon(polygon_vector_list)
+    result = triangulate_polygon_face(polygon_vector_list)
     return (
         np.array([(triangle.x, triangle.y, triangle.z) for triangle in result.first], dtype=np.uintp),
         np.array([(point.x, point.y) for point in result.second], dtype=np.float32)

@@ -330,13 +330,13 @@ inline std::unordered_set<OrderedPair> _find_intersections(
 inline std::vector<point::Point> _find_intersection(const point::Segment &s1,
                                                     const point::Segment &s2) {
   // ReSharper disable CppJoinDeclarationAndAssignment
-  point::Point::coordinate_t a1, b1, c1, a2, b2, c2, det, x, y;
+  point::Point::coordinate_t a1, b1, c1, a2, b2, c2, det, x, y, t, u;
   a1 = s1.top.y - s1.bottom.y;
   b1 = s1.bottom.x - s1.top.x;
-  c1 = a1 * s1.bottom.x + b1 * s1.bottom.y;
+  // c1 = a1 * s1.bottom.x + b1 * s1.bottom.y;
   a2 = s2.top.y - s2.bottom.y;
   b2 = s2.bottom.x - s2.top.x;
-  c2 = a2 * s2.bottom.x + b2 * s2.bottom.y;
+  // c2 = a2 * s2.bottom.x + b2 * s2.bottom.y;
   det = a1 * b2 - a2 * b1;
   if (det == 0) {
     // collinear case
@@ -347,8 +347,13 @@ inline std::vector<point::Point> _find_intersection(const point::Segment &s1,
     if (s2.point_on_line(s1.top)) res.push_back(s1.top);
     return res;
   }
-  x = (b2 * c1 - b1 * c2) / det;
-  y = (a1 * c2 - a2 * c1) / det;
+  t = ((s2.top.x - s1.top.x) * (s2.bottom.y - s2.top.y) -
+       (s2.top.y - s1.top.y) * (s2.bottom.x - s2.top.x)) /
+      det;
+  // u = ((s2.top.x - s1.top.x) * (s1.bottom.y - s1.top.y) -
+  //     (s2.top.y - s1.top.y) * (s2.bottom.x - s2.top.x)) / det;
+  x = s1.top.x + t * b1;
+  y = s1.top.y + t * (-a1);
   return {{x, y}};
 }
 }  // namespace partsegcore::intersection

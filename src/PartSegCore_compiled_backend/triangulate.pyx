@@ -83,8 +83,8 @@ cdef extern from "triangulation/triangulate.hpp" namespace "partsegcore::triangu
     bool left_to_right(const Segment& s1, const Segment& s2)
     vector[Point] find_intersection_points(const vector[Point]& segments)
     vector[PointTriangle] triangulate_monotone_polygon(const MonotonePolygon& polygon)
-    pair[vector[Triangle], vector[Point]] triangulate_polygon(const vector[Point]& polygon)  # except +
-    pair[vector[Triangle], vector[Point]] triangulate_polygon(const vector[vector[Point]]& polygon_list) # except +
+    pair[vector[Triangle], vector[Point]] triangulate_polygon(const vector[Point]& polygon)  except +
+    pair[vector[Triangle], vector[Point]] triangulate_polygon(const vector[vector[Point]]& polygon_list) except +
 
 
 

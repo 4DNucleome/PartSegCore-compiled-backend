@@ -1107,19 +1107,34 @@ struct PathTriangulation {
     centers.reserve(size);
     offsets.reserve(size);
   }
+
+  void fix_triangle_orientation() {
+    point::Point p1, p2, p3;
+    for (auto &triangle : triangles) {
+      p1 = centers[triangle.x] + offsets[triangle.x];
+      p2 = centers[triangle.y] + offsets[triangle.y];
+      p3 = centers[triangle.z] + offsets[triangle.z];
+      if ((p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x) < 0) {
+        std::swap(triangle.x, triangle.z);
+      }
+      //      if (intersection::_orientation(p1, p2, p3) == 1) {
+      //        std::swap(triangle.x, triangle.z);
+      //      }
+    }
+  }
 };
 
 inline point::Point::coordinate_t add_triangles_for_join(
     PathTriangulation &triangles, point::Point p1, point::Point p2,
     point::Point p3, point::Point::coordinate_t prev_length, double cos_limit,
     bool bevel) {
-  std::size_t idx = triangles.offsets.size() + 1;
+  std::size_t idx = triangles.offsets.size();
   point::Point::coordinate_t scale_factor;
   point::Point::coordinate_t estimated_len;
   point::Vector mitter(0, 0);
   point::Point::coordinate_t length = vector_length(p2, p3);
-  point::Vector p1_p2_diff_norm = (p1 - p2) / prev_length;
-  point::Vector p2_p3_diff_norm = (p2 - p3) / length;
+  point::Vector p1_p2_diff_norm = (p2 - p1) / prev_length;
+  point::Vector p2_p3_diff_norm = (p3 - p2) / length;
 
   point::Point::coordinate_t cos_angle = p1_p2_diff_norm.x * p2_p3_diff_norm.x +
                                          p1_p2_diff_norm.y * p2_p3_diff_norm.y;
@@ -1141,19 +1156,19 @@ inline point::Point::coordinate_t add_triangles_for_join(
       estimated_len = scale_factor;
       if (prev_length < length) {
         if (estimated_len > prev_length) {
-          estimated_len = prev_length;
+          scale_factor = prev_length * 0.5;
         } else if (estimated_len < -prev_length) {
-          estimated_len = -prev_length;
+          scale_factor = -prev_length * 0.5;
         }
       } else {
         if (estimated_len > length) {
-          estimated_len = length;
+          scale_factor = length * 0.5;
         } else if (estimated_len < -length) {
-          estimated_len = -length;
+          scale_factor = -length * 0.5;
         }
       }
     }
-    mitter = p1_p2_diff_norm + p2_p3_diff_norm * scale_factor * 0.5;
+    mitter = (p1_p2_diff_norm - p2_p3_diff_norm) * scale_factor * 0.5;
   };
   if (bevel || cos_angle < cos_limit) {
     triangles.centers.push_back(p2);
@@ -1169,7 +1184,7 @@ inline point::Point::coordinate_t add_triangles_for_join(
     } else {
       triangles.offsets.emplace_back(p1_p2_diff_norm.y * 0.5,
                                      -p1_p2_diff_norm.x * 0.5);
-      triangles.offsets.push_back(mitter);
+      triangles.offsets.push_back(-mitter);
       triangles.offsets.emplace_back(p2_p3_diff_norm.y * 0.5,
                                      -p2_p3_diff_norm.x * 0.5);
       triangles.triangles.emplace_back(idx + 1, idx + 2, idx + 3);
@@ -1232,7 +1247,7 @@ inline PathTriangulation triangulate_path_edge(
     result.offsets.emplace_back(norm_diff.y * 0.5, -norm_diff.x * 0.5);
     result.offsets.push_back(-result.offsets.back());
   }
-
+  result.fix_triangle_orientation();
   return result;
 }
 

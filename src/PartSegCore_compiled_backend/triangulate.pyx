@@ -288,11 +288,13 @@ def triangulate_polygon_numpy_li(polygon_li: list[np.ndarray]) -> tuple[np.ndarr
         polygon_vector.push_back(Point(polygon[0, 0], polygon[0, 1]))
 
         for point in polygon[1:]:
-            p1 = polygon_vector[polygon_vector.size() - 1]
+            p1 = polygon_vector.back()
             p2 = Point(point[0], point[1])
             if p1 != p2:
                 # prevent from adding polygon edge of width 0
                 polygon_vector.push_back(p2)
+        if polygon_vector.size() > 1 and polygon_vector.front() == polygon_vector.back():
+            polygon_vector.pop_back()
         polygon_vector_list.push_back(polygon_vector)
 
     result = triangulate_polygon_face(polygon_vector_list)
@@ -356,7 +358,47 @@ def triangulate_path_edge_py(path: Sequence[Sequence[float]], closed: bool=False
 
     result = triangulate_path_edge(path_vector, closed, limit, bevel)
     return (
-        np.array([(triangle.x, triangle.y, triangle.z) for triangle in result.triangles], dtype=np.uintp),
         np.array([(point.x, point.y) for point in result.centers], dtype=np.float32),
-        np.array([(offset.x, offset.y) for offset in result.offsets], dtype=np.float32)
+        np.array([(offset.x, offset.y) for offset in result.offsets], dtype=np.float32),
+        np.array([(triangle.x, triangle.y, triangle.z) for triangle in result.triangles], dtype=np.uintp),
+    )
+
+
+def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray]) -> tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray, np.ndarray]]:
+    """ Triangulate polygon"""
+    cdef vector[Point] polygon_vector
+    cdef vector[vector[Point]] polygon_vector_list
+    cdef Point p1, p2
+    cdef pair[vector[Triangle], vector[Point]] result
+    cdef vector[PathTriangulation] edge_result
+
+    polygon_vector_list.reserve(len(polygon_li))
+    for polygon in polygon_li:
+        polygon_vector.clear()
+
+        polygon_vector.reserve(polygon.shape[0])
+        polygon_vector.push_back(Point(polygon[0, 0], polygon[0, 1]))
+
+        for point in polygon[1:]:
+            p1 = polygon_vector.back()
+            p2 = Point(point[0], point[1])
+            if p1 != p2:
+                # prevent from adding polygon edge of width 0
+                polygon_vector.push_back(p2)
+        if polygon_vector.size() > 1 and polygon_vector.front() == polygon_vector.back():
+            polygon_vector.pop_back()
+        polygon_vector_list.push_back(polygon_vector)
+        edge_result.push_back(triangulate_path_edge(polygon_vector, True, 3.0, False))
+
+
+    result = triangulate_polygon_face(polygon_vector_list)
+    return ((
+        np.array([(triangle.x, triangle.y, triangle.z) for triangle in result.first], dtype=np.uintp),
+        np.array([(point.x, point.y) for point in result.second], dtype=np.float32)
+    ),
+    (
+        np.array([(point.x, point.y) for res in edge_result for point in res.centers], dtype=np.float32),
+        np.array([(offset.x, offset.y) for res in edge_result for offset in res.offsets], dtype=np.float32),
+        np.array([(triangle.x, triangle.y, triangle.z) for res in edge_result for triangle in res.triangles], dtype=np.uintp),
+    )
     )

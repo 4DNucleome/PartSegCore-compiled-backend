@@ -16,6 +16,7 @@ from PartSegCore_compiled_backend.triangulate import (
     triangulate_polygon_numpy,
     triangulate_polygon_numpy_li,
     triangulate_polygon_py,
+    triangulate_polygon_with_edge_numpy_li,
 )
 
 
@@ -639,9 +640,19 @@ def test_triangulate_monotone_polygon_py(polygon, expected):
     ],
 )
 def test_triangulate_path_edge_py(path, closed, bevel, expected, exp_triangles):
-    triangles, centers, offsets = triangulate_path_edge_py(np.array(path, dtype='float32'), closed=closed, bevel=bevel)
+    centers, offsets, triangles = triangulate_path_edge_py(np.array(path, dtype='float32'), closed=closed, bevel=bevel)
     assert centers.shape == offsets.shape
     assert centers.shape[0] == expected
     assert triangles.shape[0] == expected - 2
     triangles_li = [[int(y) for y in x] for x in triangles]
     assert triangles_li == exp_triangles
+
+
+@pytest.mark.parametrize(('polygon', 'expected'), TEST_POLYGONS)
+def test_triangulate_polygon_with_edge_numpy_li(polygon, expected):
+    (triangles, points), (centers, offsets, edge_triangles) = triangulate_polygon_with_edge_numpy_li(
+        [np.array(polygon)]
+    )
+    triangles_ = _renumerate_triangles(polygon, points, triangles)
+    assert triangles_ == expected
+    assert centers.shape == offsets.shape

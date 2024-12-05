@@ -1153,9 +1153,11 @@ inline point::Point::coordinate_t add_triangles_for_join(
       point::Point::coordinate_t estimated_len = scale_factor;
       if (prev_length < length) {
         if (estimated_len > prev_length) {
-          scale_factor = prev_length * static_cast<point::Point::coordinate_t>(0.5);
+          scale_factor =
+              prev_length * static_cast<point::Point::coordinate_t>(0.5);
         } else if (estimated_len < -prev_length) {
-          scale_factor = -prev_length * static_cast<point::Point::coordinate_t>(0.5);
+          scale_factor =
+              -prev_length * static_cast<point::Point::coordinate_t>(0.5);
         }
       } else {
         if (estimated_len > length) {

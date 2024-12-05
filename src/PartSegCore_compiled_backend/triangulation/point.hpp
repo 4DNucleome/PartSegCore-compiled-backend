@@ -55,7 +55,8 @@ struct Point {
 
   struct PointHash {
     std::size_t operator()(const Point &p) const {
-      return std::hash<Point::coordinate_t>()(p.x) ^ (std::hash<Point::coordinate_t>()(p.y) << 1);
+      return std::hash<Point::coordinate_t>()(p.x) ^
+             (std::hash<Point::coordinate_t>()(p.y) << 1);
     }
   };
 };

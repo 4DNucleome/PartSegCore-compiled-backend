@@ -10,7 +10,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "debug_util.hpp"
 #include "intersection.hpp"
 #include "point.hpp"
 
@@ -1109,7 +1108,7 @@ struct PathTriangulation {
   }
 
   void fix_triangle_orientation() {
-    point::Point p1, p2, p3;
+    point::Point p1{}, p2{}, p3{};
     for (auto &triangle : triangles) {
       p1 = centers[triangle.x] + offsets[triangle.x];
       p2 = centers[triangle.y] + offsets[triangle.y];
@@ -1129,9 +1128,7 @@ inline point::Point::coordinate_t add_triangles_for_join(
     point::Point p3, point::Point::coordinate_t prev_length, double cos_limit,
     bool bevel) {
   std::size_t idx = triangles.offsets.size();
-  point::Point::coordinate_t scale_factor;
-  point::Point::coordinate_t estimated_len;
-  point::Vector mitter(0, 0);
+  point::Vector mitter{};
   point::Point::coordinate_t length = vector_length(p2, p3);
   point::Vector p1_p2_diff_norm = (p2 - p1) / prev_length;
   point::Vector p2_p3_diff_norm = (p3 - p2) / length;
@@ -1147,24 +1144,24 @@ inline point::Point::coordinate_t add_triangles_for_join(
   if (sin_angle == 0) {
     mitter = {p1_p2_diff_norm.y / 2, -p1_p2_diff_norm.x / 2};
   } else {
-    scale_factor = 1 / sin_angle;
+    point::Point::coordinate_t scale_factor = 1 / sin_angle;
     if (bevel || cos_angle < cos_limit) {
       /* Bevel join
        * There is a need to check if inner vector is not to long
        * See https://github.com/napari/napari/pull/7268#user-content-bevel-cut
        */
-      estimated_len = scale_factor;
+      point::Point::coordinate_t estimated_len = scale_factor;
       if (prev_length < length) {
         if (estimated_len > prev_length) {
-          scale_factor = prev_length * 0.5;
+          scale_factor = prev_length * static_cast<point::Point::coordinate_t>(0.5);
         } else if (estimated_len < -prev_length) {
-          scale_factor = -prev_length * 0.5;
+          scale_factor = -prev_length * static_cast<point::Point::coordinate_t>(0.5);
         }
       } else {
         if (estimated_len > length) {
-          scale_factor = length * 0.5;
+          scale_factor = length * static_cast<point::Point::coordinate_t>(0.5);
         } else if (estimated_len < -length) {
-          scale_factor = -length * 0.5;
+          scale_factor = -length * static_cast<point::Point::coordinate_t>(0.5);
         }
       }
     }
@@ -1208,10 +1205,10 @@ inline PathTriangulation triangulate_path_edge(
             {path[0], path[0], path[0], path[0]},
             {{0, 0}, {0, 0}, {0, 0}, {0, 0}}};
   PathTriangulation result;
-  point::Vector norm_diff(0, 0);
+  point::Vector norm_diff{};
   result.reserve(path.size() * 3);
-  float cos_limit = 1.0 / (limit * limit / 2) - 1.0;
-  point::Point::coordinate_t prev_length = 1;
+  double cos_limit = 1.0 / (limit * limit / 2) - 1.0;
+  point::Point::coordinate_t prev_length{};
 
   if (closed) {
     prev_length = vector_length(path[0], path[path.size() - 1]);

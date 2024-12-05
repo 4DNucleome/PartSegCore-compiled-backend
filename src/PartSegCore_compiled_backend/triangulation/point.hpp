@@ -55,7 +55,7 @@ struct Point {
 
   struct PointHash {
     std::size_t operator()(const Point &p) const {
-      return std::hash<float>()(p.x) * 31 + std::hash<float>()(p.y);
+      return std::hash<Point::coordinate_t>()(p.x) ^ (std::hash<Point::coordinate_t>()(p.y) << 1);
     }
   };
 };
@@ -79,15 +79,15 @@ struct Vector {
   Vector operator-() const { return {-this->x, -this->y}; }
 };
 
-Vector Point::operator+(const Point &p) const {
+inline Vector Point::operator+(const Point &p) const {
   return {this->x + p.x, this->y + p.y};
 }
 
-Vector Point::operator-(const Point &p) const {
+inline Vector Point::operator-(const Point &p) const {
   return {this->x - p.x, this->y - p.y};
 }
 
-Point Point::operator+(const Vector &v) const {
+inline Point Point::operator+(const Vector &v) const {
   return {this->x + v.x, this->y + v.y};
 }
 
@@ -164,13 +164,13 @@ struct Segment {
 
   [[nodiscard]] bool point_on_line(Point p) const {
     if (this->is_horizontal()) {
-      return (this->bottom.x < p.x && p.x < this->top.x);
+      return (this->bottom.x <= p.x && p.x <= this->top.x);
     }
     if (this->is_vertical()) {
-      return (this->bottom.y < p.y && p.y < this->top.y);
+      return (this->bottom.y <= p.y && p.y <= this->top.y);
     }
     auto x_cord = this->point_on_line_x(p.y);
-    return (this->bottom.x < x_cord && x_cord < this->top.x);
+    return (this->bottom.x <= x_cord && x_cord <= this->top.x);
   }
 
   /**

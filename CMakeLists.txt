@@ -33,23 +33,39 @@ execute_process(
 
 
 cython_transpile(src/PartSegCore_compiled_backend/sprawl_utils/euclidean_cython.pyx LANGUAGE CXX OUTPUT_VARIABLE euclidean_cython_cxx)
-python_add_library(euclidean_cython MODULE "${euclidean_cython_cxx}" WITH_SOABI)
+python_add_library(euclidean_cython MODULE
+        "${euclidean_cython_cxx}"
+        src/PartSegCore_compiled_backend/sprawl_utils/my_queue.h
+        src/PartSegCore_compiled_backend/sprawl_utils/global_consts.h
+        WITH_SOABI)
 target_include_directories(euclidean_cython PRIVATE "${NUMPY_INCLUDE_DIR}")
 target_include_directories(euclidean_cython PRIVATE src/PartSegCore_compiled_backend/sprawl_utils/)
 
 cython_transpile(src/PartSegCore_compiled_backend/sprawl_utils/path_sprawl_cython.pyx LANGUAGE CXX OUTPUT_VARIABLE path_sprawl_cython_cxx)
-python_add_library(path_sprawl_cython MODULE "${path_sprawl_cython_cxx}" WITH_SOABI)
+python_add_library(path_sprawl_cython MODULE
+        "${path_sprawl_cython_cxx}"
+        src/PartSegCore_compiled_backend/sprawl_utils/my_queue.h
+        src/PartSegCore_compiled_backend/sprawl_utils/global_consts.h
+        WITH_SOABI)
 target_include_directories(path_sprawl_cython PRIVATE "${NUMPY_INCLUDE_DIR}")
 target_include_directories(path_sprawl_cython PRIVATE src/PartSegCore_compiled_backend/sprawl_utils/)
 
 cython_transpile(src/PartSegCore_compiled_backend/sprawl_utils/sprawl_utils.pyx LANGUAGE CXX OUTPUT_VARIABLE sprawl_utils_cython_cxx)
-python_add_library(sprawl_utils MODULE "${sprawl_utils_cython_cxx}" WITH_SOABI)
+python_add_library(sprawl_utils MODULE
+        "${sprawl_utils_cython_cxx}"
+        src/PartSegCore_compiled_backend/sprawl_utils/my_queue.h
+        src/PartSegCore_compiled_backend/sprawl_utils/global_consts.h
+        WITH_SOABI)
 target_include_directories(sprawl_utils PRIVATE "${NUMPY_INCLUDE_DIR}")
 target_include_directories(sprawl_utils PRIVATE src/PartSegCore_compiled_backend/sprawl_utils/)
 
 
 cython_transpile(src/PartSegCore_compiled_backend/sprawl_utils/fuzzy_distance.pyx LANGUAGE CXX OUTPUT_VARIABLE fuzzy_distance_cython_cxx)
-python_add_library(fuzzy_distance MODULE "${fuzzy_distance_cython_cxx}" WITH_SOABI)
+python_add_library(fuzzy_distance MODULE
+        "${fuzzy_distance_cython_cxx}"
+        src/PartSegCore_compiled_backend/sprawl_utils/my_queue.h
+        src/PartSegCore_compiled_backend/sprawl_utils/global_consts.h
+        WITH_SOABI)
 target_include_directories(fuzzy_distance PRIVATE "${NUMPY_INCLUDE_DIR}")
 target_include_directories(fuzzy_distance PRIVATE src/PartSegCore_compiled_backend/sprawl_utils/)
 

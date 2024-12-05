@@ -9,6 +9,7 @@ sdist.include = ["src/PartSegCore_compiled_backend/version.py"]
 cmake.version = ">=3.21"
 sdist.exclude = [".github", "tox.ini", "build_utils", "notebooks", ".readthedocs.yaml"]
 wheel.exclude = ["**.pyx"]
+#cmake.build-type = "Debug"
 
 
 [project]
@@ -139,7 +140,8 @@ quote-style = "single"
 indent-style = "space"
 docstring-code-format = true
 line-ending = "lf"
-skip-magic-trailing-comma = true
+skip-magic-trailing-comma = false
+
 
 [tool.ruff.lint]
 select = [

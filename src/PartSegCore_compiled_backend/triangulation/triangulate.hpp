@@ -1123,6 +1123,17 @@ struct PathTriangulation {
   }
 };
 
+inline std::pair<point::Point::coordinate_t, point::Point::coordinate_t>
+sign_abs(point::Point::coordinate_t x) {
+  if (x < 0) {
+    return {-1, -x};
+  }
+  if (x > 0) {
+    return {1, x};
+  }
+  return {0, 0};
+}
+
 inline point::Point::coordinate_t add_triangles_for_join(
     PathTriangulation &triangles, point::Point p1, point::Point p2,
     point::Point p3, point::Point::coordinate_t prev_length, double cos_limit,
@@ -1150,22 +1161,8 @@ inline point::Point::coordinate_t add_triangles_for_join(
        * There is a need to check if inner vector is not to long
        * See https://github.com/napari/napari/pull/7268#user-content-bevel-cut
        */
-      point::Point::coordinate_t estimated_len = scale_factor;
-      if (prev_length < length) {
-        if (estimated_len > prev_length) {
-          scale_factor =
-              prev_length * static_cast<point::Point::coordinate_t>(0.5);
-        } else if (estimated_len < -prev_length) {
-          scale_factor =
-              -prev_length * static_cast<point::Point::coordinate_t>(0.5);
-        }
-      } else {
-        if (estimated_len > length) {
-          scale_factor = length * static_cast<point::Point::coordinate_t>(0.5);
-        } else if (estimated_len < -length) {
-          scale_factor = -length * static_cast<point::Point::coordinate_t>(0.5);
-        }
-      }
+      auto [sign, mag] = sign_abs(scale_factor);
+      scale_factor = sign * 0.5 * std::min(mag, std::min(prev_length, length));
     }
     mitter = (p1_p2_diff_norm - p2_p3_diff_norm) * scale_factor * 0.5;
   };

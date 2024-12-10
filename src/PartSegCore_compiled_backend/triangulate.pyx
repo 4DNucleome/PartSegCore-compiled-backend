@@ -98,8 +98,8 @@ cdef extern from "triangulation/triangulate.hpp" namespace "partsegcore::triangu
 
 
 ctypedef fused float_types:
-    np.float32_t
-    np.float64_t
+    cnp.float32_t
+    cnp.float64_t
 
 
 def on_segment(p: Sequence[float], q: Sequence[float], r: Sequence[float]) -> bool:
@@ -277,26 +277,39 @@ def triangulate_polygon_numpy(cnp.ndarray[float_types, ndim=2] polygon: np.ndarr
     )
 
 
-def triangulate_polygon_numpy_li(list[cnp.ndarray[float_types, ndim=2]] polygon_li: list[np.ndarray]) -> tuple[np.ndarray, np.ndarray]:
+def triangulate_polygon_numpy_li(list polygon_li: list[np.ndarray]) -> tuple[np.ndarray, np.ndarray]:
     """ Triangulate polygon"""
     cdef vector[Point] polygon_vector
     cdef vector[vector[Point]] polygon_vector_list
     cdef Point p1, p2
     cdef pair[vector[Triangle], vector[Point]] result
+    cdef size_t i;
+    cdef cnp.ndarray[cnp.float32_t, ndim=2] polygon32
+    cdef cnp.ndarray[cnp.float64_t, ndim=2] polygon64
 
     polygon_vector_list.reserve(len(polygon_li))
     for polygon in polygon_li:
         polygon_vector.clear()
-
         polygon_vector.reserve(polygon.shape[0])
         polygon_vector.push_back(Point(polygon[0, 0], polygon[0, 1]))
 
-        for point in polygon[1:]:
-            p1 = polygon_vector.back()
-            p2 = Point(point[0], point[1])
-            if p1 != p2:
-                # prevent from adding polygon edge of width 0
-                polygon_vector.push_back(p2)
+        if polygon.dtype == np.float32:
+            polygon32 = polygon
+            for i in range(1, polygon.shape[0]):
+                p1 = polygon_vector.back()
+                p2 = Point(polygon32[i, 0], polygon32[i, 1])
+                if p1 != p2:
+                    # prevent from adding polygon edge of width 0
+                    polygon_vector.push_back(p2)
+        else:
+            polygon64 = polygon
+            for i in range(1, polygon.shape[0]):
+                p1 = polygon_vector.back()
+                p2 = Point(polygon64[i, 0], polygon64[i, 1])
+                if p1 != p2:
+                    # prevent from adding polygon edge of width 0
+                    polygon_vector.push_back(p2)
+
         if polygon_vector.size() > 1 and polygon_vector.front() == polygon_vector.back():
             polygon_vector.pop_back()
         polygon_vector_list.push_back(polygon_vector)

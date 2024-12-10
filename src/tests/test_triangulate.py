@@ -234,22 +234,22 @@ def test_triangulate_polygon_py_non_convex(polygon, expected):
 
 @pytest.mark.parametrize(('polygon', 'expected'), TEST_POLYGONS)
 def test_triangulate_polygon_numpy_non_convex(polygon, expected):
-    triangles, points = triangulate_polygon_numpy(np.array(polygon))
+    triangles, points = triangulate_polygon_numpy(np.array(polygon).astype(np.float64))
     triangles_ = _renumerate_triangles(polygon, points, triangles)
     assert triangles_ == expected
 
 
 @pytest.mark.parametrize(('polygon', 'expected'), TEST_POLYGONS)
 def test_triangulate_polygon_numpy_li_non_convex(polygon, expected):
-    triangles, points = triangulate_polygon_numpy_li([np.array(polygon)])
+    triangles, points = triangulate_polygon_numpy_li([np.array(polygon).astype(np.float64)])
     triangles_ = _renumerate_triangles(polygon, points, triangles)
     assert triangles_ == expected
 
 
 def test_triangulate_polygon_in_polygon_numpy():
     polygons = [
-        np.array([(0, 0), (10, 0), (10, 10), (0, 10)]),
-        np.array([(4, 4), (6, 4), (6, 6), (4, 6)]),
+        np.array([(0, 0), (10, 0), (10, 10), (0, 10)], dtype=np.float64),
+        np.array([(4, 4), (6, 4), (6, 6), (4, 6)], dtype=np.float32),
     ]
     triangles, points = triangulate_polygon_numpy_li(polygons)
     assert len(triangles) == 8

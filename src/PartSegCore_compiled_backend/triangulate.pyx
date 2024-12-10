@@ -97,6 +97,10 @@ cdef extern from "triangulation/triangulate.hpp" namespace "partsegcore::triangu
     PathTriangulation triangulate_path_edge(const vector[Point]& path, bool closed, float limit, bool bevel) except +
 
 
+ctypedef fused float_types:
+    np.float32_t
+    np.float64_t
+
 
 def on_segment(p: Sequence[float], q: Sequence[float], r: Sequence[float]) -> bool:
     """ Check if point q is on segment pr
@@ -251,7 +255,7 @@ def triangulate_polygon_py(polygon: Sequence[Sequence[float]]) -> tuple[list[tup
     return [(triangle.x, triangle.y, triangle.z) for triangle in result.first], [(point.x, point.y) for point in result.second]
 
 
-def triangulate_polygon_numpy(polygon: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def triangulate_polygon_numpy(cnp.ndarray[float_types, ndim=2] polygon: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """ Triangulate polygon"""
     cdef vector[Point] polygon_vector
     cdef Point p1, p2
@@ -273,7 +277,7 @@ def triangulate_polygon_numpy(polygon: np.ndarray) -> tuple[np.ndarray, np.ndarr
     )
 
 
-def triangulate_polygon_numpy_li(polygon_li: list[np.ndarray]) -> tuple[np.ndarray, np.ndarray]:
+def triangulate_polygon_numpy_li(list[cnp.ndarray[float_types, ndim=2]] polygon_li: list[np.ndarray]) -> tuple[np.ndarray, np.ndarray]:
     """ Triangulate polygon"""
     cdef vector[Point] polygon_vector
     cdef vector[vector[Point]] polygon_vector_list

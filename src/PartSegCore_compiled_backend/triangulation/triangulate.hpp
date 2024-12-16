@@ -464,15 +464,16 @@ struct MonotonePolygonBuilder {
         segment_to_line[right_segment] = new_interval;
 
         if (interval->polygons_list.size() == 1) {
-          MonotonePolygon *new_polygon = nullptr;
+          std::unique_ptr<MonotonePolygon> new_polygon;
           if (interval->polygons_list[0]->right.empty()) {
-            new_polygon = new MonotonePolygon(interval->polygons_list[0]->top);
+            new_polygon = std::make_unique<MonotonePolygon>(
+                interval->polygons_list[0]->top);
           } else {
-            new_polygon =
-                new MonotonePolygon(interval->polygons_list[0]->right.back());
+            new_polygon = std::make_unique<MonotonePolygon>(
+                interval->polygons_list[0]->right.back());
           }
           new_polygon->left.push_back(p);
-          new_interval->polygons_list.emplace_back(new_polygon);
+          new_interval->polygons_list.emplace_back(std::move(new_polygon));
           interval->polygons_list[0]->right.push_back(p);
         }
 

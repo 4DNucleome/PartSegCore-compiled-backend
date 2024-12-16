@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <map>
+#include <memory>
 #include <set>
 #include <sstream>
 #include <unordered_map>
@@ -38,17 +39,20 @@ struct Interval {
   point::Point last_seen{};
   point::Segment left_segment;
   point::Segment right_segment;
-  std::vector<MonotonePolygon *> polygons_list{};
+  std::vector<std::unique_ptr<MonotonePolygon>> polygons_list{};
   Interval() = default;
   explicit Interval(const point::Point &p, const point::Segment &left,
                     const point::Segment &right)
       : last_seen(p), left_segment(left), right_segment(right) {};
   explicit Interval(const point::Point &p, const point::Segment &left,
-                    const point::Segment &right, MonotonePolygon *polygon)
+                    const point::Segment &right,
+                    std::unique_ptr<MonotonePolygon> &polygon)
       : last_seen(p),
         left_segment(left),
         right_segment(right),
-        polygons_list({polygon}) {};
+        polygons_list() {
+    polygons_list.emplace_back(std::move(polygon));
+  };
 
   void replace_segment(const point::Segment &old_segment,
                        const point::Segment &new_segment) {
@@ -238,7 +242,7 @@ inline PointType get_point_type(point::Point p,
 }
 
 struct MonotonePolygonBuilder {
-  std::map<point::Segment, Interval *> segment_to_line{};
+  std::map<point::Segment, std::shared_ptr<Interval>> segment_to_line{};
   std::vector<point::Segment> edges{};
   PointToEdges point_to_edges{};
   std::vector<MonotonePolygon> monotone_polygons{};
@@ -286,16 +290,14 @@ struct MonotonePolygonBuilder {
 
   void process_end_point(const point::Point &p, const point::Segment &edge_left,
                          const point::Segment &edge_right) {
-    Interval *interval = segment_to_line.at(edge_left);
+    auto interval = segment_to_line.at(edge_left);
     for (auto &polygon : interval->polygons_list) {
       polygon->bottom = p;
       monotone_polygons.push_back(*polygon);
-      delete polygon;
     }
 
     segment_to_line.erase(edge_left);
     segment_to_line.erase(edge_right);
-    delete interval;
   }
 
   void process_merge_point(const point::Point &p) {
@@ -303,8 +305,8 @@ struct MonotonePolygonBuilder {
 
     if (segment_to_line.at(edge_left) != segment_to_line.at(edge_right)) {
       // merge two intervals into one
-      Interval *left_interval = segment_to_line.at(edge_left);
-      Interval *right_interval = segment_to_line.at(edge_right);
+      auto left_interval = segment_to_line.at(edge_left);
+      auto right_interval = segment_to_line.at(edge_right);
 #ifdef DEBUG
       if (right_interval->right_segment == edge_right) {
         std::ostringstream oss;
@@ -327,9 +329,8 @@ struct MonotonePolygonBuilder {
       left_interval->polygons_list.back()->right.push_back(p);
       right_interval->polygons_list.front()->left.push_back(p);
       for (auto &polygon : right_interval->polygons_list) {
-        left_interval->polygons_list.push_back(polygon);
+        left_interval->polygons_list.push_back(std::move(polygon));
       }
-      delete right_interval;
     } else {
       // This is the end point
       this->process_end_point(p, edge_left, edge_right);
@@ -362,7 +363,7 @@ struct MonotonePolygonBuilder {
     if (segment_to_line.count(edge_top) == 0) {
       throw std::runtime_error("Segment not found in the map1");
     }
-    Interval *interval = segment_to_line.at(edge_top);
+    auto interval = segment_to_line.at(edge_top);
 
     if (interval->polygons_list.size() > 1) {
       // end all the polygons, except 1
@@ -370,16 +371,14 @@ struct MonotonePolygonBuilder {
         for (auto i = 1; i < interval->polygons_list.size(); i++) {
           interval->polygons_list[i]->bottom = p;
           monotone_polygons.push_back(*interval->polygons_list[i]);
-          delete interval->polygons_list[i];
         }
 
       } else {
         for (auto i = 0; i < interval->polygons_list.size() - 1; i++) {
           interval->polygons_list[i]->bottom = p;
           monotone_polygons.push_back(*interval->polygons_list[i]);
-          delete interval->polygons_list[i];
         }
-        interval->polygons_list[0] = interval->polygons_list.back();
+        interval->polygons_list[0] = std::move(interval->polygons_list.back());
       }
       interval->polygons_list.erase(interval->polygons_list.begin() + 1,
                                     interval->polygons_list.end());
@@ -427,8 +426,9 @@ struct MonotonePolygonBuilder {
   void process_start_point(const point::Point &p,
                            const point::Segment &edge_left,
                            const point::Segment &edge_right) {
-    auto *new_polygon = new MonotonePolygon(p);
-    auto *interval = new Interval(p, edge_left, edge_right, new_polygon);
+    auto new_polygon = std::make_unique<MonotonePolygon>(p);
+    auto interval =
+        std::make_shared<Interval>(p, edge_left, edge_right, new_polygon);
     segment_to_line[edge_left] = interval;
     segment_to_line[edge_right] = interval;
   }
@@ -447,7 +447,7 @@ struct MonotonePolygonBuilder {
       }
       // check if the current point is inside the quadrangle defined by edges of
       // the interval
-      Interval *interval = segment_interval.second;
+      auto interval = segment_interval.second;
       if (interval->left_segment.point_on_line_x(p.y) < p.x &&
           interval->right_segment.point_on_line_x(p.y) > p.x) {
         // the point is inside the interval
@@ -458,7 +458,8 @@ struct MonotonePolygonBuilder {
         interval->last_seen = p;
         segment_to_line[edge_left] = interval;
 
-        auto *new_interval = new Interval(p, edge_right, right_segment);
+        auto new_interval =
+            std::make_shared<Interval>(p, edge_right, right_segment);
         segment_to_line[edge_right] = new_interval;
         segment_to_line[right_segment] = new_interval;
 
@@ -471,7 +472,7 @@ struct MonotonePolygonBuilder {
                 new MonotonePolygon(interval->polygons_list[0]->right.back());
           }
           new_polygon->left.push_back(p);
-          new_interval->polygons_list.push_back(new_polygon);
+          new_interval->polygons_list.emplace_back(new_polygon);
           interval->polygons_list[0]->right.push_back(p);
         }
 
@@ -482,9 +483,9 @@ struct MonotonePolygonBuilder {
           for (auto i = 1; i < interval->polygons_list.size() - 1; i++) {
             interval->polygons_list[i]->bottom = p;
             monotone_polygons.push_back(*interval->polygons_list[i]);
-            delete interval->polygons_list[i];
           }
-          new_interval->polygons_list.push_back(interval->polygons_list.back());
+          new_interval->polygons_list.push_back(
+              std::move(interval->polygons_list.back()));
           interval->polygons_list.erase(interval->polygons_list.begin() + 1,
                                         interval->polygons_list.end());
         }
@@ -510,7 +511,7 @@ struct MonotonePolygonBuilder {
         continue;
       }
       if (segment_to_line.count(edge) > 0) {
-        Interval *interval = segment_to_line.at(edge);
+        auto interval = segment_to_line.at(edge);
         auto opposite_edge = interval->opposite_segment(edge);
         if (edge.bottom == p && opposite_edge.bottom == p) {
           process_end_point(p, edge, opposite_edge);
@@ -1162,10 +1163,11 @@ inline point::Point::coordinate_t add_triangles_for_join(
        * See https://github.com/napari/napari/pull/7268#user-content-bevel-cut
        */
       auto [sign, mag] = sign_abs(scale_factor);
-      scale_factor = sign * 0.5 * std::min(mag, std::min(prev_length, length));
+      scale_factor =
+          sign * (float)0.5 * std::min(mag, std::min(prev_length, length));
     }
     mitter = (p1_p2_diff_norm - p2_p3_diff_norm) * scale_factor * 0.5;
-  };
+  }
   if (bevel || cos_angle < cos_limit) {
     triangles.centers.push_back(p2);
     triangles.triangles.emplace_back(idx, idx + 1, idx + 2);

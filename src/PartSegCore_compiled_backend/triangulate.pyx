@@ -5,6 +5,7 @@
 from collections.abc import Sequence
 
 import numpy as np
+import cython
 
 cimport numpy as cnp
 
@@ -92,9 +93,9 @@ cdef extern from "triangulation/triangulate.hpp" namespace "partsegcore::triangu
     bool left_to_right(const Segment& s1, const Segment& s2)
     vector[Point] find_intersection_points(const vector[Point]& segments)
     vector[PointTriangle] triangulate_monotone_polygon(const MonotonePolygon& polygon)
-    pair[vector[Triangle], vector[Point]] triangulate_polygon_face(const vector[Point]& polygon)  except +
-    pair[vector[Triangle], vector[Point]] triangulate_polygon_face(const vector[vector[Point]]& polygon_list) except +
-    PathTriangulation triangulate_path_edge(const vector[Point]& path, bool closed, float limit, bool bevel) except +
+    pair[vector[Triangle], vector[Point]] triangulate_polygon_face(const vector[Point]& polygon) except + nogil
+    pair[vector[Triangle], vector[Point]] triangulate_polygon_face(const vector[vector[Point]]& polygon_list) except + nogil
+    PathTriangulation triangulate_path_edge(const vector[Point]& path, bool closed, float limit, bool bevel) except + nogil
 
 
 ctypedef fused float_types:
@@ -372,8 +373,8 @@ def triangulate_path_edge_py(path: Sequence[Sequence[float]], closed: bool=False
     path_vector.reserve(len(path))
     for point in path:
         path_vector.push_back(Point(point[0], point[1]))
-
-    result = triangulate_path_edge(path_vector, closed, limit, bevel)
+    with cython.nogil:
+        result = triangulate_path_edge(path_vector, closed, limit, bevel)
     return (
         np.array([(point.x, point.y) for point in result.centers], dtype=np.float32),
         np.array([(offset.x, offset.y) for offset in result.offsets], dtype=np.float32),
@@ -407,8 +408,8 @@ def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray]) -> tupl
         polygon_vector_list.push_back(polygon_vector)
         edge_result.push_back(triangulate_path_edge(polygon_vector, True, 3.0, False))
 
-
-    result = triangulate_polygon_face(polygon_vector_list)
+    with cython.nogil:
+        result = triangulate_polygon_face(polygon_vector_list)
     return ((
         np.array([(triangle.x, triangle.y, triangle.z) for triangle in result.first], dtype=np.uintp),
         np.array([(point.x, point.y) for point in result.second], dtype=np.float32)

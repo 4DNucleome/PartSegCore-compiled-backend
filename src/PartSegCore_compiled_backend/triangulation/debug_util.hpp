@@ -37,12 +37,14 @@ void print_vector(std::ostream &o, const T &s, const std::string &end = "\n") {
 }
 template <typename T>
 void print_map(std::ostream &o, const T &s, const std::string &end = "\n") {
+  bool first = true;
   o << "{";
   for (const auto &el : s) {
-    if (el != *s.begin()) {
+    if (!first) {
       o << ", ";
     }
     o << el.first << ": ";
+    first = false;
     print_set(o, el.second, "");
   }
   o << "}" << end;

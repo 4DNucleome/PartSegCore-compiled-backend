@@ -361,7 +361,7 @@ struct MonotonePolygonBuilder {
                              const point::Segment &edge_top,
                              const point::Segment &edge_bottom) {
     if (segment_to_line.count(edge_top) == 0) {
-      throw std::runtime_error("Segment not found in the map1");
+      throw std::runtime_error("Segment not found in the map");
     }
     auto interval = segment_to_line.at(edge_top);
 

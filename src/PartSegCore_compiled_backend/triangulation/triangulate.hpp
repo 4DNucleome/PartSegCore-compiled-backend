@@ -253,23 +253,61 @@ struct MonotonePolygonBuilder {
     this->point_to_edges = get_points_edges(edges);
   }
 
+  /**
+   * Retrieves the left and right segments (edges) of a monotone polygon
+   * for a given point when edges are sharing top point.
+   *
+   * @param p The point for which the left and right edges are to be retrieved.
+   * @return A pair containing the left and right segments respectively.
+   *
+   * The function looks up the segments associated with the given point `p`
+   * in the `point_to_edges` map. Based on their mutual orientation at the
+   * bottom point of one of the edges, it determines which segment is on the
+   * left and which is on the right. This orientation check is conducted
+   * using a helper function to determine the relative ordering of the edges.
+   *
+   * If the orientation is counter-clockwise (value 2), the first segment is
+   * on the right while the second segment is on the left. Otherwise, the
+   * segments maintain their original order.
+   */
   std::pair<const point::Segment &, const point::Segment &>
-  get_left_right_edges(const point::Point &p) {
+  get_left_right_edges_top(const point::Point &p) {
     auto point_info = point_to_edges.at(p);
     auto fst_idx = point_info[0].edge_index;
     auto snd_idx = point_info[1].edge_index;
-    if (edges[fst_idx].top == edges[snd_idx].top) {
-      if (intersection::_orientation(edges[fst_idx].bottom, edges[fst_idx].top,
-                                     edges[snd_idx].bottom) == 2) {
-        return {edges[snd_idx], edges[fst_idx]};
-      }
-      return {edges[fst_idx], edges[snd_idx]};
+    if (intersection::_orientation(edges[fst_idx].bottom, edges[fst_idx].top,
+                                   edges[snd_idx].bottom) == 2) {
+      return {edges[snd_idx], edges[fst_idx]};
     }
+    return {edges[fst_idx], edges[snd_idx]};
+  }
+
+  /**
+   * Retrieves the left and right edges of a monotone polygon
+   * for a given point at its bottom.
+   *
+   * @param p The point for which the left and right edges are to be retrieved.
+   * @return A pair containing the left and right segments (edges) in order.
+   *
+   * This function looks up the edges associated with the point `p` in the
+   * `point_to_edges` map. Based on the orientation of the segments
+   * at their top and bottom points, it determines which edge is on the left
+   * and which is on the right. The orientation is calculated using a helper
+   * function to determine the relative position of one segment relative to the
+   * other.
+   *
+   * If the orientation indicates a counter-clockwise arrangement, the function
+   * swaps the order of the edges to ensure the left and right ordering.
+   */
+  std::pair<const point::Segment &, const point::Segment &>
+  get_left_right_edges_bottom(const point::Point &p) {
+    auto point_info = point_to_edges.at(p);
+    auto fst_idx = point_info[0].edge_index;
+    auto snd_idx = point_info[1].edge_index;
     if (intersection::_orientation(edges[fst_idx].top, edges[fst_idx].bottom,
                                    edges[snd_idx].top) == 1) {
       return {edges[snd_idx], edges[fst_idx]};
     }
-
     return {edges[fst_idx], edges[snd_idx]};
   }
 
@@ -301,7 +339,7 @@ struct MonotonePolygonBuilder {
   }
 
   void process_merge_point(const point::Point &p) {
-    auto [edge_left, edge_right] = get_left_right_edges(p);
+    auto [edge_left, edge_right] = get_left_right_edges_bottom(p);
 
     if (segment_to_line.at(edge_left) != segment_to_line.at(edge_right)) {
       // merge two intervals into one
@@ -434,7 +472,7 @@ struct MonotonePolygonBuilder {
   }
 
   void process_split_point(const point::Point &p) {
-    auto [edge_left, edge_right] = get_left_right_edges(p);
+    auto [edge_left, edge_right] = get_left_right_edges_top(p);
 
     // We need to find to which interval the point belongs.
     // If the point does not belong to any interval, we treat

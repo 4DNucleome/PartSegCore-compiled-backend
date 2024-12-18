@@ -327,8 +327,8 @@ struct MonotonePolygonBuilder {
    */
 
   void process_end_point(const point::Point &p, const point::Segment &edge_left,
-                         const point::Segment &edge_right) {
-    auto interval = segment_to_line.at(edge_left);
+                         const point::Segment &edge_right,
+                         const std::shared_ptr<Interval> &interval) {
     for (auto &polygon : interval->polygons_list) {
       polygon->bottom = p;
       monotone_polygons.push_back(*polygon);
@@ -341,10 +341,10 @@ struct MonotonePolygonBuilder {
   void process_merge_point(const point::Point &p) {
     auto [edge_left, edge_right] = get_left_right_edges_bottom(p);
 
-    if (segment_to_line.at(edge_left) != segment_to_line.at(edge_right)) {
-      // merge two intervals into one
-      auto left_interval = segment_to_line.at(edge_left);
-      auto right_interval = segment_to_line.at(edge_right);
+    auto left_interval = segment_to_line.at(edge_left);
+    auto right_interval = segment_to_line.at(edge_right);
+
+    if (left_interval != right_interval) {
 #ifdef DEBUG
       if (right_interval->right_segment == edge_right) {
         std::ostringstream oss;
@@ -371,7 +371,7 @@ struct MonotonePolygonBuilder {
       }
     } else {
       // This is the end point
-      this->process_end_point(p, edge_left, edge_right);
+      this->process_end_point(p, edge_left, edge_right, left_interval);
     }
   };
 
@@ -553,7 +553,7 @@ struct MonotonePolygonBuilder {
         auto interval = segment_to_line.at(edge);
         auto opposite_edge = interval->opposite_segment(edge);
         if (edge.bottom == p && opposite_edge.bottom == p) {
-          process_end_point(p, edge, opposite_edge);
+          process_end_point(p, edge, opposite_edge, interval);
           processed_segments.insert(edge);
           processed_segments.insert(opposite_edge);
           continue;

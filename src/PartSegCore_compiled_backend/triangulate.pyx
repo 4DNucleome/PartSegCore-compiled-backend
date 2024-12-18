@@ -369,16 +369,23 @@ def triangulate_path_edge_py(path: Sequence[Sequence[float]], closed: bool=False
     cdef vector[Point] path_vector
     cdef PathTriangulation result
     cdef Point p1, p2
+    cdef cnp.ndarray[cnp.uint32_t, ndim=2] triangles
 
     path_vector.reserve(len(path))
     for point in path:
         path_vector.push_back(Point(point[0], point[1]))
     with cython.nogil:
         result = triangulate_path_edge(path_vector, closed, limit, bevel)
+
+    if result.triangles.size() == 0:
+        triangles = np.zeros((0, 3), dtype=np.uint32)
+    else:
+        triangles = np.array([(triangle.x, triangle.y, triangle.z) for triangle in result.triangles], dtype=np.uint32)
+
     return (
         np.array([(point.x, point.y) for point in result.centers], dtype=np.float32),
         np.array([(offset.x, offset.y) for offset in result.offsets], dtype=np.float32),
-        np.array([(triangle.x, triangle.y, triangle.z) for triangle in result.triangles], dtype=np.uintp),
+        triangles,
     )
 
 
@@ -387,8 +394,9 @@ def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray]) -> tupl
     cdef vector[Point] polygon_vector
     cdef vector[vector[Point]] polygon_vector_list
     cdef Point p1, p2
-    cdef pair[vector[Triangle], vector[Point]] result
+    cdef pair[vector[Triangle], vector[Point]] triangulation_result
     cdef vector[PathTriangulation] edge_result
+    cdef cnp.ndarray[cnp.uint32_t, ndim=2] triangles
 
     polygon_vector_list.reserve(len(polygon_li))
     for polygon in polygon_li:
@@ -406,17 +414,24 @@ def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray]) -> tupl
         if polygon_vector.size() > 1 and polygon_vector.front() == polygon_vector.back():
             polygon_vector.pop_back()
         polygon_vector_list.push_back(polygon_vector)
-        edge_result.push_back(triangulate_path_edge(polygon_vector, True, 3.0, False))
+        with cython.nogil:
+            edge_result.push_back(triangulate_path_edge(polygon_vector, True, 3.0, False))
 
     with cython.nogil:
-        result = triangulate_polygon_face(polygon_vector_list)
+        triangulation_result = triangulate_polygon_face(polygon_vector_list)
+
+    if triangulation_result.first.size() == 0:
+        triangles = np.zeros((0, 3), dtype=np.uint32)
+    else:
+        triangles = np.array([(triangle.x, triangle.y, triangle.z) for triangle in triangulation_result.first], dtype=np.uint32)
+
     return ((
-        np.array([(triangle.x, triangle.y, triangle.z) for triangle in result.first], dtype=np.uintp),
-        np.array([(point.x, point.y) for point in result.second], dtype=np.float32)
+        triangles,
+        np.array([(point.x, point.y) for point in triangulation_result.second], dtype=np.float32)
     ),
     (
         np.array([(point.x, point.y) for res in edge_result for point in res.centers], dtype=np.float32),
         np.array([(offset.x, offset.y) for res in edge_result for offset in res.offsets], dtype=np.float32),
-        np.array([(triangle.x, triangle.y, triangle.z) for res in edge_result for triangle in res.triangles], dtype=np.uintp),
+        np.array([(triangle.x, triangle.y, triangle.z) for res in edge_result for triangle in res.triangles], dtype=np.uint32),
     )
     )

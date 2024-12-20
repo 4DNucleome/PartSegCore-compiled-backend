@@ -388,6 +388,46 @@ def triangulate_path_edge_py(path: Sequence[Sequence[float]], closed: bool=False
         triangles,
     )
 
+def triangulate_path_edge_numpy(cnp.ndarray[cnp.float32_t, ndim=2] path, bool closed=False, float limit=3.0, bool bevel=False) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """ Triangulate path"""
+    cdef vector[Point] path_vector
+    cdef PathTriangulation result
+    cdef Point p1, p2
+    cdef cnp.ndarray[cnp.uint32_t, ndim=2] triangles
+    cdef cnp.ndarray[cnp.float32_t, ndim=2] offsets, centers
+    cdef size_t i, len_path
+
+    len_path = path.shape[0]
+
+    path_vector.reserve(len_path)
+    for i in range(len_path):
+        path_vector.push_back(Point(path[i, 0], path[i, 1]))
+    with cython.nogil:
+        result = triangulate_path_edge(path_vector, closed, limit, bevel)
+
+    triangles = np.empty((result.triangles.size(), 3), dtype=np.uint32)
+    centers = np.empty((result.centers.size(), 2), dtype=np.float32)
+    offsets = np.empty((result.offsets.size(), 2), dtype=np.float32)
+
+    for i in range(result.triangles.size()):
+        triangles[i, 0] = result.triangles[i].x
+        triangles[i, 1] = result.triangles[i].y
+        triangles[i, 2] = result.triangles[i].z
+
+    for i in range(result.centers.size()):
+        centers[i, 0] = result.centers[i].x
+        centers[i, 1] = result.centers[i].y
+
+    for i in range(result.offsets.size()):
+        offsets[i, 0] = result.offsets[i].x
+        offsets[i, 1] = result.offsets[i].y
+
+    return (
+        centers,
+        offsets,
+        triangles,
+    )
+
 
 def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray]) -> tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray, np.ndarray]]:
     """ Triangulate polygon"""
@@ -396,18 +436,21 @@ def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray]) -> tupl
     cdef Point p1, p2
     cdef pair[vector[Triangle], vector[Point]] triangulation_result
     cdef vector[PathTriangulation] edge_result
-    cdef cnp.ndarray[cnp.uint32_t, ndim=2] triangles
+    cdef cnp.ndarray[cnp.uint32_t, ndim=2] triangles, edge_triangles
+
+    cdef cnp.ndarray[cnp.float32_t, ndim=2] points, edge_offsets, edges_centers, polygon
+    cdef size_t i, j, len_path, edge_triangle_count, edge_center_count, edge_triangle_index, edge_center_index
 
     polygon_vector_list.reserve(len(polygon_li))
-    for polygon in polygon_li:
-        polygon_vector.clear()
+    for i in range(len(polygon_li)):
+        polygon = polygon_li[i]
 
         polygon_vector.reserve(polygon.shape[0])
         polygon_vector.push_back(Point(polygon[0, 0], polygon[0, 1]))
 
-        for point in polygon[1:]:
+        for j in range(1, polygon.shape[0]):
             p1 = polygon_vector.back()
-            p2 = Point(point[0], point[1])
+            p2 = Point(polygon[j, 0], polygon[j, 1])
             if p1 != p2:
                 # prevent from adding polygon edge of width 0
                 polygon_vector.push_back(p2)
@@ -420,18 +463,51 @@ def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray]) -> tupl
     with cython.nogil:
         triangulation_result = triangulate_polygon_face(polygon_vector_list)
 
-    if triangulation_result.first.size() == 0:
-        triangles = np.zeros((0, 3), dtype=np.uint32)
-    else:
-        triangles = np.array([(triangle.x, triangle.y, triangle.z) for triangle in triangulation_result.first], dtype=np.uint32)
+
+    triangles = np.empty((triangulation_result.first.size(), 3), dtype=np.uint32)
+    for i in range(triangulation_result.first.size()):
+        triangles[i, 0] = triangulation_result.first[i].x
+        triangles[i, 1] = triangulation_result.first[i].y
+        triangles[i, 2] = triangulation_result.first[i].z
+
+    points =np.empty((triangulation_result.second.size(), 2), dtype=np.float32)
+    for i in range(triangulation_result.second.size()):
+        points[i, 0] = triangulation_result.second[i].x
+        points[i, 1] = triangulation_result.second[i].y
+
+    edge_triangle_count = 0
+    edge_center_count = 0
+    for i in range(edge_result.size()):
+        edge_triangle_count += edge_result[i].triangles.size()
+        edge_center_count += edge_result[i].centers.size()
+
+    edge_triangles = np.empty((edge_triangle_count, 3), dtype=np.uint32)
+    edge_offsets = np.empty((edge_center_count, 2), dtype=np.float32)
+    edges_centers = np.empty((edge_center_count, 2), dtype=np.float32)
+
+    edge_triangle_index = 0
+    edge_center_index = 0
+    for i in range(edge_result.size()):
+        for j in range(edge_result[i].triangles.size()):
+            edge_triangles[edge_triangle_index, 0] = edge_result[i].triangles[j].x
+            edge_triangles[edge_triangle_index, 1] = edge_result[i].triangles[j].y
+            edge_triangles[edge_triangle_index, 2] = edge_result[i].triangles[j].z
+            edge_triangle_index += 1
+
+        for j in range(edge_result[i].centers.size()):
+            edges_centers[edge_center_index, 0] = edge_result[i].centers[j].x
+            edges_centers[edge_center_index, 1] = edge_result[i].centers[j].y
+            edge_offsets[edge_center_index, 0] = edge_result[i].offsets[j].x
+            edge_offsets[edge_center_index, 1] = edge_result[i].offsets[j].y
+            edge_center_index += 1
 
     return ((
         triangles,
-        np.array([(point.x, point.y) for point in triangulation_result.second], dtype=np.float32)
+        points,
     ),
     (
-        np.array([(point.x, point.y) for res in edge_result for point in res.centers], dtype=np.float32),
-        np.array([(offset.x, offset.y) for res in edge_result for offset in res.offsets], dtype=np.float32),
-        np.array([(triangle.x, triangle.y, triangle.z) for res in edge_result for triangle in res.triangles], dtype=np.uint32),
+        edges_centers,
+        edge_offsets,
+        edge_triangles,
     )
     )

@@ -16,14 +16,14 @@ concurrency:
 
 jobs:
   test:
-      name: Test on ${{ matrix.os }} with Python ${{ matrix.python_version }}
-      runs-on: ${{ matrix.os }}
-      strategy:
-        fail-fast: false
-        matrix:
-          os: [windows-latest, macos-latest, ubuntu-latest]
-          python_version: ['3.9' , '3.10', '3.11', '3.12']
-      steps:
+    name: Test on ${{ matrix.os }} with Python ${{ matrix.python_version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ windows-latest, macos-latest, ubuntu-latest ]
+        python_version: [ '3.9' , '3.10', '3.11', '3.12' ]
+    steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         name: Install Python ${{ matrix.python_version }}
@@ -41,15 +41,29 @@ jobs:
         run: tox
         if: runner.os != 'macOS'
 
+  test_min_req:
+    name: Test minimum requirements
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        name: Install Python 3.9
+        with:
+          python-version: '3.9'
+      - name: Install tox
+        run: pip install tox tox-gh-actions tox-min-req
+      - name: Test Backend
+        run: tox
+
 
   build_wheels:
-    needs: test
+    needs: [test, test_min_req]
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest, macos-13]
+        os: [ ubuntu-latest, windows-latest, macos-latest, macos-13 ]
 
     steps:
       - uses: actions/checkout@v4
@@ -81,13 +95,13 @@ jobs:
           path: dist/*.tar.gz
 
   upload_pypi:
-    needs: [build_wheels, build_sdist]
+    needs: [ build_wheels, build_sdist ]
     runs-on: ubuntu-latest
     environment:
       name: pypi
       url: https://pypi.org/p/PartSegCore-compiled-backend
     permissions:
-        id-token: write  # IMPORTANT: mandatory for trusted publishing
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
     # upload to PyPI on every tag starting with 'v'
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
     # alternatively, to publish when a GitHub Release is created, use the following rule:

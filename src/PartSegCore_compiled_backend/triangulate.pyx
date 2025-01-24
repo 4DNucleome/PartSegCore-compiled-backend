@@ -13,8 +13,6 @@ from libcpp cimport bool
 from libcpp.unordered_set cimport unordered_set
 from libcpp.utility cimport pair
 from libcpp.vector cimport vector
-from libcpp.unordered_map cimport unordered_map
-from libcpp.algorithm cimport sort
 
 
 cdef extern from "triangulation/point.hpp" namespace "partsegcore::point":

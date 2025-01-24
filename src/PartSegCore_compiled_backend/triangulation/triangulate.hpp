@@ -7,6 +7,7 @@
 #include <memory>
 #include <set>
 #include <sstream>
+#include <stack>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -1286,6 +1287,32 @@ inline PathTriangulation triangulate_path_edge(
   }
   result.fix_triangle_orientation();
   return result;
+}
+
+std::vector<std::vector<point::Point>> split_polygon_on_repeated_edges(
+    std::vector<point::Point> polygon) {
+  std::unordered_map<point::Point, std::vector<size_t>> point_to_index;
+  std::stack<std::size_t> stack = {0};
+  for (std::size_t i = 0; i < polygon.size(); i++) {
+    point_to_index[polygon[i]].emplace_back(i);
+  }
+  if (point_to_index.size() == polygon.size()) {
+    // no repeated points
+    return {polygon};
+  }
+  std::vector<std::vector<point::Point>> new_polygons_list;
+  new_polygons_list.push_back({});
+  for (std::size_t i = 0; i < polygon.size(); i++) {
+    auto &point = polygon[i];
+    if (point_to_index[point].size() == 1) {
+      new_polygons_list[stack.top()].push_back(point);
+    } else {
+      new_polygons_list[stack.top()].push_back(point);
+      if stack
+        .push(new_polygons_list.size());
+      new_polygons_list.push_back({});
+    }
+  }
 }
 
 }  // namespace partsegcore::triangulation

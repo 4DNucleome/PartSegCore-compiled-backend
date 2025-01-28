@@ -673,7 +673,9 @@ def test_split_polygon_on_repeated_edges_py_no_split():
 
 
 def test_split_polygon_on_repeated_edges_py_square_in_square():
-    res = split_polygon_on_repeated_edges_py()
+    res = split_polygon_on_repeated_edges_py(
+        [[0, 0], [0, 5], [1, 5], [1, 1], [9, 1], [9, 9], [1, 9], [1, 5], [0, 5], [0, 10], [10, 10], [10, 0]]
+    )
     assert len(res) == 2
     assert len(res[0]) == 5
     assert len(res[1]) == 5

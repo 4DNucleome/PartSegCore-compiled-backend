@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <map>
 #include <memory>  // memory header is required on linux, and not on macos
-#include <queue>
 #include <set>
 #include <sstream>
 #include <unordered_map>
@@ -1288,12 +1287,22 @@ inline PathTriangulation triangulate_path_edge(
   return result;
 }
 
+/**
+ * Represents an edge in a graph structure used for polygon processing.
+ * Each edge contains a reference to its opposite point and a flag to track
+ * if it has been visited during graph traversal.
+ */
 struct GraphEdge {
   point::Point opposite_point;
   bool visited;
   explicit GraphEdge(point::Point p) : opposite_point(p), visited(false) {}
 };
 
+/**
+ * Represents a node in a graph structure used for polygon processing.
+ * Each node contains its edges, a sub-index for traversal tracking,
+ * and a visited flag for graph traversal.
+ */
 struct GraphNode {
   std::vector<GraphEdge> edges;
   std::size_t sub_index;
@@ -1302,10 +1311,23 @@ struct GraphNode {
   GraphNode() : sub_index(0), visited(false) {}
 };
 
+/**
+ * Splits a polygon into sub-polygons by identifying and removing edges that
+ * appear more than once in the polygon's edge list.
+ *
+ * This function processes the given polygon and separates it wherever an
+ * edge is repeated. It generates a collection of sub-polygons such that each
+ * resulting sub-polygon contains unique edges. This operation can help to
+ * resolve ambiguities in complex or self-intersecting polygons.
+ *
+ * @param polygon The input polygon represented as a list of edges.
+ *
+ * @return A vector of sub-polygons, where each sub-polygon is free of repeated
+ * edges.
+ */
 inline std::vector<std::vector<point::Point>> split_polygon_on_repeated_edges(
     const std::vector<point::Point> &polygon) {
   auto edges_dedup = calc_dedup_edges({polygon});
-  std::vector<bool> visited(polygon.size(), false);
   std::vector<std::vector<point::Point>> result;
   point::Segment segment;
 

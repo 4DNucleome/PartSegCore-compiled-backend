@@ -10,6 +10,7 @@ from PartSegCore_compiled_backend.triangulate import (
     on_segment,
     orientation,
     segment_left_to_right_comparator,
+    split_polygon_on_repeated_edges_py,
     triangle_convex_polygon,
     triangulate_monotone_polygon_py,
     triangulate_path_edge_numpy,
@@ -661,3 +662,30 @@ def test_triangulate_polygon_with_edge_numpy_li(polygon, expected):
     triangles_ = _renumerate_triangles(polygon, points, triangles)
     assert triangles_ == expected
     assert centers.shape == offsets.shape
+
+
+def test_split_polygon_on_repeated_edges_py_no_split():
+    res = split_polygon_on_repeated_edges_py([[0, 0], [0, 1], [1, 1], [1, 0]])
+    assert len(res) == 1
+    assert len(res[0]) == 4
+    idx = res[0].index((0, 0))
+    assert res[0][idx:] + res[0][:idx] == [(0, 0), (0, 1), (1, 1), (1, 0)]
+
+
+def test_split_polygon_on_repeated_edges_py_square_in_square():
+    res = split_polygon_on_repeated_edges_py()
+    assert len(res) == 2
+    assert len(res[0]) == 5
+    assert len(res[1]) == 5
+    # idx = res[0].index((0, 0))
+    # assert res[0][idx:] + res[0][:idx] == [(0, 0), (0, 1), (1, 1), (1, 0)]
+
+
+@pytest.mark.parametrize(('split_edges', 'triangles'), [(True, 20), (False, 24)])
+def test_splitting_edges(split_edges, triangles):
+    polygon = np.array(
+        [[0, 0], [0, 5], [1, 5], [1, 1], [9, 1], [9, 9], [1, 9], [1, 5], [0, 5], [0, 10], [10, 10], [10, 0]],
+        dtype=np.float32,
+    )
+    triangles_ = triangulate_polygon_with_edge_numpy_li([polygon], split_edges=split_edges)[1][2]
+    assert len(triangles_) == triangles

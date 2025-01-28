@@ -2,12 +2,10 @@
 #define PARTSEGCORE_TRIANGULATE_H
 
 #include <algorithm>
-#include <cmath>
 #include <map>
-#include <memory>
+#include <queue>
 #include <set>
 #include <sstream>
-#include <stack>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -1289,30 +1287,62 @@ inline PathTriangulation triangulate_path_edge(
   return result;
 }
 
-std::vector<std::vector<point::Point>> split_polygon_on_repeated_edges(
-    std::vector<point::Point> polygon) {
-  std::unordered_map<point::Point, std::vector<size_t>> point_to_index;
-  std::stack<std::size_t> stack = {0};
-  for (std::size_t i = 0; i < polygon.size(); i++) {
-    point_to_index[polygon[i]].emplace_back(i);
-  }
-  if (point_to_index.size() == polygon.size()) {
-    // no repeated points
-    return {polygon};
-  }
-  std::vector<std::vector<point::Point>> new_polygons_list;
-  new_polygons_list.push_back({});
-  for (std::size_t i = 0; i < polygon.size(); i++) {
-    auto &point = polygon[i];
-    if (point_to_index[point].size() == 1) {
-      new_polygons_list[stack.top()].push_back(point);
-    } else {
-      new_polygons_list[stack.top()].push_back(point);
-      if stack
-        .push(new_polygons_list.size());
-      new_polygons_list.push_back({});
+struct GraphEdge {
+  point::Point opposite_point;
+  bool visited;
+  explicit GraphEdge(point::Point p) : opposite_point(p), visited(false) {}
+};
+
+struct GraphNode {
+  std::vector<GraphEdge> edges;
+  std::size_t sub_index;
+  bool visited;
+
+  GraphNode() : sub_index(0), visited(false) {}
+};
+
+inline std::vector<std::vector<point::Point>> split_polygon_on_repeated_edges(
+    const std::vector<point::Point> &polygon) {
+  auto edges_dedup = calc_dedup_edges({polygon});
+  std::vector<bool> visited(polygon.size(), false);
+  std::vector<std::vector<point::Point>> result;
+  point::Segment segment;
+
+  std::unordered_set edges_set(edges_dedup.begin(), edges_dedup.end());
+  std::unordered_map<point::Point, GraphNode> edges_map;
+  for (std::size_t i = 0; i < polygon.size() - 1; i++) {
+    segment = {polygon[i], polygon[(i + 1)]};
+    if (edges_set.count(segment) > 0) {
+      edges_map[polygon[i]].edges.emplace_back(polygon[i + 1]);
     }
   }
+  segment = {polygon.back(), polygon.front()};
+  if (edges_set.count(segment) > 0) {
+    edges_map[polygon.back()].edges.emplace_back(polygon.front());
+  }
+  for (auto &edge : edges_map) {
+    if (edge.second.visited) {
+      continue;
+    }
+    edge.second.visited = true;
+    std::vector<point::Point> new_polygon;
+    new_polygon.push_back(edge.first);
+    auto *current_edge = &edge.second;
+    while (current_edge->sub_index < current_edge->edges.size()) {
+      auto *prev = current_edge;
+      auto next_point =
+          current_edge->edges[current_edge->sub_index].opposite_point;
+      current_edge = &edges_map.at(next_point);
+      prev->sub_index++;
+      current_edge->visited = true;
+      new_polygon.push_back(next_point);
+    }
+    while (new_polygon.front() == new_polygon.back()) {
+      new_polygon.pop_back();
+    }
+    result.push_back(new_polygon);
+  }
+  return result;
 }
 
 }  // namespace partsegcore::triangulation

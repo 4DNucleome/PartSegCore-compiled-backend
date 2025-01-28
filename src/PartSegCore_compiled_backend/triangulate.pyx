@@ -94,6 +94,7 @@ cdef extern from "triangulation/triangulate.hpp" namespace "partsegcore::triangu
     pair[vector[Triangle], vector[Point]] triangulate_polygon_face(const vector[Point]& polygon) except + nogil
     pair[vector[Triangle], vector[Point]] triangulate_polygon_face(const vector[vector[Point]]& polygon_list) except + nogil
     PathTriangulation triangulate_path_edge(const vector[Point]& path, bool closed, float limit, bool bevel) except + nogil
+    vector[vector[Point]] split_polygon_on_repeated_edges(const vector[Point]& polygon) except + nogil
 
 
 ctypedef fused float_types:
@@ -427,10 +428,10 @@ def triangulate_path_edge_numpy(cnp.ndarray[cnp.float32_t, ndim=2] path, bool cl
     )
 
 
-def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray]) -> tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray, np.ndarray]]:
+def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray], split_edges: bool=False) -> tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray, np.ndarray]]:
     """ Triangulate polygon"""
     cdef vector[Point] polygon_vector
-    cdef vector[vector[Point]] polygon_vector_list
+    cdef vector[vector[Point]] polygon_vector_list, edge_split_list
     cdef Point p1, p2
     cdef pair[vector[Triangle], vector[Point]] triangulation_result
     cdef vector[PathTriangulation] edge_result
@@ -455,8 +456,14 @@ def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray]) -> tupl
         if polygon_vector.size() > 1 and polygon_vector.front() == polygon_vector.back():
             polygon_vector.pop_back()
         polygon_vector_list.push_back(polygon_vector)
-        with cython.nogil:
-            edge_result.push_back(triangulate_path_edge(polygon_vector, True, 3.0, False))
+        if split_edges:
+            with cython.nogil:
+                edge_split_list = split_polygon_on_repeated_edges(polygon_vector)
+                for edge_li in edge_split_list:
+                    edge_result.push_back(triangulate_path_edge(edge_li, True, 3.0, False))
+        else:
+            with cython.nogil:
+                edge_result.push_back(triangulate_path_edge(polygon_vector, True, 3.0, False))
 
     with cython.nogil:
         triangulation_result = triangulate_polygon_face(polygon_vector_list)
@@ -509,3 +516,20 @@ def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray]) -> tupl
         edge_triangles,
     )
     )
+
+
+def split_polygon_on_repeated_edges_py(polygon: Sequence[Sequence[float]]) -> list[list[tuple[float, float]]]:
+    """ Split polygon on repeated edges"""
+    cdef vector[Point] polygon_vector
+    cdef vector[vector[Point]] result
+    cdef Point p1, p2
+
+    polygon_vector.reserve(len(polygon))
+    for point in polygon:
+        polygon_vector.push_back(Point(point[0], point[1]))
+
+    result = split_polygon_on_repeated_edges(polygon_vector)
+    return [
+        [(point.x, point.y) for point in polygon_vector]
+        for polygon_vector in result
+    ]

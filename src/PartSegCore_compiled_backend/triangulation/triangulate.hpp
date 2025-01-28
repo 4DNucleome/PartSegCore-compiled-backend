@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <map>
+#include <memory>  // memory header is required on linux, and not on macos
 #include <queue>
 #include <set>
 #include <sstream>

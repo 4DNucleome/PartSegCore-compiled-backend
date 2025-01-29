@@ -436,6 +436,7 @@ def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray], split_e
     cdef pair[vector[Triangle], vector[Point]] triangulation_result
     cdef vector[PathTriangulation] edge_result
     cdef cnp.ndarray[cnp.uint32_t, ndim=2] triangles, edge_triangles
+    cdef size_t triangle_count = 0
 
     cdef cnp.ndarray[cnp.float32_t, ndim=2] points, edge_offsets, edges_centers, polygon
     cdef size_t i, j, len_path, edge_triangle_count, edge_center_count, edge_triangle_index, edge_center_index
@@ -475,7 +476,7 @@ def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray], split_e
         triangles[i, 1] = triangulation_result.first[i].y
         triangles[i, 2] = triangulation_result.first[i].z
 
-    points =np.empty((triangulation_result.second.size(), 2), dtype=np.float32)
+    points = np.empty((triangulation_result.second.size(), 2), dtype=np.float32)
     for i in range(triangulation_result.second.size()):
         points[i, 0] = triangulation_result.second[i].x
         points[i, 1] = triangulation_result.second[i].y
@@ -494,10 +495,11 @@ def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray], split_e
     edge_center_index = 0
     for i in range(edge_result.size()):
         for j in range(edge_result[i].triangles.size()):
-            edge_triangles[edge_triangle_index, 0] = edge_result[i].triangles[j].x
-            edge_triangles[edge_triangle_index, 1] = edge_result[i].triangles[j].y
-            edge_triangles[edge_triangle_index, 2] = edge_result[i].triangles[j].z
+            edge_triangles[edge_triangle_index, 0] = edge_result[i].triangles[j].x + triangle_count
+            edge_triangles[edge_triangle_index, 1] = edge_result[i].triangles[j].y + triangle_count
+            edge_triangles[edge_triangle_index, 2] = edge_result[i].triangles[j].z + triangle_count
             edge_triangle_index += 1
+        triangle_count += edge_result[i].centers.size()
 
         for j in range(edge_result[i].centers.size()):
             edges_centers[edge_center_index, 0] = edge_result[i].centers[j].x

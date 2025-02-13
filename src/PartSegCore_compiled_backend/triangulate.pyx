@@ -13,8 +13,6 @@ from libcpp cimport bool
 from libcpp.unordered_set cimport unordered_set
 from libcpp.utility cimport pair
 from libcpp.vector cimport vector
-from libcpp.unordered_map cimport unordered_map
-from libcpp.algorithm cimport sort
 
 
 cdef extern from "triangulation/point.hpp" namespace "partsegcore::point":
@@ -96,6 +94,7 @@ cdef extern from "triangulation/triangulate.hpp" namespace "partsegcore::triangu
     pair[vector[Triangle], vector[Point]] triangulate_polygon_face(const vector[Point]& polygon) except + nogil
     pair[vector[Triangle], vector[Point]] triangulate_polygon_face(const vector[vector[Point]]& polygon_list) except + nogil
     PathTriangulation triangulate_path_edge(const vector[Point]& path, bool closed, float limit, bool bevel) except + nogil
+    vector[vector[Point]] split_polygon_on_repeated_edges(const vector[Point]& polygon) except + nogil
 
 
 ctypedef fused float_types:
@@ -429,14 +428,15 @@ def triangulate_path_edge_numpy(cnp.ndarray[cnp.float32_t, ndim=2] path, bool cl
     )
 
 
-def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray]) -> tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray, np.ndarray]]:
+def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray], split_edges: bool=False) -> tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray, np.ndarray]]:
     """ Triangulate polygon"""
     cdef vector[Point] polygon_vector
-    cdef vector[vector[Point]] polygon_vector_list
+    cdef vector[vector[Point]] polygon_vector_list, edge_split_list
     cdef Point p1, p2
     cdef pair[vector[Triangle], vector[Point]] triangulation_result
     cdef vector[PathTriangulation] edge_result
     cdef cnp.ndarray[cnp.uint32_t, ndim=2] triangles, edge_triangles
+    cdef size_t triangle_count = 0
 
     cdef cnp.ndarray[cnp.float32_t, ndim=2] points, edge_offsets, edges_centers, polygon
     cdef size_t i, j, len_path, edge_triangle_count, edge_center_count, edge_triangle_index, edge_center_index
@@ -457,8 +457,14 @@ def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray]) -> tupl
         if polygon_vector.size() > 1 and polygon_vector.front() == polygon_vector.back():
             polygon_vector.pop_back()
         polygon_vector_list.push_back(polygon_vector)
-        with cython.nogil:
-            edge_result.push_back(triangulate_path_edge(polygon_vector, True, 3.0, False))
+        if split_edges:
+            with cython.nogil:
+                edge_split_list = split_polygon_on_repeated_edges(polygon_vector)
+                for edge_li in edge_split_list:
+                    edge_result.push_back(triangulate_path_edge(edge_li, True, 3.0, False))
+        else:
+            with cython.nogil:
+                edge_result.push_back(triangulate_path_edge(polygon_vector, True, 3.0, False))
 
     with cython.nogil:
         triangulation_result = triangulate_polygon_face(polygon_vector_list)
@@ -470,7 +476,7 @@ def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray]) -> tupl
         triangles[i, 1] = triangulation_result.first[i].y
         triangles[i, 2] = triangulation_result.first[i].z
 
-    points =np.empty((triangulation_result.second.size(), 2), dtype=np.float32)
+    points = np.empty((triangulation_result.second.size(), 2), dtype=np.float32)
     for i in range(triangulation_result.second.size()):
         points[i, 0] = triangulation_result.second[i].x
         points[i, 1] = triangulation_result.second[i].y
@@ -489,10 +495,11 @@ def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray]) -> tupl
     edge_center_index = 0
     for i in range(edge_result.size()):
         for j in range(edge_result[i].triangles.size()):
-            edge_triangles[edge_triangle_index, 0] = edge_result[i].triangles[j].x
-            edge_triangles[edge_triangle_index, 1] = edge_result[i].triangles[j].y
-            edge_triangles[edge_triangle_index, 2] = edge_result[i].triangles[j].z
+            edge_triangles[edge_triangle_index, 0] = edge_result[i].triangles[j].x + triangle_count
+            edge_triangles[edge_triangle_index, 1] = edge_result[i].triangles[j].y + triangle_count
+            edge_triangles[edge_triangle_index, 2] = edge_result[i].triangles[j].z + triangle_count
             edge_triangle_index += 1
+        triangle_count += edge_result[i].centers.size()
 
         for j in range(edge_result[i].centers.size()):
             edges_centers[edge_center_index, 0] = edge_result[i].centers[j].x
@@ -511,3 +518,20 @@ def triangulate_polygon_with_edge_numpy_li(polygon_li: list[np.ndarray]) -> tupl
         edge_triangles,
     )
     )
+
+
+def split_polygon_on_repeated_edges_py(polygon: Sequence[Sequence[float]]) -> list[list[tuple[float, float]]]:
+    """ Split polygon on repeated edges"""
+    cdef vector[Point] polygon_vector
+    cdef vector[vector[Point]] result
+    cdef Point p1, p2
+
+    polygon_vector.reserve(len(polygon))
+    for point in polygon:
+        polygon_vector.push_back(Point(point[0], point[1]))
+
+    result = split_polygon_on_repeated_edges(polygon_vector)
+    return [
+        [(point.x, point.y) for point in polygon_vector]
+        for polygon_vector in result
+    ]

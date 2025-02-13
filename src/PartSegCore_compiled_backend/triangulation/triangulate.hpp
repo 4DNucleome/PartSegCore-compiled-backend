@@ -2,9 +2,8 @@
 #define PARTSEGCORE_TRIANGULATE_H
 
 #include <algorithm>
-#include <cmath>
 #include <map>
-#include <memory>
+#include <memory>  // memory header is required on linux, and not on macos
 #include <set>
 #include <sstream>
 #include <unordered_map>
@@ -1285,6 +1284,87 @@ inline PathTriangulation triangulate_path_edge(
     result.offsets.push_back(-result.offsets.back());
   }
   result.fix_triangle_orientation();
+  return result;
+}
+
+/**
+ * Represents an edge in a graph structure used for polygon processing.
+ * Each edge contains a reference to its opposite point and a flag to track
+ * if it has been visited during graph traversal.
+ */
+struct GraphEdge {
+  point::Point opposite_point;
+  bool visited;
+  explicit GraphEdge(point::Point p) : opposite_point(p), visited(false) {}
+};
+
+/**
+ * Represents a node in a graph structure used for polygon processing.
+ * Each node contains its edges, a sub-index for traversal tracking,
+ * and a visited flag for graph traversal.
+ */
+struct GraphNode {
+  std::vector<GraphEdge> edges;
+  std::size_t sub_index;
+  bool visited;
+
+  GraphNode() : sub_index(0), visited(false) {}
+};
+
+/**
+ * Splits a polygon into sub-polygons by identifying and removing edges that
+ * appear more than once in the polygon's edge list.
+ *
+ * This function processes the given polygon and separates it wherever an
+ * edge is repeated. It generates a collection of sub-polygons such that each
+ * resulting sub-polygon contains unique edges. This operation can help to
+ * resolve ambiguities in complex or self-intersecting polygons.
+ *
+ * @param polygon The input polygon represented as a list of edges.
+ *
+ * @return A vector of sub-polygons, where each sub-polygon is free of repeated
+ * edges.
+ */
+inline std::vector<std::vector<point::Point>> split_polygon_on_repeated_edges(
+    const std::vector<point::Point> &polygon) {
+  auto edges_dedup = calc_dedup_edges({polygon});
+  std::vector<std::vector<point::Point>> result;
+  point::Segment segment;
+
+  std::unordered_set edges_set(edges_dedup.begin(), edges_dedup.end());
+  std::unordered_map<point::Point, GraphNode> edges_map;
+  for (std::size_t i = 0; i < polygon.size() - 1; i++) {
+    segment = {polygon[i], polygon[(i + 1)]};
+    if (edges_set.count(segment) > 0) {
+      edges_map[polygon[i]].edges.emplace_back(polygon[i + 1]);
+    }
+  }
+  segment = {polygon.back(), polygon.front()};
+  if (edges_set.count(segment) > 0) {
+    edges_map[polygon.back()].edges.emplace_back(polygon.front());
+  }
+  for (auto &edge : edges_map) {
+    if (edge.second.visited) {
+      continue;
+    }
+    edge.second.visited = true;
+    std::vector<point::Point> new_polygon;
+    new_polygon.push_back(edge.first);
+    auto *current_edge = &edge.second;
+    while (current_edge->sub_index < current_edge->edges.size()) {
+      auto *prev = current_edge;
+      auto next_point =
+          current_edge->edges[current_edge->sub_index].opposite_point;
+      current_edge = &edges_map.at(next_point);
+      prev->sub_index++;
+      current_edge->visited = true;
+      new_polygon.push_back(next_point);
+    }
+    while (new_polygon.front() == new_polygon.back()) {
+      new_polygon.pop_back();
+    }
+    result.push_back(new_polygon);
+  }
   return result;
 }
 

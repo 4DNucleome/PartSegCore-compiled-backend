@@ -890,6 +890,7 @@ inline std::vector<point::Segment> calc_dedup_edges(
       }
     }
     if (polygon.back() == polygon.front()) continue;
+    if (polygon.size() == 2) continue;
     edge = point::Segment(polygon.back(), polygon.front());
     if (edges_set.count(edge) == 0) {
       edges_set.insert(edge);

@@ -1320,6 +1320,9 @@ struct GraphNode {
  * resulting sub-polygon contains unique edges. This operation can help to
  * resolve ambiguities in complex or self-intersecting polygons.
  *
+ * Note: Polygons with exactly 2 points are treated as single line segments and
+ * are not processed for edge deduplication between their first and last points.
+ *
  * @param polygon The input polygon represented as a list of edges.
  *
  * @return A vector of sub-polygons, where each sub-polygon is free of repeated
@@ -1327,6 +1330,7 @@ struct GraphNode {
  */
 inline std::vector<std::vector<point::Point>> split_polygon_on_repeated_edges(
     const std::vector<point::Point> &polygon) {
+  if (polygon.size() < 3) return {polygon};
   auto edges_dedup = calc_dedup_edges({polygon});
   std::vector<std::vector<point::Point>> result;
   point::Segment segment;

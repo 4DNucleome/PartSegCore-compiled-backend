@@ -613,7 +613,7 @@ class MSO {
         queue_copy.pop();
         position = calculate_position(coord, dimension_size);
         dist_val = distances_from_components[position];
-        position_global = calculate_position(coord + this->lower_bounqd,
+        position_global = calculate_position(coord + this->lower_bound,
                                              global_dimension_size);
         val = this->mu_array[position_global];
         // std::cerr << "Coord " << coord <<  " val " << val << std::endl;

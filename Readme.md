@@ -32,6 +32,31 @@ pip install .
 As currently there is no wheel for macOS ARM64
 it is required to build package from source.
 
+## Development in Clion
+
+For install python build dependencies run
+
+```bash
+pip install scikit-build-core cython cython-cmake numpy setuptools-scm
+```
+
+Then install in development mode:
+
+```bash
+pip install --no-build-isolation --config-settings=editable.rebuild=true\
+ -Cbuild-dir=build -ve .
+```
+
+vendor `FindCython.cmake` from cython-cmake to `cmake` directory.
+
+```bash
+mkdir cmake && cython-cmake vendor cmake
+```
+
+Set `CUSTOM_MODULE_PATH` environment variable to full path to cmake directory.
+
+Set it in Settings → Build, Execution, Deployment → CMake → Environment
+
 ## Cite as
 
 Bokota, G., Sroka, J., Basu, S. et al. PartSeg: a tool for quantitative feature extraction

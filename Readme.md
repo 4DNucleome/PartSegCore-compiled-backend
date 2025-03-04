@@ -34,13 +34,13 @@ it is required to build package from source.
 
 ## Development in Clion
 
-For install python build dependencies run
+To install Python build dependencies, run:
 
 ```bash
 pip install scikit-build-core cython cython-cmake numpy setuptools-scm
 ```
 
-Then install in development mode:
+Then, install the package in development mode:
 
 ```bash
 pip install --no-build-isolation --config-settings=editable.rebuild=true\

@@ -580,8 +580,8 @@ class MSO {
       queue_copy = queue;
       // std::cerr << "# Queue1 " << queue.get_size() << " Queue2 " <<
       // queue_copy.get_size() << std::endl;
-      // Calculate area which can be reached by monoticall path (firs part of
-      // Morphological neighborhood)
+      // Calculate area which can be reached by monotonically path (first part
+      // of Morphological neighborhood)
       while (!queue.empty()) {
         coord = queue.front();
         queue.pop();

@@ -2,6 +2,7 @@
 #define PARTSEGCORE_TRIANGULATE_H
 
 #include <algorithm>
+#include <cmath>
 #include <map>
 #include <memory>  // memory header is required on linux, and not on macos
 #include <set>
@@ -616,10 +617,25 @@ struct MonotonePolygonBuilder {
  */
 inline bool _is_convex(const std::vector<point::Point> &polygon) {
   int orientation = 0;
-  int triangle_orientation;
+  intersection::Orientation triangle_orientation;
+  point::Point centroid = point::centroid(polygon);
+  double start_angle =
+      std::atan2(polygon[0].y - centroid.y, polygon[0].x - centroid.x);
+  double prev_angle = 0;
   for (std::size_t i = 0; i < polygon.size() - 2; i++) {
     triangle_orientation =
         intersection::_orientation(polygon[i], polygon[i + 1], polygon[i + 2]);
+    double angle = std::atan2(polygon[i + 1].y - centroid.y,
+                              polygon[i + 1].x - centroid.x) -
+                   start_angle;
+    if (angle < 0) {
+      angle += 2 * M_PI;
+    }
+    if (angle < prev_angle) {
+      return false;
+    } else {
+      prev_angle = angle;
+    }
     if (triangle_orientation == 0) continue;
     if (orientation == 0)
       orientation = triangle_orientation;

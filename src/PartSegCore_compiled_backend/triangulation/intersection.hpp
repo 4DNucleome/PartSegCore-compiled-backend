@@ -112,6 +112,12 @@ inline int64_t double_as_hex(double d) {
   return result;
 }
 
+enum Orientation {
+  COLLINEAR = 0,
+  CLOCKWISE = 1,
+  COUNTERCLOCKWISE = 2,
+};
+
 /**
  * Determines the orientation of the triplet (p, q, r).
  *
@@ -123,8 +129,8 @@ inline int64_t double_as_hex(double d) {
  *         1 if the triplet (p, q, r) is in a clockwise orientation.
  *         2 if the triplet (p, q, r) is in a counterclockwise orientation.
  */
-inline int _orientation(const point::Point &p, const point::Point &q,
-                        const point::Point &r) {
+inline Orientation _orientation(const point::Point &p, const point::Point &q,
+                                const point::Point &r) {
   double val1 = ((q.y - p.y) * (r.x - q.x));
   double val2 = ((r.y - q.y) * (q.x - p.x));
   // This commented code if for debugging purposes of differences between macOS
@@ -142,8 +148,8 @@ inline int _orientation(const point::Point &p, const point::Point &q,
   // }
   // Instead of using classical equation, we need to use two variables
   // to handle problem with strange behavior on macOS.
-  if (val1 == val2) return 0;
-  return (val1 > val2) ? 1 : 2;
+  if (val1 == val2) return Orientation::COLLINEAR;
+  return (val1 > val2) ? Orientation::CLOCKWISE : Orientation::COUNTERCLOCKWISE;
 }
 
 /**

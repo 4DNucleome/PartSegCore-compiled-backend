@@ -208,6 +208,7 @@ def test_triangle_convex_polygon():
     ],
 )
 def test_triangulate_polygon_py_convex(polygon, expected):
+    assert is_convex(polygon)
     assert triangulate_polygon_py(polygon)[0] == expected
 
 
@@ -691,3 +692,50 @@ def test_splitting_edges(split_edges, triangles):
     )
     triangles_ = triangulate_polygon_with_edge_numpy_li([polygon], split_edges=split_edges)[1][2]
     assert len(triangles_) == triangles
+
+
+def generate_regular_polygon(n, reverse, radius=1):
+    angles = np.linspace(0, 2 * np.pi, n, endpoint=False)
+    if reverse:
+        angles = angles[::-1]
+    return np.column_stack((radius * np.cos(angles), radius * np.sin(angles)))
+
+
+def pentagram(reverse):
+    radius = 10
+    n = 5
+    angles = np.linspace(0, 4 * np.pi, n, endpoint=False)
+    if reverse:
+        angles = angles[::-1]
+    return np.column_stack((radius * np.cos(angles), radius * np.sin(angles)))
+
+
+def rotation_matrix(angle):
+    return np.array(
+        [
+            [np.cos(np.radians(angle)), -np.sin(np.radians(angle))],
+            [np.sin(np.radians(angle)), np.cos(np.radians(angle))],
+        ]
+    )
+
+
+ANGLES = [0, 5, 75, 95, 355]
+
+
+@pytest.mark.parametrize('angle', ANGLES, ids=str)
+@pytest.mark.parametrize('reverse', [False, True])
+def test_is_convex_self_intersection(angle, reverse):
+    p = pentagram(reverse)
+    rot = rotation_matrix(angle)
+    data = np.dot(p, rot)
+    assert not is_convex(data)
+
+
+@pytest.mark.parametrize('angle', ANGLES, ids=str)
+@pytest.mark.parametrize('n_vertex', [3, 4, 7, 12, 15, 20])
+@pytest.mark.parametrize('reverse', [False, True])
+def test_is_convex2(angle, n_vertex, reverse):
+    poly = generate_regular_polygon(n_vertex, reverse=reverse)
+    rot = rotation_matrix(angle)
+    rotated_poly = np.dot(poly, rot)
+    assert is_convex(rotated_poly)

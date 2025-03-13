@@ -209,6 +209,9 @@ struct Segment {
   };
 };
 Point centroid(const std::vector<Point> &point_list) {
+  if (point_list.empty()) {
+    return {0, 0};
+  }
   Point res(0, 0);
   for (auto &point : point_list) {
     res.x += point.x;

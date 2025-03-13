@@ -208,6 +208,19 @@ struct Segment {
     }
   };
 };
+Point centroid(const std::vector<Point> &point_list) {
+  if (point_list.empty()) {
+    return {0, 0};
+  }
+  Point res(0, 0);
+  for (auto &point : point_list) {
+    res.x += point.x;
+    res.y += point.y;
+  }
+  res.x /= float(point_list.size());
+  res.y /= float(point_list.size());
+  return res;
+}
 }  // namespace partsegcore::point
 
 // overload of hash function for

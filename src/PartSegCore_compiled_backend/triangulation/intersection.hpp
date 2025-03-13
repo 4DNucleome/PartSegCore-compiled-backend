@@ -112,6 +112,12 @@ inline int64_t double_as_hex(double d) {
   return result;
 }
 
+enum Orientation {
+  COLLINEAR = 0,
+  CLOCKWISE = 1,
+  COUNTERCLOCKWISE = 2,
+};
+
 /**
  * Determines the orientation of the triplet (p, q, r).
  *
@@ -119,12 +125,14 @@ inline int64_t double_as_hex(double d) {
  * @param q The second point.
  * @param r The third point.
  *
- * @return 0 if p, q and r are collinear.
- *         1 if the triplet (p, q, r) is in a clockwise orientation.
- *         2 if the triplet (p, q, r) is in a counterclockwise orientation.
+ * @return Orientation::COLLINEAR if p, q and r are collinear.
+ *         Orientation::CLOCKWISE if the triplet (p, q, r) is in a clockwise
+ *         orientation.
+ *         Orientation::COUNTERCLOCKWISE if the triplet (p, q, r) is in a
+ *         counterclockwise orientation.
  */
-inline int _orientation(const point::Point &p, const point::Point &q,
-                        const point::Point &r) {
+inline Orientation _orientation(const point::Point &p, const point::Point &q,
+                                const point::Point &r) {
   double val1 = ((q.y - p.y) * (r.x - q.x));
   double val2 = ((r.y - q.y) * (q.x - p.x));
   // This commented code if for debugging purposes of differences between macOS
@@ -142,8 +150,8 @@ inline int _orientation(const point::Point &p, const point::Point &q,
   // }
   // Instead of using classical equation, we need to use two variables
   // to handle problem with strange behavior on macOS.
-  if (val1 == val2) return 0;
-  return (val1 > val2) ? 1 : 2;
+  if (val1 == val2) return Orientation::COLLINEAR;
+  return (val1 > val2) ? Orientation::CLOCKWISE : Orientation::COUNTERCLOCKWISE;
 }
 
 /**
@@ -163,17 +171,17 @@ inline bool _do_intersect(const point::Segment &s1, const point::Segment &s2) {
   const point::Point &p2 = s2.bottom;
   const point::Point &q2 = s2.top;
 
-  int o1 = _orientation(p1, q1, p2);
-  int o2 = _orientation(p1, q1, q2);
-  int o3 = _orientation(p2, q2, p1);
-  int o4 = _orientation(p2, q2, q1);
+  Orientation o1 = _orientation(p1, q1, p2);
+  Orientation o2 = _orientation(p1, q1, q2);
+  Orientation o3 = _orientation(p2, q2, p1);
+  Orientation o4 = _orientation(p2, q2, q1);
 
   if (o1 != o2 && o3 != o4) return true;
 
-  if (o1 == 0 && _on_segment(p1, p2, q1)) return true;
-  if (o2 == 0 && _on_segment(p1, q2, q1)) return true;
-  if (o3 == 0 && _on_segment(p2, p1, q2)) return true;
-  if (o4 == 0 && _on_segment(p2, q1, q2)) return true;
+  if (o1 == Orientation::COLLINEAR && _on_segment(p1, p2, q1)) return true;
+  if (o2 == Orientation::COLLINEAR && _on_segment(p1, q2, q1)) return true;
+  if (o3 == Orientation::COLLINEAR && _on_segment(p2, p1, q2)) return true;
+  if (o4 == Orientation::COLLINEAR && _on_segment(p2, q1, q2)) return true;
 
   return false;
 }

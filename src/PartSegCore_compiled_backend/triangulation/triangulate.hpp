@@ -2,6 +2,7 @@
 #define PARTSEGCORE_TRIANGULATE_H
 
 #include <algorithm>
+#include <cmath>
 #include <map>
 #include <memory>  // memory header is required on linux, and not on macos
 #include <set>
@@ -602,6 +603,36 @@ struct MonotonePolygonBuilder {
   };
 };
 
+/*
+ * Check if the polygon, that all angles have the same orientation
+ * do not have self-intersections
+ *
+ * @param begin Iterator to the first point of the polygon
+ * @param end Iterator to the end of the polygon
+ * @param centroid Centroid of the polygon
+ *
+ * @return True if the polygon is simple, false otherwise
+ */
+template <typename Iterator>
+bool is_simple_polygon(Iterator begin, Iterator end, point::Point centroid) {
+  double start_angle = std::atan2(begin->y - centroid.y, begin->x - centroid.x);
+  double prev_angle = 0;
+  begin++;
+  for (; begin != end; begin++) {
+    double angle =
+        std::atan2(begin->y - centroid.y, begin->x - centroid.x) - start_angle;
+    if (angle < 0) {
+      angle += 2 * M_PI;
+    }
+    if (angle < prev_angle) {
+      return false;
+    } else {
+      prev_angle = angle;
+    }
+  }
+  return true;
+}
+
 /**
  * Checks if a given polygon is convex.
  *
@@ -615,26 +646,47 @@ struct MonotonePolygonBuilder {
  * @return True if the polygon is convex, false otherwise.
  */
 inline bool _is_convex(const std::vector<point::Point> &polygon) {
-  int orientation = 0;
-  int triangle_orientation;
-  for (std::size_t i = 0; i < polygon.size() - 2; i++) {
-    triangle_orientation =
-        intersection::_orientation(polygon[i], polygon[i + 1], polygon[i + 2]);
-    if (triangle_orientation == 0) continue;
-    if (orientation == 0)
+  if (polygon.size() < 3) return false;
+  if (polygon.size() == 3) return true;
+  intersection::Orientation orientation = intersection::Orientation::COLLINEAR;
+  intersection::Orientation triangle_orientation;
+  size_t idx = 0;
+  for (; idx < polygon.size() - 2; idx++) {
+    triangle_orientation = intersection::_orientation(
+        polygon[idx], polygon[(idx + 1)], polygon[(idx + 2)]);
+    if (triangle_orientation != intersection::Orientation::COLLINEAR) {
       orientation = triangle_orientation;
-    else if (orientation != triangle_orientation)
+      break;
+    }
+  }
+  if (orientation == intersection::Orientation::COLLINEAR) {
+    return false;
+  }
+  for (; idx < polygon.size() - 2; idx++) {
+    triangle_orientation = intersection::_orientation(
+        polygon[idx], polygon[(idx + 1)], polygon[(idx + 2)]);
+    if (triangle_orientation != 0 && triangle_orientation != orientation) {
       return false;
+    }
   }
   triangle_orientation = intersection::_orientation(
       polygon[polygon.size() - 2], polygon[polygon.size() - 1], polygon[0]);
-  if (triangle_orientation != 0 && triangle_orientation != orientation)
+  if (triangle_orientation != 0 && triangle_orientation != orientation) {
     return false;
+  }
   triangle_orientation = intersection::_orientation(polygon[polygon.size() - 1],
                                                     polygon[0], polygon[1]);
-  if (triangle_orientation != 0 && triangle_orientation != orientation)
+  if (triangle_orientation != 0 && triangle_orientation != orientation) {
     return false;
-  return true;
+  }
+
+  point::Point centroid = point::centroid(polygon);
+
+  if (orientation == intersection::Orientation::COUNTERCLOCKWISE) {
+    return is_simple_polygon(polygon.begin(), polygon.end(), centroid);
+  } else {
+    return is_simple_polygon(polygon.rbegin(), polygon.rend(), centroid);
+  }
 }
 
 /**

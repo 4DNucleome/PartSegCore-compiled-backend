@@ -714,6 +714,7 @@ def generate_self_intersecting_polygon(n: int, reverse: bool, radius: int = 1) -
 
 
 def rotation_matrix(angle: float) -> np.ndarray:
+    """Create a 2D rotation matrix for the given angle in degrees."""
     return np.array(
         [
             [np.cos(np.radians(angle)), -np.sin(np.radians(angle))],
@@ -738,7 +739,7 @@ def test_is_convex_self_intersection(angle, n_vertex, reverse):
 @pytest.mark.parametrize('angle', ANGLES, ids=str)
 @pytest.mark.parametrize('n_vertex', [3, 4, 7, 12, 15, 20])
 @pytest.mark.parametrize('reverse', [False, True])
-def test_is_convex2(angle, n_vertex, reverse):
+def test_is_convex_regular_polygon(angle, n_vertex, reverse):
     poly = generate_regular_polygon(n_vertex, reverse=reverse)
     rot = rotation_matrix(angle)
     rotated_poly = np.dot(poly, rot)

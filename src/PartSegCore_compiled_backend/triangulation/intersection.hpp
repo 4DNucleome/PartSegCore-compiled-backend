@@ -125,9 +125,11 @@ enum Orientation {
  * @param q The second point.
  * @param r The third point.
  *
- * @return 0 if p, q and r are collinear.
- *         1 if the triplet (p, q, r) is in a clockwise orientation.
- *         2 if the triplet (p, q, r) is in a counterclockwise orientation.
+ * @return Orientation::COLLINEAR if p, q and r are collinear.
+ *         Orientation::CLOCKWISE if the triplet (p, q, r) is in a clockwise
+ *         orientation.
+ *         Orientation::COUNTERCLOCKWISE if the triplet (p, q, r) is in a
+ *         counterclockwise orientation.
  */
 inline Orientation _orientation(const point::Point &p, const point::Point &q,
                                 const point::Point &r) {

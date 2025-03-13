@@ -171,17 +171,17 @@ inline bool _do_intersect(const point::Segment &s1, const point::Segment &s2) {
   const point::Point &p2 = s2.bottom;
   const point::Point &q2 = s2.top;
 
-  int o1 = _orientation(p1, q1, p2);
-  int o2 = _orientation(p1, q1, q2);
-  int o3 = _orientation(p2, q2, p1);
-  int o4 = _orientation(p2, q2, q1);
+  Orientation o1 = _orientation(p1, q1, p2);
+  Orientation o2 = _orientation(p1, q1, q2);
+  Orientation o3 = _orientation(p2, q2, p1);
+  Orientation o4 = _orientation(p2, q2, q1);
 
   if (o1 != o2 && o3 != o4) return true;
 
-  if (o1 == 0 && _on_segment(p1, p2, q1)) return true;
-  if (o2 == 0 && _on_segment(p1, q2, q1)) return true;
-  if (o3 == 0 && _on_segment(p2, p1, q2)) return true;
-  if (o4 == 0 && _on_segment(p2, q1, q2)) return true;
+  if (o1 == Orientation::COLLINEAR && _on_segment(p1, p2, q1)) return true;
+  if (o2 == Orientation::COLLINEAR && _on_segment(p1, q2, q1)) return true;
+  if (o3 == Orientation::COLLINEAR && _on_segment(p2, p1, q2)) return true;
+  if (o4 == Orientation::COLLINEAR && _on_segment(p2, q1, q2)) return true;
 
   return false;
 }

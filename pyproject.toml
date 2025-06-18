@@ -2,7 +2,7 @@
 # Minimum requirements for the build system to execute.
 requires = [
     "scikit-build-core",
-    "Cython<3.1", # see https://github.com/cython/cython/issues/6974
+    "Cython",
     "cython-cmake",
     "numpy>=2",
     "setuptools_scm[toml]>=8.1"

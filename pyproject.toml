@@ -1,6 +1,12 @@
 [build-system]
 # Minimum requirements for the build system to execute.
-requires = ["scikit-build-core", "Cython", "cython-cmake", "numpy>=2", "setuptools_scm[toml]>=8.1"]  # PEP 508 specifications.
+requires = [
+    "scikit-build-core",
+    "Cython",
+    "cython-cmake",
+    "numpy>=2",
+    "setuptools_scm[toml]>=8.1"
+]  # PEP 508 specifications.
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]

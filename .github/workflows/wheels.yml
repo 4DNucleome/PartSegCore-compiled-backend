@@ -29,6 +29,7 @@ jobs:
         name: Install Python ${{ matrix.python_version }}
         with:
           python-version: ${{ matrix.python_version }}
+          allow-prereleases: true
       - name: install openblas
         if: runner.os == 'macOS'
         run: brew install libomp

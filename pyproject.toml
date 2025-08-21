@@ -130,6 +130,7 @@ test-command = "pytest {project}/src/tests"
 test-extras = ["test"]
 skip = "pp*macos* pp31* pp39-manylinux*"
 build = "*64"
+enable = ["pypy", "cpython-freethreading"]
 
 [tool.cibuildwheel.macos]
 before-all = [

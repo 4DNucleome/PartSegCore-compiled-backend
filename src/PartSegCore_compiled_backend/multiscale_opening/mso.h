@@ -172,7 +172,7 @@ class ArrayLimits {
     }
     std::array<T, K> operator++(int) {
       const auto res = this->state;
-      ++this;
+      ++(*this);
       return res;
     }
     std::array<T, K> operator--() {
@@ -188,7 +188,7 @@ class ArrayLimits {
     }
     std::array<T, K> operator--(int) {
       const auto res = this->state;
-      --this;
+      --(*this);
       return res;
     }
     std::array<T, K> operator*() { return this->state; };

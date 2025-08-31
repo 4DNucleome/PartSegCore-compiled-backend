@@ -161,7 +161,7 @@ class ArrayLimits {
       this->state = state;
     }
     std::array<T, K> operator++() {
-      for (size_t i = K - 1; i >= 0; i--) {
+      for (size_t i = K - 1; i-- > 0;) {
         this->state[i]++;
         if (this->state[i] >= this->upper_bound[i])
           this->state[i] = this->lower_bound[i];
@@ -176,7 +176,7 @@ class ArrayLimits {
       return res;
     }
     std::array<T, K> operator--() {
-      for (size_t i = K - 1; i >= 0; i--) {
+      for (size_t i = K - 1; i-- > 0;) {
         if (this->state[i] > this->lower_bound[i]) {
           this->state[i]--;
           break;
@@ -335,7 +335,7 @@ class MSO {
                          size_t neigh_size) {
     this->neighbourhood =
         std::vector<int8_t>(neighbourhood, neighbourhood + 3 * neigh_size);
-    this->distances = std::vector<double>(distances, distances + neigh_size);
+    this->distances = std::vector<mu_type>(distances, distances + neigh_size);
     this->steps = 0;
   }
 

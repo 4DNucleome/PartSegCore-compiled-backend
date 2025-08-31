@@ -1,3 +1,7 @@
+
+#ifndef MSO_H
+#define MSO_H
+
 #include <array>
 #include <cmath>
 #include <cstdint>
@@ -44,8 +48,9 @@ template <size_t K>
 std::ostream& operator<<(std::ostream& stream,
                          const std::array<char, K>& array) {
   stream << "array(";
-  for (size_t i = 0; i < K - 1; i++) stream << (int)array[i] << ", ";
-  stream << (int)array[K - 1] << ")";
+  for (size_t i = 0; i < K - 1; i++)
+    stream << static_cast<int>(array[i]) << ", ";
+  stream << static_cast<int>(array[K - 1]) << ")";
   return stream;
 }
 
@@ -62,15 +67,15 @@ template <>
 std::ostream& operator<<(std::ostream& stream,
                          const std::vector<unsigned char>& array) {
   stream << "vector(";
-  for (size_t i = 0; i < array.size(); i++) stream << (int)array[i] << ", ";
-  stream << (int)array.back() << ")";
+  for (unsigned char i : array) stream << static_cast<int>(i) << ", ";
+  stream << static_cast<int>(array.back()) << ")";
   return stream;
 }
 std::ostream& operator<<(std::ostream& stream,
                          const std::vector<signed char>& array) {
   stream << "vector(";
-  for (size_t i = 0; i < array.size(); i++) stream << (int)array[i] << ", ";
-  stream << (int)array.back() << ")";
+  for (signed char i : array) stream << static_cast<int>(i) << ", ";
+  stream << static_cast<int>(array.back()) << ")";
   return stream;
 }
 #pragma GCC diagnostic pop
@@ -95,7 +100,7 @@ template <typename T, size_t K>
 std::array<size_t, K> calculate_dimension_size(const std::array<T, K>& size) {
   std::array<size_t, K> res;
   res[K - 1] = 1;
-  for (size_t i = K - 1; i > 0; i--) {
+  for (size_t i = K - 1; i > 0; --i) {
     res[i - 1] = res[i] * size[i];
   }
   return res;
@@ -120,7 +125,9 @@ class ArrayLimits {
   };
   ArrayLimits(std::array<T, K> lower_bound_, std::array<T, K> upper_bound_)
       : lower_bound(lower_bound_), upper_bound(upper_bound_) {};
-  ArrayLimits(std::array<T, K> upper_bound_) : upper_bound(upper_bound_) {
+
+  explicit ArrayLimits(std::array<T, K> upper_bound_)
+      : upper_bound(upper_bound_) {
     this->lower_bound.fill(0);
   };
   void set_bounds(std::array<T, K> lower_bound, std::array<T, K> upper_bound) {
@@ -162,7 +169,7 @@ class ArrayLimits {
     }
     std::array<T, K> operator++() {
       for (size_t i = K - 1; i-- > 0;) {
-        this->state[i]++;
+        ++this->state[i];
         if (this->state[i] >= this->upper_bound[i])
           this->state[i] = this->lower_bound[i];
         else
@@ -178,7 +185,7 @@ class ArrayLimits {
     std::array<T, K> operator--() {
       for (size_t i = K - 1; i-- > 0;) {
         if (this->state[i] > this->lower_bound[i]) {
-          this->state[i]--;
+          --this->state[i];
           break;
         } else {
           this->state[i] = this->upper_bound[i] - 1;
@@ -214,13 +221,16 @@ class ArrayLimits {
 
 namespace MSO {
 struct BadInitialization : public std::runtime_error {
-  BadInitialization(char const* const message) : std::runtime_error(message) {};
-  BadInitialization(const std::string& message)
+  explicit BadInitialization(char const* const message)
+      : std::runtime_error(message) {};
+  explicit BadInitialization(const std::string& message)
       : std::runtime_error(message) {};
 };
 struct BadArgumentSize : public std::runtime_error {
-  BadArgumentSize(char const* const message) : std::runtime_error(message) {};
-  BadArgumentSize(const std::string& message) : std::runtime_error(message) {};
+  explicit BadArgumentSize(char const* const message)
+      : std::runtime_error(message) {};
+  explicit BadArgumentSize(const std::string& message)
+      : std::runtime_error(message) {};
 };
 
 template <typename T, typename M = double, size_t N = 3>
@@ -255,8 +265,8 @@ class MSO {
 
   void set_use_background(bool val) { this->use_background = val; }
 
-  void set_components_num(T components_num) {
-    this->components_num = components_num;
+  void set_components_num(T components_num_) {
+    this->components_num = components_num_;
   }
 
   void erase_data() {
@@ -265,18 +275,20 @@ class MSO {
     this->size.fill(0);
   }
 
-  inline size_t get_length() const { return calculate_area_size(this->size); }
+  [[nodiscard]] inline size_t get_length() const {
+    return calculate_area_size(this->size);
+  }
 
   inline std::array<size_t, ndim> dimension_size() const {
     return calculate_dimension_size(this->size);
   }
 
   template <typename W>
-  void set_data(T* components, W size) {
-    this->components = components;
+  void set_data(T* components_, W size_) {
+    this->components = components_;
     for (size_t i = 0; i < ndim; i++) {
-      this->size[i] = size[i];
-      this->upper_bound[i] = size[i];
+      this->size[i] = size_[i];
+      this->upper_bound[i] = size_[i];
       this->lower_bound[i] = 0;
     }
     if (this->get_length() != this->mu_array.size()) this->mu_array.clear();
@@ -284,10 +296,10 @@ class MSO {
   }
 
   template <typename W>
-  void set_bounding_box(W lower_bound, W upper_bound) {
+  void set_bounding_box(W lower_bound_, W upper_bound_) {
     for (size_t i = 0; i < ndim; i++) {
-      this->lower_bound[i] = lower_bound[i];
-      this->upper_bound[i] = upper_bound[i];
+      this->lower_bound[i] = lower_bound_[i];
+      this->upper_bound[i] = upper_bound_[i];
     }
   }
 
@@ -320,22 +332,22 @@ class MSO {
     this->steps = 0;
   }
 
-  void set_neighbourhood(std::vector<int8_t> neighbourhood,
-                         std::vector<mu_type> distances) {
-    if (neighbourhood.size() != ndim * distances.size()) {
+  void set_neighbourhood(const std::vector<int8_t>& neighbourhood_,
+                         std::vector<mu_type> distances_) {
+    if (neighbourhood_.size() != ndim * distances_.size()) {
       throw std::length_error(
           "Size of neighbourhood need to be 3* Size of distances");
     }
-    this->neighbourhood = neighbourhood;
-    this->distances = distances;
+    this->neighbourhood = neighbourhood_;
+    this->distances = distances_;
     this->steps = 0;
   }
 
-  void set_neighbourhood(int8_t* neighbourhood, mu_type* distances,
+  void set_neighbourhood(int8_t* neighbourhood_, mu_type* distances_,
                          size_t neigh_size) {
     this->neighbourhood =
-        std::vector<int8_t>(neighbourhood, neighbourhood + 3 * neigh_size);
-    this->distances = std::vector<mu_type>(distances, distances + neigh_size);
+        std::vector<int8_t>(neighbourhood_, neighbourhood_ + 3 * neigh_size);
+    this->distances = std::vector<mu_type>(distances_, distances_ + neigh_size);
     this->steps = 0;
   }
 
@@ -372,23 +384,23 @@ class MSO {
     // "Distances: " << this->distances << std::endl;
     auto bounds =
         ArrayLimits<coord_type, ndim>(this->lower_bound, this->upper_bound);
-    for (auto coord : bounds) {
-      position = calculate_position(coord, global_dimension_size);
+    for (auto coord_ : bounds) {
+      position = calculate_position(coord_, global_dimension_size);
       array_position =
-          calculate_position(coord - this->lower_bound, global_dimension_size);
+          calculate_position(coord_ - this->lower_bound, global_dimension_size);
       array[array_position] = std::numeric_limits<mu_type>::max();
       if (this->components[position] == this->background_component) {
         array[position] = 0;
         for (size_t i = 0; i < 3 * this->distances.size(); i += 3) {
           for (size_t j = 0; j < ndim; j++)
-            coord2[j] = coord[j] + this->neighbourhood[i + j];
+            coord2[j] = coord_[j] + this->neighbourhood[i + j];
           if (outside_bounds(coord2, lower_bound, upper_bound)) {
             continue;
           }
           if (components[calculate_position(coord2, global_dimension_size)] ==
               0) {
-            queue.push(coord);
-            coord_in_queue[calculate_position(coord, global_dimension_size)] =
+            queue.push(coord_);
+            coord_in_queue[calculate_position(coord_, global_dimension_size)] =
                 true;
             break;
           }
@@ -429,14 +441,14 @@ class MSO {
     // std::cout << "Count " << count << std::endl;
   };
 
-  size_t optimum_erosion_calculate(const std::vector<mu_type>& fdt_array,
+  size_t optimum_erosion_calculate(const std::vector<mu_type>& fdt_array_,
                                    std::vector<T>& components_arr,
                                    std::vector<bool>& sprawl_area,
                                    size_t count_steps_factor = 3) {
     Point coord, coord2;
     size_t position, neigh_position;
     mu_type val, val2;
-    std::vector<mu_type> distances_from_components(fdt_array.size(), 0);
+    std::vector<mu_type> distances_from_components(fdt_array_.size(), 0);
     std::vector<my_queue<Point>> queues(this->components_num + 1);
     std::vector<bool> coord_in_queue(this->get_length(), false);
     auto bounds =
@@ -445,17 +457,17 @@ class MSO {
         calculate_dimension_size(this->upper_bound - this->lower_bound);
     const size_t area_size = bounds.size();
 
-    for (auto coord : bounds) {
-      position = calculate_position(coord, dimension_size);
+    for (auto coord_ : bounds) {
+      position = calculate_position(coord_, dimension_size);
       if (components_arr[position] != 0) {
-        distances_from_components[position] = fdt_array[position];
+        distances_from_components[position] = fdt_array_[position];
         for (size_t i = 0; i < 3 * this->distances.size(); i += 3) {
           for (size_t j = 0; j < ndim; j++)
-            coord2[j] = coord[j] + this->neighbourhood[i + j];
+            coord2[j] = coord_[j] + this->neighbourhood[i + j];
           if (outside_bounds(coord2, lower_bound, upper_bound)) continue;
           if (sprawl_area[calculate_position(coord2, dimension_size)] == true) {
-            queues[components_arr[position]].push(coord);
-            coord_in_queue[calculate_position(coord, dimension_size)] = true;
+            queues[components_arr[position]].push(coord_);
+            coord_in_queue[calculate_position(coord_, dimension_size)] = true;
             break;
           }
         }
@@ -480,7 +492,7 @@ class MSO {
           if (outside_bounds(coord2, lower_bound, upper_bound)) continue;
           neigh_position = calculate_position(coord2, dimension_size);
           if (sprawl_area[neigh_position] == false) continue;
-          val2 = std::min(val, fdt_array[neigh_position]);
+          val2 = std::min(val, fdt_array_[neigh_position]);
           if (val2 < distances_from_components[neigh_position] -
                          std::numeric_limits<mu_type>::epsilon())
             continue;
@@ -526,7 +538,7 @@ class MSO {
     return count;
   };
 
-  size_t constrained_dilation(const std::vector<mu_type>& fdt_array,
+  size_t constrained_dilation(const std::vector<mu_type>& fdt_array_,
                               std::vector<T>& components_arr,
                               std::vector<bool>& sprawl_area) const {
     if (this->get_length() == 0) throw BadInitialization("Zero sized array");
@@ -539,7 +551,7 @@ class MSO {
     size_t position, neigh_position, position_global;
     mu_type val, val2, dist_val;
     std::vector<mu_type> distances_from_components(
-        fdt_array.size(), std::numeric_limits<mu_type>::max());
+        fdt_array_.size(), std::numeric_limits<mu_type>::max());
     std::vector<my_queue<Point>> queues(this->components_num + 1);
     my_queue<Point> queue_copy;
     std::vector<bool> coord_in_queue(this->get_length(), false);
@@ -554,15 +566,15 @@ class MSO {
     const size_t area_size = bounds.size();
 
     // Put borders of components to queue
-    for (auto coord : bounds) {
-      position = calculate_position(coord, dimension_size);
+    for (auto coord_ : bounds) {
+      position = calculate_position(coord_, dimension_size);
       if (components_arr[position] != 0) {
         for (size_t i = 0; i < 3 * this->distances.size(); i += 3) {
           for (size_t j = 0; j < ndim; j++)
-            coord2[j] = coord[j] + this->neighbourhood[i + j];
+            coord2[j] = coord_[j] + this->neighbourhood[i + j];
           if (outside_bounds(coord2, lower_bound, upper_bound)) continue;
           if (sprawl_area[calculate_position(coord2, dimension_size)] == true) {
-            queues[components_arr[position]].push(coord);
+            queues[components_arr[position]].push(coord_);
             distances_from_components[position] =
                 0;  // this->mu_array[calculate_position(coord +
                     // this->lower_bound, global_dimension_size)];
@@ -586,14 +598,14 @@ class MSO {
         coord = queue.front();
         queue.pop();
         position = calculate_position(coord, dimension_size);
-        val = fdt_array[position];
+        val = fdt_array_[position];
         for (size_t i = 0; i < this->distances.size(); i++) {
           for (size_t j = 0; j < ndim; j++)
             coord2[j] = coord[j] + this->neighbourhood[3 * i + j];
           if (outside_bounds(coord2, lower_bound, upper_bound)) continue;
           neigh_position = calculate_position(coord2, dimension_size);
           if (sprawl_area[neigh_position] == false) continue;
-          if (fdt_array[neigh_position] <= val &&
+          if (fdt_array_[neigh_position] <= val &&
               morphological_neighbourhood[neigh_position] != comp_num &&
               morphological_neighbourhood[neigh_position] !=
                   std::numeric_limits<T>::max()) {
@@ -631,7 +643,7 @@ class MSO {
                  this->distances[i] / 2;
           val2 = dist_val + val2;
           if (val2 + std::numeric_limits<mu_type>::epsilon() >=
-              fdt_array[neigh_position]) {
+              fdt_array_[neigh_position]) {
             // std::cerr << "    coord(fdt) " << coord2 << " " << val2 << " - "
             // << fdt_array[neigh_position] << std::endl;
             continue;
@@ -642,14 +654,14 @@ class MSO {
             // << distances_from_components[neigh_position] << std::endl;
             continue;
           }
-          if (fabs(val2 - fdt_array[neigh_position]) <
+          if (fabs(val2 - fdt_array_[neigh_position]) <
               std::numeric_limits<mu_type>::epsilon()) {
             if (components_arr[neigh_position] == std::numeric_limits<T>::max())
               continue;
             else
               components_arr[neigh_position] = std::numeric_limits<T>::max();
           }
-          if (val2 < fdt_array[neigh_position]) {
+          if (val2 < fdt_array_[neigh_position]) {
             components_arr[neigh_position] = components_arr[position];
             distances_from_components[neigh_position] = val2;
           }
@@ -671,7 +683,7 @@ class MSO {
       // std::endl; std::cerr << " component change " << count3 << " ";
       // std::cerr << "Queue1 " << queue.get_size() << " Queue2 " <<
       // queue_copy.get_size() << std::endl;
-      comp_num++;
+      ++comp_num;
     }
     size_t count = 0;
     for (auto& el : components_arr) {
@@ -756,16 +768,16 @@ class MSO {
           this->fdt_array, this->res_components_array, this->sprawl_area_array);
       total_changes += count_changes;
       // std::cerr << "loop3\n";
-      this->steps++;
+      ++this->steps;
     }
     // std::cerr << "end\n";
     if (count_changes == 0) {
-      this->steps--;
+      --this->steps;
     }
     return total_changes;
   }
 
-  size_t steps_done() { return this->steps; }
+  [[nodiscard]] size_t steps_done() const { return this->steps; }
 
   std::vector<T> get_result_catted() const {
     return this->res_components_array;
@@ -790,7 +802,7 @@ class MuCalc {
     std::vector<R> result(length, 0);
     R mu;
     for (size_t i = 0; i < length; i++) {
-      mu = (R)(array[i] - lower_bound) / (upper_bound - lower_bound);
+      mu = static_cast<R>(array[i] - lower_bound) / (upper_bound - lower_bound);
       shrink(mu);
       result[i] = mu;
     }
@@ -803,7 +815,7 @@ class MuCalc {
     std::vector<R> result(length, 0);
     R mu;
     for (size_t i = 0; i < length; i++) {
-      mu = (R)(array[i] - lower_bound) / (upper_bound - lower_bound);
+      mu = static_cast<R>(array[i] - lower_bound) / (upper_bound - lower_bound);
       shrink(mu);
       if (mu < 0.5) mu = 1 - mu;
       result[i] = mu;
@@ -820,13 +832,16 @@ class MuCalc {
     T pixel_val;
     for (size_t i = 0; i < length; i++) {
       pixel_val = array[i];
-      mu = (R)(pixel_val - lower_bound) / (upper_bound - lower_bound);
+      mu =
+          static_cast<R>(pixel_val - lower_bound) / (upper_bound - lower_bound);
       if (((lower_bound - lower_mid_bound) > 0) &&
           (pixel_val >= lower_mid_bound) && (pixel_val <= lower_bound))
-        mu = (R)(pixel_val - lower_mid_bound) / (lower_bound - lower_mid_bound);
+        mu = static_cast<R>(pixel_val - lower_mid_bound) /
+             (lower_bound - lower_mid_bound);
       else if (((upper_bound - lower_bound) > 0) && (lower_bound < pixel_val) &&
                (pixel_val <= upper_bound))
-        mu = (R)(upper_bound - pixel_val) / (upper_bound - lower_bound);
+        mu = static_cast<R>(upper_bound - pixel_val) /
+             (upper_bound - lower_bound);
       shrink(mu);
       result[i] = mu;
     }
@@ -835,12 +850,12 @@ class MuCalc {
 
   static std::vector<R> calculate_mu_array_masked(T* array, size_t length,
                                                   T lower_bound, T upper_bound,
-                                                  uint8_t* mask) {
+                                                  const uint8_t* mask) {
     std::vector<R> result(length, 0);
     R mu;
     for (size_t i = 0; i < length; i++) {
       if (mask[i] == 0) continue;
-      mu = (R)(array[i] - lower_bound) / (upper_bound - lower_bound);
+      mu = static_cast<R>(array[i] - lower_bound) / (upper_bound - lower_bound);
       shrink(mu);
       result[i] = mu;
     }
@@ -848,12 +863,13 @@ class MuCalc {
   }
 
   static std::vector<R> calculate_reflection_mu_array_masked(
-      T* array, size_t length, T lower_bound, T upper_bound, uint8_t* mask) {
+      T* array, size_t length, T lower_bound, T upper_bound,
+      const uint8_t* mask) {
     std::vector<R> result(length, 0);
     R mu;
     for (size_t i = 0; i < length; i++) {
       if (mask[i] == 0) continue;
-      mu = (R)(array[i] - lower_bound) / (upper_bound - lower_bound);
+      mu = static_cast<R>(array[i] - lower_bound) / (upper_bound - lower_bound);
       shrink(mu);
       if (mu < 0.5) mu = 1 - mu;
       result[i] = mu;
@@ -862,20 +878,23 @@ class MuCalc {
   }
   static std::vector<R> calculate_two_object_mu_masked(
       T* array, size_t length, T lower_bound, T upper_bound, T lower_mid_bound,
-      T upper_mid_bound, uint8_t* mask) {
+      T upper_mid_bound, const uint8_t* mask) {
     std::vector<R> result(length, 0);
     R mu;
     T pixel_val;
     for (size_t i = 0; i < length; i++) {
       if (mask[i] == 0) continue;
       pixel_val = array[i];
-      mu = (R)(pixel_val - lower_bound) / (upper_bound - lower_bound);
+      mu =
+          static_cast<R>(pixel_val - lower_bound) / (upper_bound - lower_bound);
       if (((lower_bound - lower_mid_bound) > 0) &&
           (pixel_val >= lower_mid_bound) && (pixel_val <= lower_bound))
-        mu = (R)(pixel_val - lower_mid_bound) / (lower_bound - lower_mid_bound);
+        mu = static_cast<R>(pixel_val - lower_mid_bound) /
+             (lower_bound - lower_mid_bound);
       else if (((upper_bound - lower_bound) > 0) && (lower_bound < pixel_val) &&
                (pixel_val <= upper_bound))
-        mu = (R)(upper_bound - pixel_val) / (upper_bound - lower_bound);
+        mu = static_cast<R>(upper_bound - pixel_val) /
+             (upper_bound - lower_bound);
       shrink(mu);
       result[i] = mu;
     }
@@ -883,3 +902,5 @@ class MuCalc {
   }
 };
 }  // namespace MSO
+
+#endif

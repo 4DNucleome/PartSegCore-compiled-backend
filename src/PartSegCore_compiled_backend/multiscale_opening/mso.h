@@ -179,10 +179,11 @@ class ArrayLimits {
       this->state = state;
     }
     std::array<T, K> operator++() {
-      for (size_t i = K - 1; i-- > 0;) {
-        ++this->state[i];
-        if (this->state[i] >= this->upper_bound[i])
-          this->state[i] = this->lower_bound[i];
+      for (size_t i = K; i > 0; --i) {
+        const size_t idx = i - 1;
+        ++this->state[idx];
+        if (this->state[idx] >= this->upper_bound[idx])
+          this->state[idx] = this->lower_bound[idx];
         else
           break;
       }
@@ -194,12 +195,13 @@ class ArrayLimits {
       return res;
     }
     std::array<T, K> operator--() {
-      for (size_t i = K - 1; i-- > 0;) {
-        if (this->state[i] > this->lower_bound[i]) {
-          --this->state[i];
+      for (size_t i = K; i > 0; --i) {
+        const size_t idx = i - 1;
+        if (this->state[idx] > this->lower_bound[idx]) {
+          --this->state[idx];
           break;
         } else {
-          this->state[i] = this->upper_bound[i] - 1;
+          this->state[idx] = this->upper_bound[idx] - 1;
         }
       }
       return this->state;

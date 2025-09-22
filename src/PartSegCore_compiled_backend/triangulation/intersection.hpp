@@ -32,11 +32,11 @@ struct Event {
   Event(point::Point::coordinate_t x, point::Point::coordinate_t y, int index,
         bool is_left)
       : p(x, y), index(index), is_top(is_left) {}
-  Event(const point::Point &p, int index, bool is_left)
+  Event(const point::Point& p, int index, bool is_left)
       : p(p), index(index), is_top(is_left) {}
   Event() = default;
 
-  bool operator<(const Event &e) const {
+  bool operator<(const Event& e) const {
     if (p == e.p) {
       if (is_top == e.is_top) {
         return index < e.index;
@@ -65,7 +65,7 @@ struct OrderedPair {
       this->second = first;
     }
   }
-  bool operator==(const OrderedPair &pair) const {
+  bool operator==(const OrderedPair& pair) const {
     return first == pair.first && second == pair.second;
   }
 };
@@ -74,7 +74,7 @@ struct OrderedPair {
 template <>
 struct std::hash<partsegcore::intersection::OrderedPair> {
   std::size_t operator()(
-      const partsegcore::intersection::OrderedPair &pair) const noexcept {
+      const partsegcore::intersection::OrderedPair& pair) const noexcept {
     return std::hash<std::size_t>()(pair.first) ^
            std::hash<std::size_t>()(pair.second);
   }
@@ -98,8 +98,8 @@ typedef std::map<point::Point, EventData> IntersectionEvents;
  * @param r The second endpoint of the line segment.
  * @return True if point q lies on the segment pr, false otherwise.
  */
-inline bool _on_segment(const point::Point &p, const point::Point &q,
-                        const point::Point &r) {
+inline bool _on_segment(const point::Point& p, const point::Point& q,
+                        const point::Point& r) {
   if (q.x <= std::max(p.x, r.x) && q.x >= std::min(p.x, r.x) &&
       q.y <= std::max(p.y, r.y) && q.y >= std::min(p.y, r.y))
     return true;
@@ -131,8 +131,8 @@ enum Orientation {
  *         Orientation::COUNTERCLOCKWISE if the triplet (p, q, r) is in a
  *         counterclockwise orientation.
  */
-inline Orientation _orientation(const point::Point &p, const point::Point &q,
-                                const point::Point &r) {
+inline Orientation _orientation(const point::Point& p, const point::Point& q,
+                                const point::Point& r) {
   double val1 = ((q.y - p.y) * (r.x - q.x));
   double val2 = ((r.y - q.y) * (q.x - p.x));
   // This commented code if for debugging purposes of differences between macOS
@@ -165,11 +165,11 @@ inline Orientation _orientation(const point::Point &p, const point::Point &q,
  * @param s2 The second line segment, represented by two endpoints.
  * @return True if the segments intersect, false otherwise.
  */
-inline bool _do_intersect(const point::Segment &s1, const point::Segment &s2) {
-  const point::Point &p1 = s1.bottom;
-  const point::Point &q1 = s1.top;
-  const point::Point &p2 = s2.bottom;
-  const point::Point &q2 = s2.top;
+inline bool _do_intersect(const point::Segment& s1, const point::Segment& s2) {
+  const point::Point& p1 = s1.bottom;
+  const point::Point& q1 = s1.top;
+  const point::Point& p2 = s2.bottom;
+  const point::Point& q2 = s2.top;
 
   Orientation o1 = _orientation(p1, q1, p2);
   Orientation o2 = _orientation(p1, q1, q2);
@@ -198,14 +198,14 @@ inline bool _do_intersect(const point::Segment &s1, const point::Segment &s2) {
  * @param s2 The second segment.
  * @return true if the segments share at least one endpoint, false otherwise.
  */
-inline bool _share_endpoint(const point::Segment &s1,
-                            const point::Segment &s2) {
+inline bool _share_endpoint(const point::Segment& s1,
+                            const point::Segment& s2) {
   return s1.bottom == s2.bottom || s1.bottom == s2.top || s1.top == s2.bottom ||
          s1.top == s2.top;
 }
 
 template <typename T>
-typename T::iterator pred(T &s, typename T::iterator it) {
+typename T::iterator pred(T& s, typename T::iterator it) {
   if (it == s.begin()) {
     return s.end();
   }
@@ -213,12 +213,12 @@ typename T::iterator pred(T &s, typename T::iterator it) {
 }
 
 template <typename T>
-typename T::iterator succ(T &s, typename T::iterator it) {
+typename T::iterator succ(T& s, typename T::iterator it) {
   return ++it;
 }
 
 inline std::unordered_set<OrderedPair> _find_intersections(
-    const std::vector<point::Segment> &segments) {
+    const std::vector<point::Segment>& segments) {
   std::unordered_set<OrderedPair> intersections;
   IntersectionEvents intersection_events;
   std::vector<Event> events;
@@ -236,14 +236,14 @@ inline std::unordered_set<OrderedPair> _find_intersections(
     //    print_vector(std::cout, event_it->second.tops, ", bottoms: ");
     //    print_vector(std::cout, event_it->second.bottoms, "\n");
     //    i++;
-    auto &event_data = event_it->second;
+    auto& event_data = event_it->second;
     //    std::cout << "Active: ";
     //    print_map(std::cout, active, "\n");
     if (!event_data.tops.empty()) {
       // Current implementation is not optimal, but it is was
       // faster to use this to have initial working version.
       // TODO based on commented code fix edge cases.
-      for (const auto &active_el : active) {
+      for (const auto& active_el : active) {
         for (auto event_index : event_data.tops) {
           for (auto index : active_el.second) {
             if (_do_intersect(segments[event_index], segments[index]) &&
@@ -335,8 +335,8 @@ inline std::unordered_set<OrderedPair> _find_intersections(
  * @return The intersection point of the two segments, or (0, 0) if they do not
  * intersect.
  */
-inline std::vector<point::Point> _find_intersection(const point::Segment &s1,
-                                                    const point::Segment &s2) {
+inline std::vector<point::Point> _find_intersection(const point::Segment& s1,
+                                                    const point::Segment& s2) {
   // ReSharper disable CppJoinDeclarationAndAssignment
   point::Point::coordinate_t a1, b1, a2, b2, det, x, y, t;
   //  point::Point::coordinate_t c1, c2, u;

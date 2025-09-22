@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-
 from PartSegCore_compiled_backend.triangulate import (
     do_intersect,
     find_intersection_point,

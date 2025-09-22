@@ -10,10 +10,10 @@
 namespace partsegcore {
 
 template <typename T>
-void print_set(std::ostream &o, const T &s, const std::string &end = "\n") {
+void print_set(std::ostream& o, const T& s, const std::string& end = "\n") {
   bool first = true;
   o << "{";
-  for (const auto &el : s) {
+  for (const auto& el : s) {
     if (!first) {
       o << ", ";
     }
@@ -23,10 +23,10 @@ void print_set(std::ostream &o, const T &s, const std::string &end = "\n") {
   o << "}" << end;
 }
 template <typename T>
-void print_vector(std::ostream &o, const T &s, const std::string &end = "\n") {
+void print_vector(std::ostream& o, const T& s, const std::string& end = "\n") {
   bool first = true;
   o << "[";
-  for (const auto &el : s) {
+  for (const auto& el : s) {
     if (!first) {
       o << ", ";
     }
@@ -36,10 +36,10 @@ void print_vector(std::ostream &o, const T &s, const std::string &end = "\n") {
   o << "]" << end;
 }
 template <typename T>
-void print_map(std::ostream &o, const T &s, const std::string &end = "\n") {
+void print_map(std::ostream& o, const T& s, const std::string& end = "\n") {
   bool first = true;
   o << "{";
-  for (const auto &el : s) {
+  for (const auto& el : s) {
     if (!first) {
       o << ", ";
     }
@@ -51,7 +51,7 @@ void print_map(std::ostream &o, const T &s, const std::string &end = "\n") {
 }
 
 template <typename T1, typename T2>
-std::ostream &operator<<(std::ostream &os, const std::pair<T1, T2> &p) {
+std::ostream& operator<<(std::ostream& os, const std::pair<T1, T2>& p) {
   os << "(" << p.first << ", " << p.second << ")";
   return os;
 }

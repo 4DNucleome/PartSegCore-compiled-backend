@@ -762,7 +762,7 @@ class MSO {
 
   size_t run_MSO(size_t steps_limits = 1, size_t count_steps_factor = 3) {
     if (this->components_num == 0)
-      throw BadInitialization("Wrong number of components seted");
+      throw BadInitialization("Wrong number of components set");
     size_t total_changes = 0;
     if (steps_limits == 0) steps_limits = 1;
     if (steps_limits < this->steps) this->steps = 0;

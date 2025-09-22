@@ -67,15 +67,26 @@ template <>
 std::ostream& operator<<(std::ostream& stream,
                          const std::vector<unsigned char>& array) {
   stream << "vector(";
-  for (unsigned char i : array) stream << static_cast<int>(i) << ", ";
-  stream << static_cast<int>(array.back()) << ")";
+  if (!array.empty()) {
+    for (size_t i = 0; i < array.size() - 1; i++) {
+      stream << static_cast<int>(array[i]) << ", ";
+    }
+    stream << static_cast<int>(array.back());
+  }
+  stream << ")";
   return stream;
 }
+
 std::ostream& operator<<(std::ostream& stream,
                          const std::vector<signed char>& array) {
   stream << "vector(";
-  for (signed char i : array) stream << static_cast<int>(i) << ", ";
-  stream << static_cast<int>(array.back()) << ")";
+  if (!array.empty()) {
+    for (size_t i = 0; i < array.size() - 1; i++) {
+      stream << static_cast<int>(array[i]) << ", ";
+    }
+    stream << static_cast<int>(array.back());
+  }
+  stream << ")";
   return stream;
 }
 #pragma GCC diagnostic pop
@@ -298,6 +309,11 @@ class MSO {
   template <typename W>
   void set_bounding_box(W lower_bound_, W upper_bound_) {
     for (size_t i = 0; i < ndim; i++) {
+      if (lower_bound_[i] > upper_bound_[i])
+        throw std::runtime_error(
+            "In index " + std::to_string(i) + "the lower bound " +
+            std::to_string(lower_bound_[i]) + " is greater than upper bound " +
+            std::to_string(upper_bound_[i]));
       this->lower_bound[i] = lower_bound_[i];
       this->upper_bound[i] = upper_bound_[i];
     }
@@ -335,8 +351,8 @@ class MSO {
   void set_neighbourhood(const std::vector<int8_t>& neighbourhood_,
                          std::vector<mu_type> distances_) {
     if (neighbourhood_.size() != ndim * distances_.size()) {
-      throw std::length_error(
-          "Size of neighbourhood need to be 3* Size of distances");
+      throw std::length_error("Size of neighbourhood need to be " +
+                              std::to_string(ndim) + "* Size of distances");
     }
     this->neighbourhood = neighbourhood_;
     this->distances = distances_;
@@ -346,7 +362,7 @@ class MSO {
   void set_neighbourhood(int8_t* neighbourhood_, mu_type* distances_,
                          size_t neigh_size) {
     this->neighbourhood =
-        std::vector<int8_t>(neighbourhood_, neighbourhood_ + 3 * neigh_size);
+        std::vector<int8_t>(neighbourhood_, neighbourhood_ + ndim * neigh_size);
     this->distances = std::vector<mu_type>(distances_, distances_ + neigh_size);
     this->steps = 0;
   }
@@ -387,10 +403,10 @@ class MSO {
     for (auto coord_ : bounds) {
       position = calculate_position(coord_, global_dimension_size);
       array_position =
-          calculate_position(coord_ - this->lower_bound, global_dimension_size);
+          calculate_position(coord_ - this->lower_bound, dimension_size);
       array[array_position] = std::numeric_limits<mu_type>::max();
       if (this->components[position] == this->background_component) {
-        array[position] = 0;
+        array[array_position] = 0;
         for (size_t i = 0; i < 3 * this->distances.size(); i += 3) {
           for (size_t j = 0; j < ndim; j++)
             coord2[j] = coord_[j] + this->neighbourhood[i + j];

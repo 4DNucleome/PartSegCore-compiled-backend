@@ -407,7 +407,7 @@ class MSO {
       array[array_position] = std::numeric_limits<mu_type>::max();
       if (this->components[position] == this->background_component) {
         array[array_position] = 0;
-        for (size_t i = 0; i < 3 * this->distances.size(); i += 3) {
+        for (size_t i = 0; i < ndim * this->distances.size(); i += ndim) {
           for (size_t j = 0; j < ndim; j++)
             coord2[j] = coord_[j] + this->neighbourhood[i + j];
           if (outside_bounds(coord2, lower_bound, upper_bound)) {
@@ -436,7 +436,7 @@ class MSO {
       fdt_value = array[array_position];
       for (size_t i = 0; i < this->distances.size(); i++) {
         for (size_t j = 0; j < ndim; j++)
-          coord2[j] = coord[j] + this->neighbourhood[3 * i + j];
+          coord2[j] = coord[j] + this->neighbourhood[ndim * i + j];
         if (outside_bounds(coord2, lower_bound, upper_bound)) continue;
         neigh_position = calculate_position(coord2, global_dimension_size);
         array_neigh_position =
@@ -477,7 +477,7 @@ class MSO {
       position = calculate_position(coord_, dimension_size);
       if (components_arr[position] != 0) {
         distances_from_components[position] = fdt_array_[position];
-        for (size_t i = 0; i < 3 * this->distances.size(); i += 3) {
+        for (size_t i = 0; i < ndim * this->distances.size(); i += ndim) {
           for (size_t j = 0; j < ndim; j++)
             coord2[j] = coord_[j] + this->neighbourhood[i + j];
           if (outside_bounds(coord2, lower_bound, upper_bound)) continue;
@@ -504,7 +504,7 @@ class MSO {
         val = distances_from_components[position];
         for (size_t i = 0; i < this->distances.size(); i++) {
           for (size_t j = 0; j < ndim; j++)
-            coord2[j] = coord[j] + this->neighbourhood[3 * i + j];
+            coord2[j] = coord[j] + this->neighbourhood[ndim * i + j];
           if (outside_bounds(coord2, lower_bound, upper_bound)) continue;
           neigh_position = calculate_position(coord2, dimension_size);
           if (sprawl_area[neigh_position] == false) continue;
@@ -585,7 +585,7 @@ class MSO {
     for (auto coord_ : bounds) {
       position = calculate_position(coord_, dimension_size);
       if (components_arr[position] != 0) {
-        for (size_t i = 0; i < 3 * this->distances.size(); i += 3) {
+        for (size_t i = 0; i < ndim * this->distances.size(); i += ndim) {
           for (size_t j = 0; j < ndim; j++)
             coord2[j] = coord_[j] + this->neighbourhood[i + j];
           if (outside_bounds(coord2, lower_bound, upper_bound)) continue;
@@ -617,7 +617,7 @@ class MSO {
         val = fdt_array_[position];
         for (size_t i = 0; i < this->distances.size(); i++) {
           for (size_t j = 0; j < ndim; j++)
-            coord2[j] = coord[j] + this->neighbourhood[3 * i + j];
+            coord2[j] = coord[j] + this->neighbourhood[ndim * i + j];
           if (outside_bounds(coord2, lower_bound, upper_bound)) continue;
           neigh_position = calculate_position(coord2, dimension_size);
           if (sprawl_area[neigh_position] == false) continue;
@@ -647,7 +647,7 @@ class MSO {
         // std::cerr << "Coord " << coord <<  " val " << val << std::endl;
         for (size_t i = 0; i < this->distances.size(); i++) {
           for (size_t j = 0; j < ndim; j++)
-            coord2[j] = coord[j] + this->neighbourhood[3 * i + j];
+            coord2[j] = coord[j] + this->neighbourhood[ndim * i + j];
           if (outside_bounds(coord2, lower_bound, upper_bound)) continue;
           neigh_position = calculate_position(coord2, dimension_size);
           if (sprawl_area[neigh_position] == false ||
@@ -687,7 +687,7 @@ class MSO {
             coord_in_queue[neigh_position] = true;
           }
         }
-        if (count_steps > 3 * area_size) {
+        if (count_steps > ndim * area_size) {
           throw std::runtime_error("too many steps: constrained dilation");
         }
 

@@ -19,12 +19,12 @@ struct Point {
 
   coordinate_t x;
   coordinate_t y;
-  bool operator==(const Point &p) const { return x == p.x && y == p.y; }
-  bool operator!=(const Point &p) const { return !(*this == p); }
+  bool operator==(const Point& p) const { return x == p.x && y == p.y; }
+  bool operator!=(const Point& p) const { return !(*this == p); }
   Point(coordinate_t x, coordinate_t y) : x(x), y(y) {}
   Point() = default;
 
-  bool operator<(const Point &p) const {
+  bool operator<(const Point& p) const {
     if (this->y == p.y) {
       return this->x < p.x;
     }
@@ -32,12 +32,12 @@ struct Point {
   }
 
   // add operator
-  Vector operator+(const Point &p) const;
+  Vector operator+(const Point& p) const;
 
   // subtract operator
-  Vector operator-(const Point &p) const;
+  Vector operator-(const Point& p) const;
 
-  Point operator+(const Vector &v) const;
+  Point operator+(const Vector& v) const;
 
   //  Point operator/(coordinate_t f) const {
   //      return {this->x / f, this->y / f};
@@ -48,13 +48,13 @@ struct Point {
   //  }
 
   // Overload the << operator for Point
-  friend std::ostream &operator<<(std::ostream &os, const Point &point) {
+  friend std::ostream& operator<<(std::ostream& os, const Point& point) {
     os << "(x=" << point.x << ", y=" << point.y << ")";
     return os;
   }
 
   struct PointHash {
-    std::size_t operator()(const Point &p) const {
+    std::size_t operator()(const Point& p) const {
       return std::hash<Point::coordinate_t>()(p.x) ^
              (std::hash<Point::coordinate_t>()(p.y) << 1);
     }
@@ -67,12 +67,12 @@ struct Vector {
   coordinate_t y;
   Vector(coordinate_t x, coordinate_t y) : x(x), y(y) {}
   Vector() = default;
-  explicit Vector(const Point &p) : x(p.x), y(p.y) {}
+  explicit Vector(const Point& p) : x(p.x), y(p.y) {}
 
-  Vector operator+(const Vector &v) const {
+  Vector operator+(const Vector& v) const {
     return {this->x + v.x, this->y + v.y};
   }
-  Vector operator-(const Vector &v) const {
+  Vector operator-(const Vector& v) const {
     return {this->x - v.x, this->y - v.y};
   }
   Vector operator/(coordinate_t f) const { return {this->x / f, this->y / f}; }
@@ -80,15 +80,15 @@ struct Vector {
   Vector operator-() const { return {-this->x, -this->y}; }
 };
 
-inline Vector Point::operator+(const Point &p) const {
+inline Vector Point::operator+(const Point& p) const {
   return {this->x + p.x, this->y + p.y};
 }
 
-inline Vector Point::operator-(const Point &p) const {
+inline Vector Point::operator-(const Point& p) const {
   return {this->x - p.x, this->y - p.y};
 }
 
-inline Point Point::operator+(const Vector &v) const {
+inline Point Point::operator+(const Vector& v) const {
   return {this->x + v.x, this->y + v.y};
 }
 
@@ -116,18 +116,18 @@ struct Segment {
 
   Segment() = default;
 
-  bool operator<(const Segment &s) const {
+  bool operator<(const Segment& s) const {
     if (this->bottom == s.bottom) {
       return this->top < s.top;
     }
     return this->bottom < s.bottom;
   }
 
-  bool operator==(const Segment &s) const {
+  bool operator==(const Segment& s) const {
     return this->bottom == s.bottom && this->top == s.top;
   }
 
-  bool operator!=(const Segment &s) const { return !(*this == s); }
+  bool operator!=(const Segment& s) const { return !(*this == s); }
 
   /**
    * Computes the x-coordinate of a point on the line segment at a given
@@ -185,7 +185,7 @@ struct Segment {
    * @param segment The Segment instance to be inserted into the stream.
    * @return The output stream after the Segment has been inserted.
    */
-  friend std::ostream &operator<<(std::ostream &os, const Segment &segment) {
+  friend std::ostream& operator<<(std::ostream& os, const Segment& segment) {
     os << "[bottom=" << segment.bottom << ", top=" << segment.top << "]";
     return os;
   }
@@ -201,19 +201,19 @@ struct Segment {
    * unordered containers, such as unordered_map and unordered_set.
    */
   struct SegmentHash {
-    std::size_t operator()(const Segment &segment) const {
+    std::size_t operator()(const Segment& segment) const {
       std::size_t h1 = Point::PointHash()(segment.bottom);
       std::size_t h2 = Point::PointHash()(segment.top);
       return h1 ^ (h2 << 1);
     }
   };
 };
-Point centroid(const std::vector<Point> &point_list) {
+Point centroid(const std::vector<Point>& point_list) {
   if (point_list.empty()) {
     return {0, 0};
   }
   Point res(0, 0);
-  for (auto &point : point_list) {
+  for (auto& point : point_list) {
     res.x += point.x;
     res.y += point.y;
   }
@@ -228,14 +228,14 @@ Point centroid(const std::vector<Point> &point_list) {
 namespace std {
 template <>
 struct hash<partsegcore::point::Point> {
-  size_t operator()(const partsegcore::point::Point &point) const noexcept {
+  size_t operator()(const partsegcore::point::Point& point) const noexcept {
     return partsegcore::point::Point::PointHash()(point);
   }
 };
 
 template <>
 struct hash<partsegcore::point::Segment> {
-  size_t operator()(const partsegcore::point::Segment &segment) const noexcept {
+  size_t operator()(const partsegcore::point::Segment& segment) const noexcept {
     return partsegcore::point::Segment::SegmentHash()(segment);
   }
 };

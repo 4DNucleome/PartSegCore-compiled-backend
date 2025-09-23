@@ -4,7 +4,6 @@ This module contains function to perform multiple component sprawl (watershed li
 
 from __future__ import annotations
 
-import logging
 import os
 import typing
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -385,7 +384,6 @@ def reverse_permutation(perm: list[int]) -> list[int]:
 
 
 def relabel_with_perm(labeling: list, perm: list) -> list:
-    logging.debug('%(labeling), %(perm)', extra={'labeling': labeling, 'perm': perm})
     perm = reverse_permutation(perm)
     return [perm[x] for x in labeling]
 

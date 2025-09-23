@@ -27,7 +27,7 @@ ctypedef fused numpy_int_types:
 def unique1d(np.ndarray[numpy_int_types, ndim=1] array):
     cdef unordered_set[numpy_int_types] unique_values
     cdef vector[unordered_set[numpy_int_types]] unique_values_vector
-    cdef Py_ssize_t i, j, n_rows, n_cols, id_num
+    cdef Py_ssize_t i, j, n_rows, n_cols, id_num, n_items
     cdef numpy_int_types prev_val, v
     n_items = array.shape[0]
     unique_values_vector.resize(50) # openmp.omp_get_num_threads())

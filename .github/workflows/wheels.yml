@@ -16,19 +16,20 @@ concurrency:
 
 jobs:
   test:
-      name: Test on ${{ matrix.os }} with Python ${{ matrix.python_version }}
-      runs-on: ${{ matrix.os }}
-      strategy:
-        fail-fast: false
-        matrix:
-          os: [windows-latest, macos-latest, ubuntu-latest]
-          python_version: ['3.9' , '3.10', '3.11', '3.12']
-      steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+    name: Test on ${{ matrix.os }} with Python ${{ matrix.python_version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ windows-latest, macos-latest, ubuntu-latest ]
+        python_version: [ '3.9', '3.13', '3.14' ]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         name: Install Python ${{ matrix.python_version }}
         with:
           python-version: ${{ matrix.python_version }}
+          allow-prereleases: true
       - name: install openblas
         if: runner.os == 'macOS'
         run: brew install libomp
@@ -41,22 +42,36 @@ jobs:
         run: tox
         if: runner.os != 'macOS'
 
+  test_min_req:
+    name: Test minimum requirements
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        name: Install Python 3.9
+        with:
+          python-version: '3.9'
+      - name: Install tox
+        run: pip install tox tox-gh-actions tox-min-req
+      - name: Test Backend
+        run: tox
+
 
   build_wheels:
-    needs: test
+    needs: [test, test_min_req]
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest, macos-13]
+        os: [ ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-latest, macos-13 ]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.21.3
+        uses: pypa/cibuildwheel@v3.1.4
 
       - uses: actions/upload-artifact@v4
         with:
@@ -68,7 +83,7 @@ jobs:
     name: Build source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -81,19 +96,19 @@ jobs:
           path: dist/*.tar.gz
 
   upload_pypi:
-    needs: [build_wheels, build_sdist]
+    needs: [ build_wheels, build_sdist ]
     runs-on: ubuntu-latest
     environment:
       name: pypi
       url: https://pypi.org/p/PartSegCore-compiled-backend
     permissions:
-        id-token: write  # IMPORTANT: mandatory for trusted publishing
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
     # upload to PyPI on every tag starting with 'v'
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
     # alternatively, to publish when a GitHub Release is created, use the following rule:
     # if: github.event_name == 'release' && github.event.action == 'published'
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           pattern: pypi-*
           path: dist

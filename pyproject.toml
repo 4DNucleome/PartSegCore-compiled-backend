@@ -1,6 +1,12 @@
 [build-system]
 # Minimum requirements for the build system to execute.
-requires = ["scikit-build-core", "Cython", "cython-cmake", "numpy>=2", "setuptools_scm[toml]>=8.1"]  # PEP 508 specifications.
+requires = [
+    "scikit-build-core",
+    "Cython",
+    "cython-cmake",
+    "numpy>=2",
+    "setuptools_scm[toml]>=8.1"
+]  # PEP 508 specifications.
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
@@ -9,6 +15,7 @@ sdist.include = ["src/PartSegCore_compiled_backend/version.py"]
 cmake.version = ">=3.21"
 sdist.exclude = [".github", "tox.ini", "build_utils", "notebooks", ".readthedocs.yaml"]
 wheel.exclude = ["**.pyx"]
+#cmake.build-type = "Debug"
 
 
 [project]
@@ -27,6 +34,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
@@ -35,7 +43,7 @@ keywords = [
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "numpy>=1.25.0",
+    "numpy>=1.23.5",
 ]
 dynamic = [
     "version",
@@ -122,6 +130,7 @@ test-command = "pytest {project}/src/tests"
 test-extras = ["test"]
 skip = "pp*macos* pp31* pp39-manylinux*"
 build = "*64"
+enable = ["pypy", "cpython-freethreading"]
 
 [tool.cibuildwheel.macos]
 before-all = [
@@ -139,7 +148,8 @@ quote-style = "single"
 indent-style = "space"
 docstring-code-format = true
 line-ending = "lf"
-skip-magic-trailing-comma = true
+skip-magic-trailing-comma = false
+
 
 [tool.ruff.lint]
 select = [

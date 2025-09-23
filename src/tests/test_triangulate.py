@@ -656,7 +656,7 @@ def test_triangulate_path_edge_py(path, closed, bevel, expected, exp_triangles, 
 
 @pytest.mark.parametrize(('polygon', 'expected'), TEST_POLYGONS)
 def test_triangulate_polygon_with_edge_numpy_li(polygon, expected):
-    (triangles, points), (centers, offsets, edge_triangles) = triangulate_polygon_with_edge_numpy_li(
+    (triangles, points), (centers, offsets, _edge_triangles) = triangulate_polygon_with_edge_numpy_li(
         [np.array(polygon, dtype=np.float32)]
     )
     triangles_ = _renumerate_triangles(polygon, points, triangles)

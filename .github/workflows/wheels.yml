@@ -73,7 +73,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.1.4
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           path: ./wheelhouse/*.whl
           name: pypi-wheels-${{ matrix.os }}
@@ -90,7 +90,7 @@ jobs:
       - name: Build sdist
         run: pipx run build --sdist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: pypi-sdist
           path: dist/*.tar.gz
@@ -108,7 +108,7 @@ jobs:
     # alternatively, to publish when a GitHub Release is created, use the following rule:
     # if: github.event_name == 'release' && github.event.action == 'published'
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           pattern: pypi-*
           path: dist

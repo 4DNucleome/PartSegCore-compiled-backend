@@ -22,10 +22,18 @@ repos:
     rev: v1.10.0
     hooks:
     -   id: rst-backticks
--   repo: https://github.com/markdownlint/markdownlint
-    rev: v0.15.0  # Use the ref you want to point at
+-   repo: https://github.com/executablebooks/mdformat
+    rev: 1.0.0  # Use the ref you want to point at
     hooks:
-    - id: markdownlint
+    - id: mdformat
+      exclude: TEST_FAIL_TEMPLATE.md|bug_report.md|feature_request.md
+      args: ["--number"]
+      additional_dependencies:
+          - mdformat-gfm
+          - mdformat-footnote
+          - mdformat-gfm-alerts
+          - mdformat-ruff
+          - mdformat-toc
 -   repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
     hooks:

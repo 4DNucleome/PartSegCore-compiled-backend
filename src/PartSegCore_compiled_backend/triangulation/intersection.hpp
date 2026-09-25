@@ -133,8 +133,10 @@ enum Orientation {
  */
 inline Orientation _orientation(const point::Point& p, const point::Point& q,
                                 const point::Point& r) {
-  double val1 = ((q.y - p.y) * (r.x - q.x));
-  double val2 = ((r.y - q.y) * (q.x - p.x));
+  // Promote to double before multiplying: the float products lose precision
+  // and can flip the result for nearly collinear points.
+  double val1 = (static_cast<double>(q.y) - p.y) * (static_cast<double>(r.x) - q.x);
+  double val2 = (static_cast<double>(r.y) - q.y) * (static_cast<double>(q.x) - p.x);
   // This commented code if for debugging purposes of differences between macOS
   // and linux double val = ((q.y - p.y) * (r.x - q.x)) - ((r.y - q.y) * (q.x -
   // p.x)); if (val!= 0 && val1 == val2) {
@@ -337,15 +339,16 @@ inline std::unordered_set<OrderedPair> _find_intersections(
  */
 inline std::vector<point::Point> _find_intersection(const point::Segment& s1,
                                                     const point::Segment& s2) {
+  // To reduce problems with float precision, the same pair of segments
+  // should always be calculated in the same order.
+  if (s2 < s1) return _find_intersection(s2, s1);
   // ReSharper disable CppJoinDeclarationAndAssignment
-  point::Point::coordinate_t a1, b1, a2, b2, det, x, y, t;
-  //  point::Point::coordinate_t c1, c2, u;
-  a1 = s1.top.y - s1.bottom.y;
-  b1 = s1.bottom.x - s1.top.x;
-  // c1 = a1 * s1.bottom.x + b1 * s1.bottom.y;
-  a2 = s2.top.y - s2.bottom.y;
-  b2 = s2.bottom.x - s2.top.x;
-  // c2 = a2 * s2.bottom.x + b2 * s2.bottom.y;
+  double a1, b1, a2, b2, det, t;
+  point::Point::coordinate_t x, y;
+  a1 = static_cast<double>(s1.top.y) - s1.bottom.y;
+  b1 = static_cast<double>(s1.bottom.x) - s1.top.x;
+  a2 = static_cast<double>(s2.top.y) - s2.bottom.y;
+  b2 = static_cast<double>(s2.bottom.x) - s2.top.x;
   det = a1 * b2 - a2 * b1;
   if (det == 0) {
     // collinear case
@@ -356,15 +359,13 @@ inline std::vector<point::Point> _find_intersection(const point::Segment& s1,
     if (s2.point_on_line(s1.top)) res.push_back(s1.top);
     return res;
   }
-  t = ((s2.top.x - s1.top.x) * (s2.bottom.y - s2.top.y) -
-       (s2.top.y - s1.top.y) * (s2.bottom.x - s2.top.x)) /
+  t = ((static_cast<double>(s2.top.x) - s1.top.x) * -a2 -
+       (static_cast<double>(s2.top.y) - s1.top.y) * b2) /
       det;
-  // u = ((s2.top.x - s1.top.x) * (s1.bottom.y - s1.top.y) -
-  //     (s2.top.y - s1.top.y) * (s2.bottom.x - s2.top.x)) / det;
   if (t < 0) return {s1.top};
   if (t > 1) return {s1.bottom};
-  x = s1.top.x + t * b1;
-  y = s1.top.y + t * (-a1);
+  x = s1.top.x + static_cast<point::Point::coordinate_t>(t * b1);
+  y = s1.top.y + static_cast<point::Point::coordinate_t>(t * (-a1));
   return {{x, y}};
 }
 }  // namespace partsegcore::intersection

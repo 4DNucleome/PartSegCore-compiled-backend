@@ -135,8 +135,10 @@ inline Orientation _orientation(const point::Point& p, const point::Point& q,
                                 const point::Point& r) {
   // Promote to double before multiplying: the float products lose precision
   // and can flip the result for nearly collinear points.
-  double val1 = (static_cast<double>(q.y) - p.y) * (static_cast<double>(r.x) - q.x);
-  double val2 = (static_cast<double>(r.y) - q.y) * (static_cast<double>(q.x) - p.x);
+  double val1 =
+      (static_cast<double>(q.y) - p.y) * (static_cast<double>(r.x) - q.x);
+  double val2 =
+      (static_cast<double>(r.y) - q.y) * (static_cast<double>(q.x) - p.x);
   // This commented code if for debugging purposes of differences between macOS
   // and linux double val = ((q.y - p.y) * (r.x - q.x)) - ((r.y - q.y) * (q.x -
   // p.x)); if (val!= 0 && val1 == val2) {

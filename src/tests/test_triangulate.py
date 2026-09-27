@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pytest
 from PartSegCore_compiled_backend.triangulate import (
@@ -19,6 +21,8 @@ from PartSegCore_compiled_backend.triangulate import (
     triangulate_polygon_py,
     triangulate_polygon_with_edge_numpy_li,
 )
+
+DATA_DIR = Path(__file__).parent / 'data'
 
 
 def test_on_segment():
@@ -743,3 +747,15 @@ def test_is_convex_regular_polygon(angle, n_vertex, reverse):
     rot = rotation_matrix(angle)
     rotated_poly = np.dot(poly, rot)
     assert is_convex(rotated_poly)
+
+
+def test_hole_triangulation_precision():
+    # Polygon with two holes (napari single path encoding) from napari/bermuda#194.
+    # Float precision errors in orientation/intersection used to silently drop ~30% of the area.
+    vertices = np.loadtxt(DATA_DIR / 'create_holes_triangulation_failure.txt', dtype=np.float32)
+    triangles, points = triangulate_polygon_numpy_li([vertices])
+    tri_points = points.astype(np.float64)[triangles]
+    v1 = tri_points[:, 1] - tri_points[:, 0]
+    v2 = tri_points[:, 2] - tri_points[:, 0]
+    area = np.abs(v1[:, 0] * v2[:, 1] - v1[:, 1] * v2[:, 0]).sum() / 2
+    assert area == pytest.approx(139420612.3, rel=1e-6)

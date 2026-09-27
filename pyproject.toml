@@ -133,6 +133,8 @@ build = "*64"
 enable = ["pypy"]
 
 [tool.cibuildwheel.macos]
+# libomp (LLVM 23) uses aligned_alloc, available since macOS 10.15
+environment = { MACOSX_DEPLOYMENT_TARGET = "10.15" }
 before-all = [
     "set",
     "bash {project}/build_utils/build_libomp.sh",
